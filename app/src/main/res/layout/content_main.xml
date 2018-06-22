@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~
+  ~ * Copyright (C) 2018 Eduardo Zarate Lasurtegui
+  ~ *  Copyright (C) 2018, University of the Basque Country (UPV/EHU)
+  ~ *
+  ~ * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
+  ~ *
+  ~ * This file is part of MCOP MCPTT Client
+  ~ *
+  ~ * This is free software: you can redistribute it and/or modify it under the terms of
+  ~ * the GNU General Public License as published by the Free Software Foundation, either version 3
+  ~ * of the License, or (at your option) any later version.
+  ~ *
+  ~ * This is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  ~ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~ * See the GNU General Public License for more details.
+  ~ *
+  ~ * You should have received a copy of the GNU General Public License along
+  ~ * with this program; if not, write to the Free Software Foundation, Inc.,
+  ~ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+  -->
+
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="org.mcopenplatform.muoapi.mcopsdk.MainActivity"
+    tools:showIn="@layout/activity_main">
+
+    <Button
+        android:id="@+id/mainActivity_Button_Register"
+        android:layout_width="116dp"
+        android:layout_height="49dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="8dp"
+        android:text="REGISTER"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/mainActivity_TextView_affiliation"
+        app:layout_constraintVertical_bias="0.043" />
+
+    <Button
+        android:id="@+id/mainActivity_Button_make_call"
+        android:layout_width="116dp"
+        android:layout_height="59dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="MAKE CALL"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/mainActivity_Button_Hang_up_call"
+        app:layout_constraintHorizontal_bias="0.395"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/mainActivity_TextView_affiliation"
+        app:layout_constraintVertical_bias="0.53" />
+
+    <Button
+        android:id="@+id/mainActivity_Button_Hang_up_call"
+        android:layout_width="84dp"
+        android:layout_height="59dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="HANG UP CALL"
+        android:textSize="8sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/mainActivity_Button_accept_call"
+        app:layout_constraintHorizontal_bias="0.957"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/mainActivity_TextView_affiliation"
+        app:layout_constraintVertical_bias="0.531" />
+
+    <Button
+        android:id="@+id/mainActivity_Button_accept_call"
+        android:layout_width="127dp"
+        android:layout_height="57dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="ACCEPT CALL"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.963"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/mainActivity_TextView_affiliation"
+        app:layout_constraintVertical_bias="0.527" />
+
+    <Button
+        android:id="@+id/mainActivity_Button_affiliation"
+        android:layout_width="65dp"
+        android:layout_height="49dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="AFFILIATION"
+        android:textSize="10sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/mainActivity_Button_unaffiliation"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/mainActivity_Button_make_call"
+        app:layout_constraintVertical_bias="0.073" />
+
+    <Button
+        android:id="@+id/mainActivity_Button_unaffiliation"
+        android:layout_width="63dp"
+        android:layout_height="49dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="UNAFFILIATION"
+        android:textSize="10sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/mainActivity_Button_Release_token"
+        app:layout_constraintHorizontal_bias="0.916"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/mainActivity_Button_Hang_up_call"
+        app:layout_constraintVertical_bias="0.073" />
+
+    <Button
+        android:id="@+id/mainActivity_Button_Release_token"
+        android:layout_width="81dp"
+        android:layout_height="49dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="RELEASE TOKEN"
+        android:textSize="6sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/mainActivity_Button_Request_token"
+        app:layout_constraintHorizontal_bias="0.95"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/mainActivity_Button_Hang_up_call"
+        app:layout_constraintVertical_bias="0.073" />
+
+    <Button
+        android:id="@+id/mainActivity_Button_Request_token"
+        android:layout_width="89dp"
+        android:layout_height="49dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginStart="260dp"
+        android:layout_marginTop="8dp"
+        android:text="REQUEST TOKEN"
+        android:textSize="6sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/mainActivity_Button_Hang_up_call"
+        app:layout_constraintVertical_bias="0.073" />
+
+    <Button
+        android:id="@+id/mainActivity_Button_Speaker"
+        android:layout_width="89dp"
+        android:layout_height="49dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="20dp"
+        android:text="SET SPEAKER"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.769"
+        app:layout_constraintStart_toEndOf="@+id/mainActivity_Button_unRegister"
+        app:layout_constraintTop_toBottomOf="@+id/mainActivity_TextView_affiliation" />
+
+
+    <Button
+        android:id="@+id/mainActivity_Button_unRegister"
+        android:layout_width="114dp"
+        android:layout_height="46dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="UNREGISTER"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.028"
+        app:layout_constraintStart_toEndOf="@+id/mainActivity_Button_Register"
+        app:layout_constraintTop_toBottomOf="@+id/mainActivity_TextView_affiliation"
+        app:layout_constraintVertical_bias="0.053" />
+
+    <TextView
+        android:id="@+id/mainActivity_TextView_info"
+        android:layout_width="323dp"
+        android:layout_height="96dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
+        android:text="TextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.523"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/mainActivity_TextView_affiliation"
+        android:layout_width="322dp"
+        android:layout_height="49dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="AFFILIATION"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/mainActivity_TextView_info" />
+
+    <TextView
+        android:id="@+id/mainActivity_TextView_error"
+        android:layout_width="325dp"
+        android:layout_height="45dp"
+        android:layout_marginBottom="56dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="ERRORS"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.506"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/mainActivity_TextView_affiliation"
+        app:layout_constraintVertical_bias="0.375" />
+
+    <EditText
+        android:id="@+id/mainActivity_EditText_affiliation"
+        android:layout_width="331dp"
+        android:layout_height="49dp"
+        android:layout_marginTop="8dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="sip:test_group@organization.org"
+        app:layout_constraintTop_toBottomOf="@+id/mainActivity_Button_unaffiliation"
+        tools:layout_editor_absoluteX="15dp" />
+</android.support.constraint.ConstraintLayout>

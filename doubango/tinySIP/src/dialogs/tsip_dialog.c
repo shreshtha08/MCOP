@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -39,6 +38,8 @@
  */
 #include "tinysip/dialogs/tsip_dialog.h"
 
+
+
 #include "tinysip/dialogs/tsip_dialog_layer.h"
 #include "tinysip/transactions/tsip_transac_layer.h"
 #include "tinysip/transports/tsip_transport_layer.h"
@@ -65,6 +66,13 @@
 #include "tsk_debug.h"
 #include "tsk_time.h"
 #include <inttypes.h>
+#include <tsip.h>
+#if HAVE_LIBXML2
+#include <libxml/tree.h>
+#include <libxml/parser.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
+#endif
 
 int tsip_dialog_update_challenges(tsip_dialog_t *self, const tsip_response_t* response, tsk_bool_t acceptNewVector);
 int tsip_dialog_add_session_headers(const tsip_dialog_t *self, tsip_request_t* request);
@@ -100,18 +108,18 @@ extern tsip_uri_t* tsip_stack_get_contacturi(const tsip_stack_t *self, const cha
 		}\
 	}
 /**
-MCPTT by Eduardo
+MCPTT
 Configure the dialog for create tsip_request_t with request_uri and to correct
 */
 int tsip_dialog_request_configure_mcptt(tsip_dialog_t *self){
 	if(TSK_LIST_IS_EMPTY(self->record_routes)){
-			if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_audio_ptt_group_mcptt) == tmedia_audio_ptt_group_mcptt){
-		//MCPTT. Here change request_uri by PSIs private
+		if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_mcptt_group) == tmedia_mcptt_group){
+		//MCPTT. Here change request_uri by PSIs group
 			self->uri_remote_target = tsk_object_ref((void*)TSIP_DIALOG_GET_STACK(self)->pttMCPTT.psi_group);
 			self->uri_remote = tsk_object_ref((void*)TSIP_DIALOG_GET_STACK(self)->pttMCPTT.psi_group);
 			return 1;
-		}else if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_audio_ptt_mcptt) == tmedia_audio_ptt_mcptt){
-		//MCPTT. Here change request_uri by PSIs private
+		} else if ((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_audio_ptt_mcptt) == tmedia_audio_ptt_mcptt){
+			//MCPTT. Here change request_uri by PSIs private
 			self->uri_remote_target = tsk_object_ref((void*)TSIP_DIALOG_GET_STACK(self)->pttMCPTT.psi_private);
 			self->uri_remote = tsk_object_ref((void*)TSIP_DIALOG_GET_STACK(self)->pttMCPTT.psi_private);
 			return 2;
@@ -124,21 +132,52 @@ int tsip_dialog_request_configure_mcptt(tsip_dialog_t *self){
 			self->uri_remote = tsk_object_ref((void*)TSIP_DIALOG_GET_STACK(self)->sessionLocation.p_asserted_identity_location);
 			return 3;
 		}else 
+
+
 			if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_mcptt_mbms) == tmedia_mcptt_mbms){
 		//MCPTT. MBMS menssage
 			self->uri_remote_target = tsk_object_ref((void*)TSIP_DIALOG_GET_STACK(self)->pttMCPTTMbms.p_asserted_identity_mbms);
 			self->uri_remote = tsk_object_ref((void*)TSIP_DIALOG_GET_STACK(self)->pttMCPTTMbms.p_asserted_identity_mbms);
 			return 4;
-		}else 
-			if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_affiliation) == tmedia_affiliation){
-		//MCPTT. affiliation menssage
-			self->uri_remote_target = tsk_object_ref((void*)TSIP_DIALOG_GET_STACK(self)->pttMCPTTAffiliation.psi_affiliation);
-			self->uri_remote = tsk_object_ref((void*)TSIP_DIALOG_GET_STACK(self)->pttMCPTTAffiliation.psi_affiliation);
+		}else
+			if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_cms) == tmedia_cms){
+		//MCPTT. cms menssage
+			self->uri_remote_target = tsk_object_ref((void*)TSIP_DIALOG_GET_STACK(self)->pttMCPTT.psi_cms);
+			self->uri_remote = tsk_object_ref((void*)TSIP_DIALOG_GET_STACK(self)->pttMCPTT.psi_cms);
 			return 5;
+		}else
+			if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_gms) == tmedia_gms){
+				//MCPTT. cms menssage
+				self->uri_remote_target = tsk_object_ref((void*)TSIP_DIALOG_GET_STACK(self)->pttMCPTT.psi_gms);
+				self->uri_remote = tsk_object_ref((void*)TSIP_DIALOG_GET_STACK(self)->pttMCPTT.psi_gms);
+				return 6;
+			}else
+			if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_affiliation) == tmedia_affiliation){
+				//MCPTT. affiliation menssage
+				self->uri_remote_target = tsk_object_ref((void*)TSIP_DIALOG_GET_STACK(self)->pttMCPTTAffiliation.psi_affiliation);
+				self->uri_remote = tsk_object_ref((void*)TSIP_DIALOG_GET_STACK(self)->pttMCPTTAffiliation.psi_affiliation);
+				return 7;
 		}
 	}
 	return -1;
 }
+
+/*char* xml_to_string(xmlDocPtr doc)
+{
+	char* out;
+	xmlChar *s;
+	int size;
+	xmlDocDumpMemory(doc, &s, &size);
+#if HAVE_CRT //Debug memory
+	out = malloc(strlen((char *)s));
+#else
+	out = tsk_malloc(strlen((char *)s));
+#endif //HAVE_CRT
+
+	strcpy(out,(char *)s);
+	xmlFree(s);
+	return out;
+}*/
 
 tsip_request_t *tsip_dialog_request_new(const tsip_dialog_t *self, const char* method)
 {
@@ -374,7 +413,7 @@ tsip_request_t *tsip_dialog_request_new(const tsip_dialog_t *self, const char* m
 	else if(!TSK_LIST_IS_EMPTY(self->challenges)){
 		tsip_challenge_t *challenge;
 		tsip_header_t* auth_hdr;
-		//MCPTT Authentication by Eduardo 
+		//MCPTT Authentication
 		if(self->curr_action && self->curr_action->payload){
 			tsip_message_add_content(request, "", TSK_BUFFER_DATA(TSIP_DIALOG(self)->curr_action->payload), TSK_BUFFER_SIZE(TSIP_DIALOG(self)->curr_action->payload));
 		}
@@ -969,7 +1008,7 @@ int tsip_dialog_update_challenges(tsip_dialog_t *self, const tsip_response_t* re
 					WWW_Authenticate->nonce, 
 					WWW_Authenticate->opaque, 
 					WWW_Authenticate->algorithm,
-					//By Eduardo
+					//
 					//This is for SQN with SIM
 					WWW_Authenticate->auts,
 					WWW_Authenticate->auts_param,
@@ -998,7 +1037,7 @@ int tsip_dialog_update_challenges(tsip_dialog_t *self, const tsip_response_t* re
 					WWW_Authenticate->nonce, 
 					WWW_Authenticate->opaque, 
 					WWW_Authenticate->algorithm,
-					//By Eduardo
+					//
 					//This is for SQN with SIM
 					WWW_Authenticate->auts,
 					WWW_Authenticate->auts_param,
@@ -1034,7 +1073,7 @@ int tsip_dialog_update_challenges(tsip_dialog_t *self, const tsip_response_t* re
 					Proxy_Authenticate->nonce, 
 					Proxy_Authenticate->opaque, 
 					Proxy_Authenticate->algorithm,
-					//By Eduardo
+					//
 					//This is for SQN with SIM
 					Proxy_Authenticate->auts, 
 					Proxy_Authenticate->auts_param, 
@@ -1062,7 +1101,7 @@ int tsip_dialog_update_challenges(tsip_dialog_t *self, const tsip_response_t* re
 					Proxy_Authenticate->nonce, 
 					Proxy_Authenticate->opaque, 
 					Proxy_Authenticate->algorithm,
-					//By Eduardo
+					//
 					//This is for SQN with SIM
 					Proxy_Authenticate->auts,
 					Proxy_Authenticate->auts_param,
@@ -1354,12 +1393,15 @@ int tsip_dialog_get_lasterror(const tsip_dialog_t* self, short *code, const char
 
 int tsip_dialog_hangup(tsip_dialog_t *self, const tsip_action_t* action)
 {
+	TSK_DEBUG_INFO("tsip_dialog_hangup");
 	if(self){
 		// CANCEL should only be sent for INVITE dialog
 		if(self->type != tsip_dialog_INVITE || self->state == tsip_established){
+            TSK_DEBUG_INFO("tsip_atype_hangup in tsip_dialog_hangup");
 			return tsip_dialog_fsm_act(self, tsip_atype_hangup, tsk_null, action);
 		}
 		else{
+            TSK_DEBUG_INFO("tsip_atype_hangup in tsip_atype_cancel");
 			return tsip_dialog_fsm_act(self, tsip_atype_cancel, tsk_null, action);
 		}
 	}
@@ -1405,7 +1447,7 @@ int tsip_dialog_cmp(const tsip_dialog_t *d1, const tsip_dialog_t *d2)
 	return -1;
 }
 
-//Added by Mikel
+
 tsk_bool_t tsip_dialog_send_ptt_refer(tsip_dialog_t *self, tsk_list_t* callee_list, tsk_bool_t is_crisis)
 {
 	tsk_bool_t ret = tsk_true;

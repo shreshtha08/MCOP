@@ -1,5 +1,5 @@
 /* 
-*  Copyright (C) 2017 Mikel Ramos
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>

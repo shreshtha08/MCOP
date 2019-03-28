@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -643,7 +642,7 @@ int tmedia_codec_to_sdp(const tmedia_codecs_L_t* codecs, tsdp_header_M_t* m)
 			/* add fmtp attributes */
 			if((fmtp = tmedia_codec_sdp_att_get(codec, "fmtp"))){
 				if(is_video && tmedia_defaults_get_screen_x() > 0 && tmedia_defaults_get_screen_y() > 0){
-					tsk_sprintf(&temp, "%s %s;sx=%d;sy=%d",  neg_format, fmtp, tmedia_defaults_get_screen_x(), tmedia_defaults_get_screen_y());//MCPTT clients by Eduardo Zarate
+					tsk_sprintf(&temp, "%s %s;sx=%d;sy=%d",  neg_format, fmtp, tmedia_defaults_get_screen_x(), tmedia_defaults_get_screen_y());//MCPTT clients Zarate
 				}
 				else{
 					tsk_sprintf(&temp, "%s %s",  neg_format, fmtp);

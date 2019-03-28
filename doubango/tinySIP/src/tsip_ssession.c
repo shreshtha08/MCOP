@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -37,6 +36,9 @@
  *
 
  */
+
+#include <tinysip.h>
+#include <tinysip/tsip_ssession.h>
 #include "tinysip/tsip_ssession.h"
 
 #include "tinysip/tsip_action.h"
@@ -378,7 +380,7 @@ int __tsip_ssession_set(tsip_ssession_t *self, va_list *app)
 									self->media.mcptt.callback = va_arg(*app, tmedia_session_mcptt_cb_f);
 									break;
 								}
-								//MCPTT AFFILIATION by eduardo
+								//MCPTT AFFILIATION
 							case mstype_set_mcptt_affiliation_cb:
 								{	/* (tmedia_session_mcptt_affiliation_cb_f)TMEDIA_SESSION_MCPTT_AFFILIATION_CB_F */
 									self->media.mcptt_affiliation.callback = va_arg(*app, tmedia_session_mcptt_affiliation_cb_f);
@@ -453,6 +455,7 @@ bail:
 
 tsip_ssession_handle_t* tsip_ssession_create(tsip_stack_handle_t *stack, ...)
 {
+    TSK_DEBUG_INFO("tsip_ssession_create");
 	tsip_ssession_t* ss = tsk_null;
 	va_list ap;
 	tsip_stack_t* _stack = stack;
@@ -618,11 +621,10 @@ tmedia_type_t tsip_ssession_get_mediatype(const tsip_ssession_handle_t *self)
 tmedia_session_mgr_t* tsip_session_get_mediamgr(const tsip_ssession_handle_t *self)
 {
 	tmedia_session_mgr_t* mgr = tsk_null;
-
+    TSK_DEBUG_INFO("tsip_session_get_mediamgr");
 	if(self){
 		const tsip_ssession_t *ss = self;
 		tsip_dialog_t* dialog;
-
 		if((dialog = tsip_dialog_layer_find_by_ss(ss->stack->layer_dialog, self))){
             if(dialog->type == tsip_dialog_INVITE){
                 mgr = tsk_object_ref(TSIP_DIALOG_INVITE(dialog)->msession_mgr);
@@ -663,18 +665,29 @@ tmedia_codec_id_t tsip_ssession_get_codecs_neg(tsip_ssession_handle_t *self)
 	return (tmedia_codec_id_t)codecs_neg;
 }
 
-//MCPTT by eduardo
+//MCPTT
 const char* tsip_ssession_get_ptt_mcptt_group_identity(tsip_ssession_handle_t *self)
 {
-	tsip_ssession_t* ss = (tsip_ssession_t*)self;
-	char* group_id = tsk_null;
-	if(ss)
-	{
-		tsk_strupdate(&group_id, ss->pttMCPTT.ptt_group_uri);
-		return (const char*)group_id;
-	}
-	else
-		return tsk_null;
+
+    tsip_ssession_t* ss = (tsip_ssession_t*)self;
+    char* member = tsk_null;
+    TSK_DEBUG_INFO("Init tsip_ssession_get_ptt_mcptt_group_identity");
+    if(ss && ss->pttMCPTT.ptt_group_uri!=tsk_null)
+    {
+        TSK_DEBUG_INFO("Parameter for call uri %s",ss->pttMCPTT.ptt_group_uri);
+#if HAVE_CRT //Debug memory
+        member = (char*)calloc(strlen((ss->pttMCPTT.ptt_group_uri))+1, sizeof(char));
+
+#else
+        member = (char*)tsk_calloc(strlen((ss->pttMCPTT.ptt_group_uri))+1, sizeof(char));
+
+#endif //HAVE_CRT
+        tsk_strupdate(&member, ss->pttMCPTT.ptt_group_uri);
+        return member;
+    }
+    else
+        return "(null)";
+
 }
 
 
@@ -715,6 +728,28 @@ const char* tsip_ssession_get_ptt_mcptt_group_member_at_position(tsip_ssession_h
 		return tsk_null;
 }
 
+int tsip_ssession_get_ptt_mcptt_emergence_resource_priority(tsip_ssession_handle_t *self)
+{
+	tsip_ssession_t* ss = (tsip_ssession_t*)self;
+	tsk_size_t count = 0;
+	if(ss)
+		count = ss->pttMCPTT.emergency.resource_priority_int;
+	
+	return (int)count;
+}
+
+const char* tsip_ssession_get_ptt_mcptt_emergence_resource_priority_string(tsip_ssession_handle_t *self)
+{
+	tsip_ssession_t* ss = (tsip_ssession_t*)self;
+	char* group_id = tsk_null;
+	if(ss)
+	{
+		tsk_strupdate(&group_id, ss->pttMCPTT.emergency.resource_priority_string);
+		return (const char*)group_id;
+	}
+	else
+		return tsk_null;
+}
 
 //
 char* tsip_ssession_get_party_uri(tsip_ssession_handle_t *self)
@@ -730,11 +765,9 @@ char* tsip_ssession_get_party_uri(tsip_ssession_handle_t *self)
 		TSK_DEBUG_INFO("Parameter for call uri %s",ss->pttMCPTT.ptt_caller_uri);
 		#if HAVE_CRT //Debug memory
 		member = (char*)calloc(strlen((ss->pttMCPTT.ptt_caller_uri))+1, sizeof(char));
-		
-	#else
+		#else
 		member = (char*)tsk_calloc(strlen((ss->pttMCPTT.ptt_caller_uri))+1, sizeof(char));
-		
-	#endif //HAVE_CRT
+		#endif //HAVE_CRT
 		tsk_strupdate(&member, ss->pttMCPTT.ptt_caller_uri);
 		return member;
 	}
@@ -759,6 +792,7 @@ int tsip_ssession_handle(const tsip_ssession_t *self, const struct tsip_action_s
 		if((dialog = tsip_dialog_layer_find_by_ss(self->stack->layer_dialog, self))){
 			switch(action->type){
 				case tsip_atype_hangup:
+					TSK_DEBUG_INFO("tsip_atype_hangup");
 					{	/* hang-up is an special case (==> hangup/cancel/nothing) */
 						ret = tsip_dialog_hangup(dialog, action);
 						break;
@@ -847,11 +881,12 @@ static tsk_object_t* tsip_ssession_ctor(tsk_object_t * self, va_list * app)
 		}
 		ss->media.poc_qoe.profile = tmedia_defaults_get_poc_qoe_profile();
 		ss->media.poc_qoe.strength = tmedia_defaults_get_poc_qoe_profile_strength();
-		//MCPTT by Eduardo Z�rate
+		//MCPTT Z�rate
 		ss->pttMCPTT.ptt_caller_uri = tsk_null;
+		ss->pttMCPTT.answer_mode_auto = tsk_false;
 		ss->pttMCPTT.ptt_group_uri = tsk_null;
 		ss->pttMCPTT.ptt_group_members = tsk_null;
-		//MCPTT emergency by Eduardo
+		//MCPTT emergency
 		ss->pttMCPTT.emergency.resource_priority_string=tsk_null;
 		ss->pttMCPTT.emergency.resource_priority_int=-1;
 		ss->pttMCPTT.mbms.port_manager = -1;
@@ -859,7 +894,7 @@ static tsk_object_t* tsip_ssession_ctor(tsk_object_t * self, va_list * app)
 		ss->pttMCPTT.mbms.is_rtcp_mux=tsk_false;
 		ss->pttMCPTT.mbms.sdp_ro=tsk_null;
 		ss->pttMCPTT.mbms.tmgi=tsk_null;
-		
+
 
 		/* add the session to the stack */
 		if(ss->stack){
@@ -878,11 +913,12 @@ static tsk_object_t* tsip_ssession_dtor(tsk_object_t * self)
 		if(ss->stack){
 			tsk_list_remove_item_by_data(ss->stack->ssessions, ss);
 		}
-		//MCPTT by Eduardo Zarate
+		//MCPTT Zarate
+		ss->pttMCPTT.answer_mode_auto=tsk_false;
 		TSK_OBJECT_SAFE_FREE(ss->pttMCPTT.ptt_caller_uri);
 		TSK_OBJECT_SAFE_FREE(ss->pttMCPTT.ptt_group_uri);
 		TSK_OBJECT_SAFE_FREE(ss->pttMCPTT.ptt_group_members);
-		//MCPTT Emergency by Eduardo Zarate
+		//MCPTT Emergency Zarate
 		TSK_OBJECT_SAFE_FREE(ss->pttMCPTT.emergency.resource_priority_string);
 		ss->pttMCPTT.emergency.resource_priority_int=-1;
 		/*
@@ -891,7 +927,6 @@ static tsk_object_t* tsip_ssession_dtor(tsk_object_t * self)
 		ss->pttMCPTT.multicastMbms.is_rtcp_mux=tsk_false;
 		TSK_OBJECT_SAFE_FREE(ss->pttMCPTT.multicastMbms.sdp_ro);
 		*/
-
 
 
 		//=======

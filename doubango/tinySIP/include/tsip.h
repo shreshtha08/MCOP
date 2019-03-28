@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -126,7 +125,11 @@ typedef enum tsip_stack_param_type_e
 	tsip_pname_mcptt_psi_private,
 	tsip_pname_mcptt_psi_group,
 	tsip_pname_mcptt_psi_preestablished,
+	tsip_pname_mcptt_psi_cms,
+	tsip_pname_mcptt_psi_gms,
+	tsip_pname_mcptt_client_id,
 	tsip_pname_mcptt_id,
+	tsip_pname_client_id,
 	tsip_pname_mcptt_access_token,
 	tsip_pname_mcptt_priority,
 	tsip_pname_mcptt_implicit,
@@ -155,6 +158,8 @@ typedef enum tsip_stack_param_type_e
 	tsip_pname_mcptt_psi_affiliation,
 	tsip_pname_mcptt_affiliation_is_enable,
 	tsip_pname_mcptt_affiliation_groups_default,
+	//MCPTT AUTHENTICATION
+	tsip_pname_mcptt_psi_authentcation,
 }
 tsip_stack_param_type_t;
 
@@ -579,7 +584,14 @@ int ret = tsip_stack_set(stack,
 #define TSIP_STACK_SET_MCPTT_PSI_PRIVATE(PSI_PRIVATE)		tsip_pname_mcptt_psi_private, (const char*)PSI_PRIVATE
 #define TSIP_STACK_SET_MCPTT_PSI_GROUP(PSI_GROUP)		tsip_pname_mcptt_psi_group, (const char*)PSI_GROUP
 #define TSIP_STACK_SET_MCPTT_PSI_PREESTABLISHED(PSI_PREESTABLISHED)		tsip_pname_mcptt_psi_preestablished, (const char*)PSI_PREESTABLISHED
+
+#define TSIP_STACK_SET_MCPTT_PSI_CMS(PSI_CMS)		tsip_pname_mcptt_psi_cms, (const char*)PSI_CMS
+
+#define TSIP_STACK_SET_MCPTT_PSI_GMS(PSI_GMS)		tsip_pname_mcptt_psi_gms, (const char*)PSI_GMS
+
 #define TSIP_STACK_SET_MCPTT_ID(MCPTT_ID)		tsip_pname_mcptt_id, (const char*)MCPTT_ID
+#define TSIP_STACK_SET_MCPTT_CLIENT_ID(MCPTT_CLIENT_ID)		tsip_pname_mcptt_client_id, (const char*)MCPTT_CLIENT_ID
+#define TSIP_STACK_SET_CLIENT_ID(CLIENT_ID)		tsip_pname_client_id, (const char*)CLIENT_ID
 #define TSIP_STACK_SET_MCPTT_PRIORITY(MCPTT_PRIORITY)		tsip_pname_mcptt_priority, (const int)MCPTT_PRIORITY
 #define TSIP_STACK_SET_MCPTT_IMPLICIT(MCPTT_IMPLICIT)		tsip_pname_mcptt_implicit, (const tsk_bool_t)MCPTT_IMPLICIT
 #define TSIP_STACK_SET_MCPTT_GRANTED(MCPTT_GRANTED)		tsip_pname_mcptt_granted, (const tsk_bool_t)MCPTT_GRANTED
@@ -591,7 +603,7 @@ int ret = tsip_stack_set(stack,
 #define TSIP_STACK_SET_MCPTT_INSERT_X_FRAMED_IP(MCPTT_INSERT_X_FRAMED_IP)		tsip_pname_mcptt_insert_x_Framed_IP, (const tsk_bool_t)MCPTT_INSERT_X_FRAMED_IP
 
 
-//Timers received from CMS by Eduardo
+//Timers received from CMS
 #define TSIP_STACK_SET_MCPTT_TIMER_T100(MCPTT_TIMER_T100)		tsip_pname_mcptt_timer_T100, (const int)MCPTT_TIMER_T100
 #define TSIP_STACK_SET_MCPTT_TIMER_T101(MCPTT_TIMER_T101)		tsip_pname_mcptt_timer_T101, (const int)MCPTT_TIMER_T101
 #define TSIP_STACK_SET_MCPTT_TIMER_T103(MCPTT_TIMER_T103)		tsip_pname_mcptt_timer_T103, (const int)MCPTT_TIMER_T103
@@ -610,10 +622,16 @@ int ret = tsip_stack_set(stack,
 //MCPTT MBMS
 #define TSIP_STACK_SET_MBMS_IS_RTCP_MUX(IS_RTCP_MUX_MBMS)		tsip_mbms_is_rtcp_mux, (const tsk_bool_t)IS_RTCP_MUX_MBMS
 
+
+
+
+
 //MCPTT AFFILIATION
 #define TSIP_STACK_SET_MCPTT_PSI_AFFILIATION(PSI_AFFILIATION)		tsip_pname_mcptt_psi_affiliation, (const char*)PSI_AFFILIATION
 #define TSIP_STACK_SET_MCPTT_AFFILIATION_IS_ENABLE(IS_ENABLE)		tsip_pname_mcptt_affiliation_is_enable, (const tsk_bool_t)IS_ENABLE
 #define TSIP_STACK_SET_MCPTT_AFFILIATION_GROUPS_DEFAULT(GROUPS_DEFAULT)		tsip_pname_mcptt_affiliation_groups_default, (const tsip_uris_L_t*)GROUPS_DEFAULT
+//MCPTT AUTHENTICATION
+#define TSIP_STACK_SET_MCPTT_PSI_AUTHENTICATION(PSI_AUTHENTICATION)		tsip_pname_mcptt_psi_authentcation, (const char*)PSI_AUTHENTICATION
 /* 3GPP IMS/LTE stack (for internal use). only tsip_stack_handle_t should be visible. */
 typedef struct tsip_stack_s
 {
@@ -697,13 +715,6 @@ typedef struct tsip_stack_s
 		tsk_bool_t enable_secagree_tls;
 	} security;
 	
-	
-	
-	
-	
-	
-	
-	
 	tsip_uris_L_t* paths;
 	tsip_uris_L_t* service_routes;
 	tsip_uris_L_t* associated_uris;
@@ -729,7 +740,13 @@ typedef struct tsip_stack_s
 		tsip_uri_t* psi_private;
 		tsip_uri_t* psi_group;
 		tsip_uri_t* psi_preestablished;
+
+		tsip_uri_t* psi_cms;
+
+		tsip_uri_t* psi_gms;
+		tsk_buffer_t* mcptt_client_id;
 		tsip_uri_t* mcptt_id;
+		tsip_uri_t* client_id;
 		int mcptt_priority;
 		tsk_bool_t mcptt_implicit;
 		tsk_bool_t mcptt_granted;
@@ -738,12 +755,13 @@ typedef struct tsip_stack_s
 		tsk_bool_t mcptt_namespace;
 		tsk_bool_t mcptt_insert_x_Framed_IP;
 		struct{
+			//This times are in seconds.
 			uint32_t timer_t100;
 			uint32_t timer_t101;
 			uint32_t timer_t103;
 			uint32_t timer_t104;
 			uint32_t timer_t132;
-		}timer_s; //By Eduardo
+		}timer_s; //
 		
 		
 		
@@ -756,6 +774,11 @@ typedef struct tsip_stack_s
 	tsk_bool_t mcptt_affiliation_is_enable;
 	tsip_uris_L_t* mcptt_affiliation_groups_default;
 	} pttMCPTTAffiliation;
+	/* MCPTT AUTHENTICATION context */
+	struct {
+		//MCPTT AUTHENTICATION
+	tsip_uri_t* psi_authentication;
+	} pttMCPTTAuthentication;
 	//=======
 	//  MCPTT LOCATION
 	//=======
@@ -773,6 +796,8 @@ typedef struct tsip_stack_s
 		tsk_bool_t is_rtcp_mux;
 		tsdp_message_t* sdp_ro;
 	}pttMCPTTMbms;
+
+
 
 	/* DHCP context */	
 

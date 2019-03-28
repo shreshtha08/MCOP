@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -30,6 +29,7 @@
 
 #include "tinysip.h"
 #include "Common.h"
+#include "SipSession.h"
 
 class SipStack;
 
@@ -48,11 +48,17 @@ class OptionsSession;
 class PublicationSession;
 //MCPTT Affiliation
 class PublicationAffiliationSession;
+//MCPTT Authentication
+class PublicationAuthenticationSession;
 
 class RegistrationSession;
 class SubscriptionSession;
 //MCPTT Affiliation
 class SubscriptionAffiliationSession;
+class SubscriptionCMSession;
+
+class SubscriptionGMSession;
+
 class SipMessage;
 
 
@@ -142,7 +148,7 @@ public: /* Public API functions */
 	const MessagingSession* getSession() const;
 	MessagingSession* takeSessionOwnership() const;
 };
-/* ======================== MessagingLocationEvent by Eduardo ========================*/
+/* ======================== MessagingLocationEvent ========================*/
 class TINYWRAP_API MessagingLocationEvent: public SipEvent
 {
 public:
@@ -157,7 +163,9 @@ public: /* Public API functions */
 	MessagingLocationSession* takeSessionOwnership() const;
 };
 
-/* ======================== MessagingAffiliationEvent by Eduardo ========================*/
+
+
+/* ======================== MessagingAffiliationEvent ========================*/
 class TINYWRAP_API MessagingAffiliationEvent: public SipEvent
 {
 public:
@@ -172,7 +180,7 @@ public: /* Public API functions */
 	MessagingAffiliationSession* takeSessionOwnership() const;
 };
 
-/* ======================== MessagingMbmsEvent by Eduardo ========================*/
+/* ======================== MessagingMbmsEvent ========================*/
 class TINYWRAP_API MessagingMbmsEvent: public SipEvent
 {
 public:
@@ -250,6 +258,20 @@ public: /* Public API functions */
 	const PublicationAffiliationSession* getSession() const;
 	PublicationAffiliationSession* takeSessionOwnership() const;
 };
+/* ======================== PublicationAuthenticationEvent ========================*/
+class TINYWRAP_API PublicationAuthenticationEvent: public SipEvent
+{
+public:
+#if !defined(SWIG)
+	PublicationAuthenticationEvent(const tsip_event_t *sipevent);
+#endif
+	virtual ~PublicationAuthenticationEvent();
+
+public: /* Public API functions */
+	tsip_publish_event_type_t getType() const;
+	const PublicationAuthenticationSession* getSession() const;
+	PublicationAuthenticationSession* takeSessionOwnership() const;
+};
 
 /* ======================== RegistrationAuthenticationEvent ========================*/
 class TINYWRAP_API RegistrationAuthenticationEvent: public SipEvent
@@ -314,6 +336,36 @@ public: /* Public API functions */
 	tsip_subscribe_event_type_t getType() const;
 	const SubscriptionAffiliationSession* getSession() const;
 	SubscriptionAffiliationSession* takeSessionOwnership() const;
+};
+
+/* ======================== SubscriptionCMSEvent ========================*/
+class TINYWRAP_API SubscriptionCMSEvent: public SipEvent
+{
+public:
+#if !defined(SWIG)
+	SubscriptionCMSEvent(const tsip_event_t *sipevent);
+#endif
+	virtual ~SubscriptionCMSEvent();
+
+public: /* Public API functions */
+	tsip_subscribe_event_type_t getType() const;
+	const SubscriptionCMSSession* getSession() const;
+	SubscriptionCMSSession* takeSessionOwnership() const;
+};
+
+/* ======================== SubscriptionGMSEvent ========================*/
+class TINYWRAP_API SubscriptionGMSEvent: public SipEvent
+{
+public:
+#if !defined(SWIG)
+	SubscriptionGMSEvent(const tsip_event_t *sipevent);
+#endif
+	virtual ~SubscriptionGMSEvent();
+
+public: /* Public API functions */
+	tsip_subscribe_event_type_t getType() const;
+	const SubscriptionGMSSession* getSession() const;
+	SubscriptionGMSSession* takeSessionOwnership() const;
 };
 
 

@@ -86,6 +86,10 @@ public class MediaSessionMgr {
     return tinyWRAPJNI.MediaSessionMgr_registerAudioPluginFromFile(path);
   }
 
+  public static long registerAudioPluginOpenSLES() {
+    return tinyWRAPJNI.MediaSessionMgr_registerAudioPluginOpenSLES();
+  }
+
   public java.math.BigInteger getSessionId(twrap_media_type_t media) {
     return tinyWRAPJNI.MediaSessionMgr_getSessionId(swigCPtr, this, media.swigValue());
   }

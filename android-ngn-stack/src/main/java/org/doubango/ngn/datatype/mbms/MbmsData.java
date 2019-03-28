@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -27,6 +27,7 @@ public class MbmsData {
     private String ipMBMSManager;
     private String pAssertedIdentity;
     private String ipMulticastMedia;
+    private String groupID;
     private int portMulticastMedia;
     private int portControlMulticastMedia;
     private String localInterface;
@@ -42,7 +43,11 @@ public class MbmsData {
         this.portControlMulticastMedia = -1;
         this.localInterface = null;
         this.localInterfaceIndex = -1;
+        this.groupID = null;
+
     }
+
+
 
     public MbmsData(McpttMbmsUsageInfoType mcpttMbmsUsageInfoType, int portMBMSManager, String ipMBMSManager, String pAssertedIdentity, String ipMulticastMedia, int portMulticastMedia, int portControlMulticastMedia) {
         this.mcpttMbmsUsageInfoType = mcpttMbmsUsageInfoType;
@@ -126,5 +131,13 @@ public class MbmsData {
 
     public void setLocalInterfaceIndex(int localInterfaceIndex) {
         this.localInterfaceIndex = localInterfaceIndex;
+    }
+
+    public String getGroupID() {
+        return groupID;
+    }
+
+    public void setGroupID(String groupID) {
+        this.groupID = groupID;
     }
 }

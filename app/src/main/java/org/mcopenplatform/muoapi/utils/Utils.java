@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *  Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -35,7 +34,11 @@ import org.mcopenplatform.muoapi.ConstantsMCOP;
 import org.mcopenplatform.muoapi.datatype.error.Constants;
 import org.mcopenplatform.muoapi.datatype.group.GroupAffiliation;
 
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +67,19 @@ public class Utils {
     //START Affiliation Utils
     public static boolean checkGroupIsExist(NgnSipPrefrences profileNow, String groupID,Context context){
         boolean result=true;
+        Map<String,NgnSipPrefrences.EntryType> stringEntryTypeMap=null;
+        if(groupID==null ||
+                groupID.trim().isEmpty() ||
+                context==null ||
+                profileNow==null ||
+                (stringEntryTypeMap=profileNow.getMCPTTGroupInfo())==null){
+            result=false;
+        }
+
+        if(stringEntryTypeMap!=null && stringEntryTypeMap.get(groupID)==null)
+            for(String groupDisplay:stringEntryTypeMap.keySet()){
+                if(stringEntryTypeMap.get(groupDisplay).getUriEntry().compareTo(groupID)==0)result=true;
+            }
         return result;
     }
 
@@ -127,4 +143,6 @@ public class Utils {
         return groups;
     }
     //END Affiliation Utils
+
+
 }

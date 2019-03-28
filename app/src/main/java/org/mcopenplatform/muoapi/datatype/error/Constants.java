@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -29,8 +28,8 @@ public class Constants {
 
     public static class CallEvent{
         public enum CallTypeValidEnum {
+            NONE(0),
             AudioWithoutFloorCtrlPrivate(CallTypeEnum.Audio.getValue() | CallTypeEnum.WithoutFloorCtrl.getValue()| CallTypeEnum.Private.getValue()),
-            AudioWithoutFloorCtrlPrivateEmergency (CallTypeEnum.Audio.getValue() | CallTypeEnum.WithoutFloorCtrl.getValue()| CallTypeEnum.Private.getValue()| CallTypeEnum.Emergency.getValue()),
             AudioWithFloorCtrlPrivate(CallTypeEnum.Audio.getValue() | CallTypeEnum.WithFloorCtrl.getValue()| CallTypeEnum.Private.getValue()),
             AudioWithFloorCtrlPrivateEmergency (CallTypeEnum.Audio.getValue() | CallTypeEnum.WithFloorCtrl.getValue()| CallTypeEnum.Private.getValue()| CallTypeEnum.Emergency.getValue()),
             AudioWithFloorCtrlPrearrangedGroupEmergency (CallTypeEnum.Audio.getValue() | CallTypeEnum.WithFloorCtrl.getValue()| CallTypeEnum.PrearrangedGroup.getValue()| CallTypeEnum.Emergency.getValue()),
@@ -114,6 +113,8 @@ public class Constants {
             CDVIII(408,"User destination is not available at the moment"),
             CDIX(409,"Undefined signal error"),
             CDVX(410,"The destination is busy");
+
+
 
             int code;
             String string;
@@ -272,6 +273,26 @@ public class Constants {
             }
         }
 
+        public enum MbmsInfoEventError{
+            CI(101,"Received data mbms not valid");
+
+            int code;
+            String string;
+
+            MbmsInfoEventError(int code, String string) {
+                this.code = code;
+                this.string = string;
+            }
+
+            public  int getCode() {
+                return code;
+            }
+
+            public  String getString() {
+                return string;
+            }
+        }
+
         public enum LoginEventError{
             CI(101,"Unknown GMS address"),
             CII(102,"Unknown CMS address"),
@@ -324,5 +345,25 @@ public class Constants {
                 return string;
             }
         }
+        public enum ConfigurationUpdateEventError{
+            CI(101,"It has been impossible to obtain authentication data");
+
+            int code;
+            String string;
+
+            ConfigurationUpdateEventError(int code, String string) {
+                this.code = code;
+                this.string = string;
+            }
+
+            public  int getCode() {
+                return code;
+            }
+
+            public  String getString() {
+                return string;
+            }
+        }
+        //#end if HAVE_CMS_USER_INFO
     }
 }

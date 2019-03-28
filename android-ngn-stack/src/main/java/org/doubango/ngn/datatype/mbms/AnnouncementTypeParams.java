@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -121,6 +121,7 @@ public class AnnouncementTypeParams {
 
     private static int[] hexStringToIntArray(String s) {
         int result[]=null;
+        if(s==null || s.isEmpty())return null;
         try {
             byte[] data=hexStringToByteArray(s);
             if(data!=null && data.length>0){

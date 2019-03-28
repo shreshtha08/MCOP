@@ -27,7 +27,7 @@
 %typemap(javadirectorin) void * "$jniinput"
 //==================
 
-//======== RegistrationSession by Eduardo ========//
+//======== RegistrationSession ========//
 %typemap(javaimports) RegistrationSession%{
 import java.nio.ByteBuffer;
 %}

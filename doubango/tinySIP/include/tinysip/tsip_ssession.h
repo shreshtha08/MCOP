@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -65,6 +64,7 @@ typedef uint64_t tsip_ssession_id_t;
 
 
 #define TSIP_SSESSION(self) ((tsip_ssession_t*)(self))
+
 
 typedef enum tsip_ssession_param_type_e
 {
@@ -156,7 +156,7 @@ typedef enum tsip_msession_param_type_e
 	mstype_set_msrp_cb,
 	//MCPTT
 	mstype_set_mcptt_cb,
-	//MCPTT AFFILIATION by eduardo
+	//MCPTT AFFILIATION
 	mstype_set_mcptt_affiliation_cb,
 	mstype_set_poc_qoe
 }
@@ -193,7 +193,7 @@ tsip_msession_param_type_t;
 //MCPTT
 #define TSIP_MSESSION_SET_MCPTT_CB(TMEDIA_SESSION_MCPTT_CB_F)									mstype_set_mcptt_cb, (tmedia_session_mcptt_cb_f)TMEDIA_SESSION_MCPTT_CB_F
 
-//MCPTT affiliation by eduardo
+//MCPTT affiliation
 #define TSIP_MSESSION_SET_MCPTT_AFFILIATION_CB(TMEDIA_SESSION_MCPTT_AFFILIATION_CB_F)									mstype_set_mcptt_affiliation_cb, (tmedia_session_mcptt_affiliation_cb_f)TMEDIA_SESSION_MCPTT_AFFILIATION_CB_F
 
 
@@ -203,8 +203,6 @@ tsip_msession_param_type_t;
 
 
 typedef int (*tsip_ssession_ptt_xcap_cb_f)(const struct thttp_event_s* event, void* context);
-
-
 
 typedef struct tsip_ssession_s
 {
@@ -216,6 +214,7 @@ typedef struct tsip_ssession_s
 	
 	const struct tsip_stack_s* stack;
 	const void* userdata;
+
 
 	//=======
 	// SIP
@@ -243,7 +242,7 @@ typedef struct tsip_ssession_s
 			int resource_priority_int;
 		} emergency;
 		tsk_list_t* ptt_group_members;
-		/* MCPTT MBMS by eduardo */
+		/* MCPTT MBMS  */
 		struct{
 			tsk_bool_t isStartMbmsManager;
 			uint32_t port_manager;
@@ -252,7 +251,8 @@ typedef struct tsip_ssession_s
 			tsdp_message_t* sdp_ro;
 			tsk_bool_t is_rtcp_mux;
 		} mbms;
-		
+
+		tsk_bool_t answer_mode_auto;
 	} pttMCPTT;
 	
 
@@ -312,7 +312,7 @@ typedef struct tsip_ssession_s
 		struct{
 			tmedia_session_mcptt_cb_f callback;
 		} mcptt;
-		/* MCPTT AFFILIATION by eduardo */
+		/* MCPTT AFFILIATION  */
 		struct{
 			tmedia_session_mcptt_affiliation_cb_f callback;
 		} mcptt_affiliation;
@@ -361,18 +361,21 @@ TINYSIP_API tmedia_type_t tsip_ssession_get_mediatype(const tsip_ssession_handle
 TINYSIP_API tmedia_session_mgr_t* tsip_session_get_mediamgr(const tsip_ssession_handle_t *self);
 TINYSIP_API const tsip_stack_handle_t* tsip_ssession_get_stack(const tsip_ssession_handle_t *self);
 TINYSIP_API tmedia_codec_id_t tsip_ssession_get_codecs_neg(tsip_ssession_handle_t *self);
-//Added by Mikel
+
 TINYSIP_API const char* tsip_ssession_get_ptt_group_identity(tsip_ssession_handle_t *self);
 TINYSIP_API int tsip_ssession_get_ptt_group_members(tsip_ssession_handle_t *self);
 TINYSIP_API const char* tsip_ssession_get_ptt_group_member_at_position(tsip_ssession_handle_t *self, int pos);
 TINYSIP_API tsk_bool_t tsip_ssession_refer_to_user_list_crisis(tsip_ssession_handle_t *self, char** user_list, int user_count);
 TINYSIP_API int tsip_ssession_set_ptt_xcap_callback(tsip_ssession_handle_t *self, void* context, tsip_ssession_ptt_xcap_cb_f cb);
 
-//Added by Eduardo Zarate
+//Added Zarate
 TINYSIP_API const char* tsip_ssession_get_ptt_mcptt_group_identity(tsip_ssession_handle_t *self);
 TINYSIP_API int tsip_ssession_get_ptt_mcptt_group_members(tsip_ssession_handle_t *self);
 TINYSIP_API const char* tsip_ssession_get_ptt_mcptt_group_member_at_position(tsip_ssession_handle_t *self, int pos);
 TINYSIP_API char* tsip_ssession_get_party_uri(tsip_ssession_handle_t *self);
+
+TINYSIP_API const char* tsip_ssession_get_ptt_mcptt_emergence_resource_priority_string(tsip_ssession_handle_t *self);
+TINYSIP_API int tsip_ssession_get_ptt_mcptt_emergence_resource_priority(tsip_ssession_handle_t *self);
 int tsip_ssession_handle(const tsip_ssession_t *self, const struct tsip_action_s* action);
 
 typedef tsk_list_t tsip_ssessions_L_t; /**< List of @ref tsip_ssession_handle_t elements. */

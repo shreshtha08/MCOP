@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -194,9 +193,19 @@ public: /* Public functions */
 	bool callVideo(const char* remoteUriString, ActionConfig* config=tsk_null); /* @deprecated */
 	bool callVideo(const SipUri* remoteUri, ActionConfig* config=tsk_null); /* @deprecated */
 
-	bool call(const char* remoteUriString, twrap_media_type_t media, ActionConfig* config=tsk_null);
-	bool call(const SipUri* remoteUri, twrap_media_type_t media, ActionConfig* config=tsk_null);
-	bool callGroup(char** user_list, int user_count, twrap_media_type_t media, ActionConfig* config); //Added by Mikel
+	bool call(const char* remoteUriString, twrap_media_type_t media
+			,const bool answer_mode_auto
+			, ActionConfig* config=tsk_null);
+	bool call(const SipUri* remoteUri, twrap_media_type_t media
+			,const bool answer_mode_auto
+			, ActionConfig* config=tsk_null);
+	bool callEmergency(const char* remoteUriString, twrap_media_type_t media
+			,const bool answerMode
+			,const char* emergencyType/*=tsk_null*/,const int levelEmergency, ActionConfig* config=tsk_null);
+	bool callEmergency(const SipUri* remoteUri, twrap_media_type_t media
+			,const bool answerMode
+			,const char* emergencyType/*=tsk_null*/,const int levelEmergency, ActionConfig* config=tsk_null);
+	bool callGroup(char** user_list, int user_count, twrap_media_type_t media, ActionConfig* config);
 	
 
 
@@ -234,16 +243,18 @@ public: /* Public functions */
 	//MCPTT
 	bool setMcpttCallback(const McpttCallback* pMcpttCallback);
 	bool setMcpttMbmsCallback(const McpttMbmsCallback* pMcpttMbmsCallback);
-	//MCPTT by Eduardo
+	//MCPTT
 	bool requestMcpttToken(ActionConfig* config=tsk_null);
 	bool releaseMcpttToken(ActionConfig* config=tsk_null);
-	//MCPTT MBMS by Eduardo 
+	//MCPTT MBMS
 	bool startMbmsManager(ActionConfig* config/*=tsk_null*/,const char* remoteIP,int remotePort, const char* localIface, int localIfaceIdx);
 	bool stopMbmsManager(ActionConfig* config/*=tsk_null*/ );
 	bool startMbmsMedia(ActionConfig* config/*=tsk_null*/, const char* mediaIP, int mediaPort, int mediaCtrlPort);
 	const char* getPTTMcpttGroupIdentity();
 	int getPTTMcpttGroupMembers();
 	const char* getPTTMcpttGroupMemberAtPosition(int pos);
+	const char* getPttMcpttEmergencyResourcePriorityString();
+	const int getPttMcpttEmergencyResourcePriority();
 	//
 	char* getSipPartyUri();
 
@@ -298,7 +309,7 @@ public: /* Public functions */
 private:
 	MsrpCallback* m_pCallback;
 };
-//by Eduardo
+
 /* ======================== McpttSession ========================*/
 class TINYWRAP_API McpttSession : public InviteSession
 {
@@ -340,7 +351,9 @@ public: /* Public functions */
 	bool accept(ActionConfig* config=tsk_null);
 	bool reject(ActionConfig* config=tsk_null);
 };
-//By Eduardo
+
+
+//
 /* ======================== MessagingLocationSession ========================*/
 class TINYWRAP_API MessagingLocationSession : public SipSession
 {
@@ -452,6 +465,22 @@ public: /* Public functions */
 	/*bool unPublish(ActionConfig* config=tsk_null);*/
 	
 };
+/* ======================== PublicationAuthenticationSession ========================*/
+class TINYWRAP_API PublicationAuthenticationSession : public SipSession
+{
+public: /* ctor() and dtor() */
+	PublicationAuthenticationSession(SipStack* pStack);
+#if !defined(SWIG)
+	PublicationAuthenticationSession(SipStack* pStack, tsip_ssession_handle_t* pHandle);
+#endif
+	virtual ~PublicationAuthenticationSession();
+
+public: /* Public functions */
+	bool publish(const char* mcptt_info,const char* poc_settings,const void* payload, unsigned len, ActionConfig* config=tsk_null);
+	bool unPublish(const void* payload, unsigned len, ActionConfig* config=tsk_null);
+	/*bool unPublish(ActionConfig* config=tsk_null);*/
+	
+};
 
 /* ======================== RegistrationSession ========================*/
 class TINYWRAP_API RegistrationSession : public SipSession
@@ -507,7 +536,35 @@ public: /* Public functions */
 	bool unSubscribeAffiliation();
 };
 
+/* ======================== SubscriptionCMSSession ========================*/
+class TINYWRAP_API SubscriptionCMSSession : public SipSession
+{
+public: /* ctor() and dtor() */
+	SubscriptionCMSSession(SipStack* pStack);
+#if !defined(SWIG)
+	SubscriptionCMSSession(SipStack* pStack, tsip_ssession_handle_t* pHandle);
+#endif
+	virtual ~SubscriptionCMSSession();
 
+public: /* Public functions */
+	bool subscribeCMS(const void* payload, unsigned len,const void* payload2, unsigned len2,ActionConfig* config=tsk_null);
+	bool unSubscribeCMS();
+};
+
+/* ======================== SubscriptionGMDSession ========================*/
+class TINYWRAP_API SubscriptionGMSSession : public SipSession
+{
+public: /* ctor() and dtor() */
+	SubscriptionGMSSession(SipStack* pStack);
+#if !defined(SWIG)
+	SubscriptionGMSSession(SipStack* pStack, tsip_ssession_handle_t* pHandle);
+#endif
+	virtual ~SubscriptionGMSSession();
+
+public: /* Public functions */
+	bool subscribeGMS(const void* payload, unsigned len, const void* payload2, unsigned len2,ActionConfig* config=tsk_null);
+	bool unSubscribeGMS();
+};
 
 
 #endif /* TINYWRAP_SIPSESSION_H */

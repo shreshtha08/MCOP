@@ -130,5 +130,4 @@
         <PcscfPort>5070</PcscfPort>
         <Transport>TCP</Transport>
     </NgnSipPrefrences>
-
 </Profiles>

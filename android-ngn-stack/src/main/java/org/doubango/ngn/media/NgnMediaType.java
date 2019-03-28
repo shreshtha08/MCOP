@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -46,14 +45,57 @@ public enum NgnMediaType {
     Messaging(SMS.getValue() | Chat.getValue() | ShortMessage.getValue()),
     AudioT140(Audio.getValue() | T140.getValue()),
     AudioVideo(Audio.getValue() | Video.getValue()),
-	//by PTT
-	AudioPtt((0x00000001 << 7) | Audio.getValue()),
-	AudioPttCrisis((0x00000001 << 8) | AudioPtt.getValue()),
+
+	WithFloorControl((0x00000001 << 27)),
+
+
 	//by MCPTT
 	SessionMCPTT((0x00000001 << 13)),
-	SessionGroupMCPTT((0x00000001 << 14)),
+	SessionGroup((0x00000001 << 14)),
 	SessionAudioMCPTT(SessionMCPTT.getValue() | Audio.getValue()),
-	SessionAudioGroupMCPTT(SessionGroupMCPTT.getValue() | SessionAudioMCPTT.getValue()),
+	SessionAudioMCPTTWithFloorControl(SessionMCPTT.getValue() | Audio.getValue() |  WithFloorControl.getValue()),
+
+	SessionAudioGroupMCPTT(SessionGroup.getValue() | SessionAudioMCPTT.getValue()),
+	SessionAudioGroupMCPTTWithFloorControl(SessionGroup.getValue() | SessionAudioMCPTT.getValue() |  WithFloorControl.getValue()),
+
+
+
+	//by MCPTT emergence call
+	SessionEmergency((0x01 << 19)),
+	SessionAlert((0x01 << 20)),
+	SessionImminentperil((0x01 << 21)),
+	SessionEmergencyAudioMCPTT(SessionEmergency.getValue() | SessionAudioMCPTT.getValue()),
+	SessionEmergencyAudioMCPTTWithFloorControl(SessionEmergency.getValue() | SessionAudioMCPTT.getValue() |  WithFloorControl.getValue()),
+
+	SessionEmergencyAudioGroupMCPTT(SessionEmergencyAudioMCPTT.getValue() | SessionGroup.getValue()),
+	SessionEmergencyAudioGroupMCPTTWithFloorControl(SessionEmergencyAudioMCPTT.getValue() | SessionGroup.getValue() |  WithFloorControl.getValue()),
+
+	SessionAlertAudioMCPTT(SessionAlert.getValue() | SessionAudioMCPTT.getValue()),
+	SessionAlertAudioMCPTTWithFloorControl(SessionAlert.getValue() | SessionAudioMCPTT.getValue() |  WithFloorControl.getValue()),
+
+	SessionAlertAudioGroupMCPTT(SessionAlertAudioMCPTT.getValue() | SessionGroup.getValue()),
+	SessionAlertAudioGroupMCPTTWithFloorControl(SessionAlertAudioMCPTT.getValue() | SessionGroup.getValue() |  WithFloorControl.getValue()),
+
+	SessionImminentperilAudioMCPTT(SessionImminentperil.getValue() | SessionAudioMCPTT.getValue()),
+	SessionImminentperilAudioMCPTTWithFloorControl(SessionImminentperil.getValue() | SessionAudioMCPTT.getValue() |  WithFloorControl.getValue()),
+
+	SessionImminentperilAudioGroupMCPTT(SessionImminentperilAudioMCPTT.getValue() | SessionGroup.getValue()),
+	SessionImminentperilAudioGroupMCPTTWithFloorControl(SessionImminentperilAudioMCPTT.getValue() | SessionGroup.getValue() |  WithFloorControl.getValue()),
+
+
+
+
+	SessionChatMCPTT((0x00000001 << 24)),
+	SessionAudioChatMCPTT(SessionChatMCPTT.getValue() | SessionAudioMCPTT.getValue()),
+	SessionAudioChatGroupMCPTT(SessionChatMCPTT.getValue() | SessionAudioMCPTT.getValue() | SessionGroup.getValue()),
+	SessionAudioChatGroupMCPTTWithFloorControl(SessionChatMCPTT.getValue() | SessionAudioMCPTT.getValue() | SessionGroup.getValue() |  WithFloorControl.getValue()),
+
+	SessionEmergencyAudioWithFloorCtrlChatGroup (SessionEmergencyAudioGroupMCPTTWithFloorControl.getValue() | SessionChatMCPTT.getValue()),
+
+
+
+
+
     All(~0)
 	;
 	
@@ -75,8 +117,36 @@ public enum NgnMediaType {
             new media_type_bind_s(NgnMediaType.BFCP, twrap_media_type_t.twrap_media_bfcp),
             new media_type_bind_s(NgnMediaType.Audiobfcp, twrap_media_type_t.twrap_media_bfcp_audio),
             new media_type_bind_s(NgnMediaType.Videobfcp, twrap_media_type_t.twrap_media_bfcp_video),
+			new media_type_bind_s(NgnMediaType.WithFloorControl, twrap_media_type_t.twrap_media_floor_control),
+
 			new media_type_bind_s(NgnMediaType.SessionAudioMCPTT, twrap_media_type_t.twrap_media_audio_ptt_mcptt),
+			new media_type_bind_s(NgnMediaType.SessionAudioMCPTTWithFloorControl, twrap_media_type_t.twrap_media_audio_ptt_mcptt_with_floor_control),
+
 			new media_type_bind_s(NgnMediaType.SessionAudioGroupMCPTT, twrap_media_type_t.twrap_media_audio_ptt_group_mcptt),
+			new media_type_bind_s(NgnMediaType.SessionAudioGroupMCPTTWithFloorControl, twrap_media_type_t.twrap_media_audio_ptt_group_mcptt_with_floor_control),
+
+			new media_type_bind_s(NgnMediaType.SessionEmergencyAudioMCPTT, twrap_media_type_t.twrap_media_mcptt_emergence),
+			new media_type_bind_s(NgnMediaType.SessionEmergencyAudioMCPTTWithFloorControl, twrap_media_type_t.twrap_media_mcptt_emergence_with_floor_control),
+
+			new media_type_bind_s(NgnMediaType.SessionEmergencyAudioGroupMCPTT, twrap_media_type_t.twrap_media_mcptt_group_emergence),
+			new media_type_bind_s(NgnMediaType.SessionEmergencyAudioGroupMCPTTWithFloorControl, twrap_media_type_t.twrap_media_mcptt_group_emergence_with_floor_control),
+
+			new media_type_bind_s(NgnMediaType.SessionAlertAudioMCPTT, twrap_media_type_t.twrap_media_mcptt_alert),
+			new media_type_bind_s(NgnMediaType.SessionAlertAudioMCPTTWithFloorControl, twrap_media_type_t.twrap_media_mcptt_alert_with_floor_control),
+
+			new media_type_bind_s(NgnMediaType.SessionAlertAudioGroupMCPTT, twrap_media_type_t.twrap_media_mcptt_group_alert),
+			new media_type_bind_s(NgnMediaType.SessionAlertAudioGroupMCPTTWithFloorControl, twrap_media_type_t.twrap_media_mcptt_group_alert_with_floor_control),
+
+			new media_type_bind_s(NgnMediaType.SessionImminentperilAudioMCPTT, twrap_media_type_t.twrap_media_mcptt_imminentperil),
+			new media_type_bind_s(NgnMediaType.SessionImminentperilAudioMCPTTWithFloorControl, twrap_media_type_t.twrap_media_mcptt_imminentperil_with_floor_control),
+
+			new media_type_bind_s(NgnMediaType.SessionImminentperilAudioGroupMCPTT, twrap_media_type_t.twrap_media_mcptt_group_imminentperil),
+			new media_type_bind_s(NgnMediaType.SessionImminentperilAudioGroupMCPTTWithFloorControl, twrap_media_type_t.twrap_media_mcptt_group_imminentperil_with_floor_control),
+
+			new media_type_bind_s(NgnMediaType.SessionAudioChatMCPTT, twrap_media_type_t.twrap_media_audio_ptt_chat_mcptt),
+			new media_type_bind_s(NgnMediaType.SessionAudioChatGroupMCPTT, twrap_media_type_t.twrap_media_audio_ptt_chat_group_mcptt),
+			new media_type_bind_s(NgnMediaType.SessionAudioChatGroupMCPTTWithFloorControl, twrap_media_type_t.twrap_media_audio_ptt_chat_group_mcptt_with_floor_control),
+
 		};
 		static int ConvertFromNative(twrap_media_type_t mediaType) {
 			int t = NgnMediaType.None.getValue();

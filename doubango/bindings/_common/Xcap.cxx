@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -27,7 +26,7 @@
 
 #include "Common.h"
 
-#include "SipSession.h" //Added by Mikel
+#include "SipSession.h"
 
 unsigned XcapStack::count = 0;
 
@@ -566,7 +565,7 @@ int stack_callback(const thttp_event_t *httpevent)
 }
 
 
-//Added by Mikel
+
 int twrap_xcap_cb(const thttp_event_t *_event, void* context) 
 {
 	const CallSession* session = dyn_cast<const CallSession*>((const CallSession*)context);

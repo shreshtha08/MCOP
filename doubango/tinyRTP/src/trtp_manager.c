@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -49,6 +48,7 @@
 #include "tsk_debug.h"
 
 #include <limits.h> /* INT_MAX */
+#include <tinyrtp.h>
 
 #if !defined(TRTP_TRANSPORT_NAME)
 #	define TRTP_TRANSPORT_NAME "RTP/RTCP Manager"
@@ -448,7 +448,6 @@ static int _trtp_manager_recv_data(const trtp_manager_t* self, const uint8_t* da
 				((trtp_manager_t*)self)->rtp.remote_addr = *remote_addr;
 			}
 		}
-
 		if(self->rtp.cb.fun){
 			trtp_rtp_packet_t* packet_rtp = tsk_null;
 			#if HAVE_SRTP
@@ -459,9 +458,9 @@ static int _trtp_manager_recv_data(const trtp_manager_t* self, const uint8_t* da
 					return -1;
 				}
 			}
-			#endif
+            #endif
 			if((packet_rtp = trtp_rtp_packet_deserialize(data_ptr, data_size))){
-				// update remote SSRC based on received RTP packet
+			    // update remote SSRC based on received RTP packet
 				((trtp_manager_t*)self)->rtp.ssrc.remote = packet_rtp->header->ssrc;
 				// forward to the callback function (most likely "session_av")
 				self->rtp.cb.fun(self->rtp.cb.usrdata, packet_rtp);
@@ -859,7 +858,7 @@ int trtp_manager_prepare(trtp_manager_t* self)
 		// Get Sockets when the transport is started
 		rtp_local_ip = rtcp_local_ip = self->use_ipv6 ? "::1" : "127.0.0.1";
 	}
-	else if(self->is_multicast) //Added by Mikel
+	else if(self->is_multicast)
 	{
 		tnet_port_t local_port = self->multicast.multicast_port;
 		tnet_socket_type_t socket_type = self->use_ipv6 ? tnet_socket_type_udp_ipv6 : tnet_socket_type_udp_ipv4;
@@ -1522,7 +1521,7 @@ int trtp_manager_start(trtp_manager_t* self)
 			self->rtcp.session = trtp_rtcp_session_create_2(self->ice_ctx, self->rtp.ssrc.local, self->rtcp.cname);
 		}
 		if(self->rtcp.session){
-			//MCPTT rtcp By Eduardo
+			//MCPTT rtcp
 			if(self->is_MCPTT_session==tsk_true){
 				self->rtcp.session->is_MCPTT_session=tsk_true;
 			}else{
@@ -1573,7 +1572,7 @@ bail:
 
 	return ret;
 }
-//MCPTT by Eduardo
+//MCPTT
 
 /* Encapsulate raw data into RTP packet and send it over the network 
 * Very IMPORTANT: For voice packets, the marker bits indicates the beginning of a talkspurt */
@@ -1581,7 +1580,6 @@ tsk_size_t trtp_manager_send_rtp(trtp_manager_t* self, const void* data, tsk_siz
 {
 	trtp_rtp_packet_t* packet;
 	tsk_size_t ret;
-
 	if(!self){
 		TSK_DEBUG_ERROR("Invalid parameter 0");
 	
@@ -1636,7 +1634,6 @@ tsk_size_t trtp_manager_send_rtp(trtp_manager_t* self, const void* data, tsk_siz
 	packet->payload.data_const = data;
 	packet->payload.size = size;
 #endif
-
 	ret = trtp_manager_send_rtp_packet(self, packet, tsk_false);
 	TSK_OBJECT_SAFE_FREE(packet);
 	return ret;

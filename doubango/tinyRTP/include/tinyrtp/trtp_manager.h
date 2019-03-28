@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -59,8 +58,8 @@ typedef struct trtp_manager_s
 	tsk_bool_t is_force_symetric_rtp;
 	tsk_bool_t is_symetric_rtp_checked;
 	tsk_bool_t is_symetric_rtcp_checked;
-	tsk_bool_t is_multicast; //Added by Mikel
-	tsk_bool_t is_MCPTT_session; //Added by Eduardo MCPTT
+	tsk_bool_t is_multicast;
+	tsk_bool_t is_MCPTT_session; //Added MCPTT
 	int32_t app_bw_max_upload; // application specific (kbps)
 	int32_t app_bw_max_download; // application specific (kbps)
 

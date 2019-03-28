@@ -20,6 +20,7 @@
 
 
     <string name="doubango_frameword">Doubango framework</string>
+    <string name="Error_Authentication_token">Authentication error: MCPTT ID not received in token</string>
 
 
 </resources>

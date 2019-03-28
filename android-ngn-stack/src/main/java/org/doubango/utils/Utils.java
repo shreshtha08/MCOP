@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -26,13 +25,9 @@
 */
 package org.doubango.utils;
 
-import android.content.Context;
-import android.media.MediaPlayer;
 import android.util.Log;
 
 import org.doubango.ngn.BuildConfig;
-import org.doubango.ngn.NgnEngine;
-import org.doubango.ngn.R;
 import org.doubango.ngn.sip.NgnSipPrefrences;
 
 import java.net.InetAddress;
@@ -68,7 +63,7 @@ public class Utils {
     }
 
     public static String getTAG(String tag){
-        if(org.doubango.ngn.BuildConfig.LOG_SHOW){
+        if(tag!=null && org.doubango.ngn.BuildConfig.LOG_SHOW){
             return tag;
         }else{
             return org.doubango.ngn.BuildConfig.APPLICATION_ID;
@@ -119,32 +114,16 @@ public class Utils {
     }
 
 
-    public static void playerSound1(Context context) {
-        NgnSipPrefrences ngnSipPrefrences=NgnEngine.getInstance().getProfilesService().getProfileNow(context);
-        if(ngnSipPrefrences==null || ngnSipPrefrences.isMcpttPlayerSound()==null){
-            Log.e(TAG,"profile not configured");
-            return;
-        }else if(!ngnSipPrefrences.isMcpttPlayerSound()){
-            return;
+    public static List<String> parseAccountToEntry(List<NgnSipPrefrences.EntryType> entryTypes){
+        if(entryTypes==null)return null;
+        ArrayList<String> accounts=new ArrayList<>();
+        for(NgnSipPrefrences.EntryType entryType:entryTypes){
+            //String name, String sipURI, TypeAccount TYPE
+            accounts.add(entryType.getUriEntry());
         }
-        try {
-            MediaPlayer mediaPlayer=MediaPlayer.create(context,R.raw.sound1);
-            mediaPlayer.start();
-            mediaPlayer.setLooping(false);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            Log.e(TAG,"Impossible to create sound :"+e.getMessage());
-        }
+        return accounts;
     }
 
-    public static void playerSound2(Context context) {
-        try {
-            MediaPlayer mediaPlayer=MediaPlayer.create(context,R.raw.sound2);
-            mediaPlayer.start();
-            mediaPlayer.setLooping(false);
-        } catch (Exception e) {
-            Log.e(TAG,"Now is imposible create sound :"+e.getMessage());
-        }
-    }
+
 
 }

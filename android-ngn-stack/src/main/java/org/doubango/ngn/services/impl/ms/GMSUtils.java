@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -27,7 +26,8 @@ package org.doubango.ngn.services.impl.ms;
 
 import android.content.Context;
 
-import org.doubango.ngn.datatype.gms.pocListService.ns.list_service.Group;
+import org.doubango.ngn.datatype.ms.gms.ns.list_service.Group;
+import org.doubango.ngn.datatype.ms.gms.ns.resource_lists.ResourceLists;
 import org.simpleframework.xml.Serializer;
 import org.simpleframework.xml.convert.AnnotationStrategy;
 import org.simpleframework.xml.core.Persister;
@@ -79,9 +79,46 @@ class GMSUtils {
     public  static String  getStringOfGroupConfiguration(Context context,Group groupConfiguration) throws Exception {
         return new String(getBytesOfGroupConfiguration(context,groupConfiguration)).trim();
     }
-
-
     //END group
+
+    //INIT resoult-list
+
+    protected static ResourceLists getResourceLists(String string) throws Exception {
+        return getResourceLists(string.getBytes());
+    }
+
+    private static ResourceLists getResourceLists(byte[] bytes) throws Exception {
+        return getResourceLists(new ByteArrayInputStream(bytes));
+    }
+    private static ResourceLists getResourceLists(InputStream stream) throws Exception {
+        if(stream==null)return null;
+        Strategy strategy = new AnnotationStrategy();
+        Serializer serializer = new Persister(strategy);
+        return serializer.read(ResourceLists.class,stream);
+    }
+
+
+    private static InputStream getOutputStreamOfResourceLists(Context context, ResourceLists resourceLists) throws Exception {
+        if(resourceLists==null)return null;
+        Strategy strategy = new AnnotationStrategy();
+        Serializer serializer = new Persister(strategy);
+        File outputDir = context.getCacheDir(); // context being the Activity pointer
+        File outputFile = File.createTempFile(String.valueOf(Calendar.getInstance().getTimeInMillis()), "txt", outputDir);
+        serializer.write(resourceLists,outputFile);
+        return new FileInputStream(outputFile);
+    }
+
+    private static byte[] getBytesStreamOfResourceLists(Context context,ResourceLists resourceLists) throws Exception {
+        InputStream inputStream=getOutputStreamOfResourceLists(context,resourceLists);
+        if(inputStream==null)return null;
+        return readBytes(inputStream);
+    }
+
+    public  static String  getStringOfResourceLists(Context context,ResourceLists resourceLists) throws Exception {
+        return new String(getBytesStreamOfResourceLists(context,resourceLists)).trim();
+    }
+    //END resoult-list
+
     private static byte[] readBytes(InputStream inputStream) throws IOException {
 
         ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();

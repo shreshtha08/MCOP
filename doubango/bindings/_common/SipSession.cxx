@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -29,7 +28,7 @@
 #include "SipUri.h"
 #include "Msrp.h"
 #include "Mcptt.h"
-#include "Xcap.h" //Added by Mikel
+#include "Xcap.h"
 
 	
 
@@ -52,7 +51,8 @@ SipSession::SipSession(SipStack* stack)
 
 SipSession::SipSession(SipStack* stack, tsip_ssession_handle_t* pHandle)
 {
-	init(stack, pHandle);
+    TSK_DEBUG_INFO("SipSession");
+    init(stack, pHandle);
 }
 
 SipSession::~SipSession()
@@ -66,8 +66,10 @@ SipSession::~SipSession()
 
 void SipSession::init(SipStack* pStack, tsip_ssession_handle_t* pHandle/*=tsk_null*/)
 {
-	if(pHandle){
-		/* "server-side-session" */
+    TSK_DEBUG_INFO("SipSession::init");
+
+    if(pHandle){
+        /* "server-side-session" */
 		if(tsip_ssession_have_ownership(pHandle)){
 			tsk_object_ref(pHandle);
 		}
@@ -78,7 +80,7 @@ void SipSession::init(SipStack* pStack, tsip_ssession_handle_t* pHandle/*=tsk_nu
 		m_pHandle = pHandle;
 	}
 	else{
-		/* "client-side-session" */
+        /* "client-side-session" */
 		m_pHandle = tsip_ssession_create(pStack->getHandle(),
 			TSIP_SSESSION_SET_USERDATA(this),
 			TSIP_SSESSION_SET_NULL());
@@ -295,6 +297,7 @@ bool InviteSession::sendInfo(const void* payload, unsigned len, ActionConfig* co
 
 const MediaSessionMgr* InviteSession::getMediaMgr()
 {
+	TSK_DEBUG_INFO("getMediaMgr()");
 	if(m_pMediaMgr==NULL && !m_pMediaMgr  && m_pHandle!=NULL && m_pHandle){
 		tmedia_session_mgr_t* mgr = tsip_session_get_mediamgr(m_pHandle);
 		if(mgr){
@@ -329,53 +332,116 @@ CallSession::~CallSession()
 /* @deprecated */
 bool CallSession::callAudio(const SipUri* remoteUri, ActionConfig* config/*=tsk_null*/)
 {
-	return call(remoteUri, twrap_media_audio, config);
+	return call(remoteUri, twrap_media_audio
+			,false
+			, config);
 }
 
 /* @deprecated */
 bool CallSession::callAudio(const char* remoteUriString, ActionConfig* config/*=tsk_null*/)
 {
-	return call(remoteUriString, twrap_media_audio, config);
+	return call(remoteUriString, twrap_media_audio
+			,false
+			, config);
 }
 
 /* @deprecated */
 bool CallSession::callAudioVideo(const SipUri* remoteUri, ActionConfig* config/*=tsk_null*/)
 {
-	return call(remoteUri, twrap_media_audio_video, config);
+	return call(remoteUri, twrap_media_audio_video
+			,false
+			, config);
 }
 
 /* @deprecated */
 bool CallSession::callAudioVideo(const char* remoteUriString, ActionConfig* config/*=tsk_null*/)
 {
-	return call(remoteUriString, twrap_media_audio_video, config);
+	return call(remoteUriString, twrap_media_audio_video
+			,false
+			, config);
 }
 
 /* @deprecated */
 bool CallSession::callVideo(const SipUri* remoteUri, ActionConfig* config/*=tsk_null*/)
 {
-	return call(remoteUri, twrap_media_video, config);
+	return call(remoteUri, twrap_media_video
+			,false
+			, config);
 }
 
 /* @deprecated */
 bool CallSession::callVideo(const char* remoteUriString, ActionConfig* config/*=tsk_null*/)
 {
-	return call(remoteUriString, twrap_media_video, config);
+	return call(remoteUriString, twrap_media_video
+			,false
+			, config);
 }
 
 
 
-bool CallSession::call(const char* remoteUriString, twrap_media_type_t media, ActionConfig* config/*=tsk_null*/)
+bool CallSession::call(const char* remoteUriString, twrap_media_type_t media
+		,const bool answer_mode_auto
+		, ActionConfig* config/*=tsk_null*/)
 {
 	
 	SipUri sipUri(remoteUriString);
 	if(sipUri.isValid()){
-		return call(&sipUri, media, config);
+		return call(&sipUri, media
+				,answer_mode_auto
+				, config);
 	}
 	TSK_DEBUG_ERROR("Failed to parse sip uri=%s", remoteUriString);
 	return false;
 }
 
-bool CallSession::call(const SipUri* remoteUri, twrap_media_type_t media, ActionConfig* config/*=tsk_null*/)
+bool CallSession::call(const SipUri* remoteUri, twrap_media_type_t media
+		,const bool answer_mode_auto
+		, ActionConfig* config/*=tsk_null*/)
+{
+	if(!remoteUri){
+		TSK_DEBUG_ERROR("Invalid parameter");
+		return false;
+	}
+	//tsip_ssession_set configure the data for the invite sip
+	//m_pHandle is self o this of obj.
+	tsip_ssession_set(m_pHandle,
+		TSIP_SSESSION_SET_TO_OBJ(remoteUri->getWrappedUri()),
+		TSIP_SSESSION_SET_NULL());
+	if(answer_mode_auto){
+		TSIP_SSESSION(m_pHandle)->pttMCPTT.answer_mode_auto=tsk_true;
+	}else{
+		TSIP_SSESSION(m_pHandle)->pttMCPTT.answer_mode_auto=tsk_false;
+	}
+	const tsip_action_handle_t* action_cfg = config ? config->getHandle() : tsk_null;
+	//In tsip_api_invite_send_invite send the invite to PCSCF
+	//twrap_get_native_media_type This translates to an identifier used in a native GUI 
+	return (tsip_api_invite_send_invite(m_pHandle, twrap_get_native_media_type(media),
+		TSIP_ACTION_SET_CONFIG(action_cfg),
+		TSIP_ACTION_SET_NULL()) == 0);
+}
+
+
+
+
+bool CallSession::callEmergency(const char* remoteUriString, twrap_media_type_t media
+        ,const bool answerMode
+        ,const char* emergencyType/*=tsk_null*/,const int levelEmergency, ActionConfig* config/*=tsk_null*/)
+{
+	
+	SipUri sipUri(remoteUriString);
+	if(sipUri.isValid()){
+		return callEmergency(&sipUri, media
+                ,answerMode
+                ,emergencyType,levelEmergency, config);
+	}
+
+	TSK_DEBUG_ERROR("Failed to parse sip uri=%s", remoteUriString);
+	return false;
+}
+
+bool CallSession::callEmergency(const SipUri* remoteUri, twrap_media_type_t media
+        ,const bool answerMode
+        ,const char* emergencyType/*=tsk_null*/,int levelEmergency, ActionConfig* config/*=tsk_null*/)
 {
 	if(!remoteUri){
 		TSK_DEBUG_ERROR("Invalid parameter");
@@ -387,15 +453,37 @@ bool CallSession::call(const SipUri* remoteUri, twrap_media_type_t media, Action
 		TSIP_SSESSION_SET_TO_OBJ(remoteUri->getWrappedUri()),
 		TSIP_SSESSION_SET_NULL());
 
-
 	const tsip_action_handle_t* action_cfg = config ? config->getHandle() : tsk_null;
 	//In tsip_api_invite_send_invite send the invite to PCSCF
-	//twrap_get_native_media_type This translates to an identifier used in a native GUI 
+	//twrap_get_native_media_type This translates to an identifier used in a native GUI
+    if(answerMode){
+        TSIP_SSESSION(m_pHandle)->pttMCPTT.answer_mode_auto=tsk_true;
+    }else{
+        TSIP_SSESSION(m_pHandle)->pttMCPTT.answer_mode_auto=tsk_false;
+    }
+	if(emergencyType && emergencyType!=tsk_null && tsk_strlen(emergencyType)>0){
+		#if HAVE_CRT //Debug memory
+			TSIP_SSESSION(m_pHandle)->pttMCPTT.emergency.resource_priority_string=(char*)malloc(tsk_strlen(emergencyType));
+		
+		#else
+			TSIP_SSESSION(m_pHandle)->pttMCPTT.emergency.resource_priority_string=(char*)tsk_malloc(tsk_strlen(emergencyType));
+		
+		#endif //HAVE_CRT
+			strcpy(TSIP_SSESSION(m_pHandle)->pttMCPTT.emergency.resource_priority_string,emergencyType);
+		TSK_DEBUG_INFO("Emergency Type: %s",emergencyType);
+    }else{
+        TSK_DEBUG_INFO("Emergency Type isn´t correct");
+    }
+	if(levelEmergency>-1){
+		TSK_DEBUG_INFO("Level Emergency: %d",levelEmergency);
+		TSIP_SSESSION(m_pHandle)->pttMCPTT.emergency.resource_priority_int=levelEmergency;
+    }else{
+        TSK_DEBUG_INFO("Level Emergency isn´t correct");
+    }
 	return (tsip_api_invite_send_invite(m_pHandle, twrap_get_native_media_type(media),
 		TSIP_ACTION_SET_CONFIG(action_cfg),
 		TSIP_ACTION_SET_NULL()) == 0);
 }
-
 bool CallSession::callGroup(char** user_list, int user_count, twrap_media_type_t media, ActionConfig* config)
 {
 	if(!user_list || user_count == 0)
@@ -697,7 +785,7 @@ bool CallSession::setT140Callback(const T140Callback* pT140Callback)
 
 
 
-//MCPTT by Eduardo
+//MCPTT
 bool CallSession::setMcpttCallback(const McpttCallback* pMcpttCallback)
 {
 	const tmedia_session_mgr_t* pWrappedMgr;
@@ -731,7 +819,7 @@ bool CallSession::releaseMcpttToken(ActionConfig* config/*=tsk_null*/ )
 	TSK_DEBUG_ERROR("No media manager");
 	return false;
 }
-//MCPTT MBMS by Eduardo
+//MCPTT MBMS
 bool CallSession::startMbmsManager(ActionConfig* config/*=tsk_null*/,const char* remoteIP,int remotePort, const char* localIface, int localIfaceIdx)
 {
 	const tmedia_session_mgr_t* pWrappedMgr;
@@ -742,7 +830,7 @@ bool CallSession::startMbmsManager(ActionConfig* config/*=tsk_null*/,const char*
 	TSK_DEBUG_ERROR("No media manager");
 	return false;
 }
-//MCPTT MBMS by Eduardo
+//MCPTT MBMS
 bool CallSession::stopMbmsManager(ActionConfig* config/*=tsk_null*/ )
 {
 	const tmedia_session_mgr_t* pWrappedMgr;
@@ -775,6 +863,15 @@ bool CallSession::setMcpttMbmsCallback(const McpttMbmsCallback* pMcpttMbmsCallba
 	return false;
 }
 
+const char* CallSession::getPttMcpttEmergencyResourcePriorityString()
+{
+	return tsip_ssession_get_ptt_mcptt_emergence_resource_priority_string(m_pHandle);
+}
+
+const int CallSession::getPttMcpttEmergencyResourcePriority()
+{
+	return tsip_ssession_get_ptt_mcptt_emergence_resource_priority(m_pHandle);
+}
 const char* CallSession::getPTTMcpttGroupIdentity()
 {
 	return tsip_ssession_get_ptt_mcptt_group_identity(m_pHandle);
@@ -1041,6 +1138,10 @@ bool MessagingSession::reject(ActionConfig* config/*=tsk_null*/)
 		TSIP_ACTION_SET_CONFIG(action_cfg),
 		TSIP_ACTION_SET_NULL()) == 0);
 }
+
+
+
+
 /* ======================== MessagingLocationSession ========================*/
 MessagingLocationSession::MessagingLocationSession(SipStack* pStack)
 : SipSession(pStack)
@@ -1383,6 +1484,56 @@ bool PublicationAffiliationSession::unPublish(ActionConfig* config)
 		TSIP_ACTION_SET_NULL()) == 0);
 }
 */
+/* ======================== PublicationAuthenticationSession ========================*/
+PublicationAuthenticationSession::PublicationAuthenticationSession(SipStack* Stack)
+: SipSession(Stack)
+{
+}
+
+PublicationAuthenticationSession::PublicationAuthenticationSession(SipStack* pStack, tsip_ssession_handle_t* pHandle)
+: SipSession(pStack, pHandle)
+{
+
+}
+
+PublicationAuthenticationSession::~PublicationAuthenticationSession()
+{
+}
+
+bool PublicationAuthenticationSession::publish(const char* mcptt_info,const char* poc_settings,const void* payload, unsigned len, ActionConfig* config/*=tsk_null*/)
+{
+	int ret;
+	const tsip_action_handle_t* action_cfg = config ? config->getHandle() : tsk_null;
+	if(payload && len){
+		ret = tsip_api_publish_send_publish_authentication(mcptt_info,poc_settings,m_pHandle,
+			TSIP_ACTION_SET_PAYLOAD(payload, len),
+			TSIP_ACTION_SET_NULL());
+	}
+	else{
+		ret = tsip_api_publish_send_publish_affiliation(m_pHandle,
+			TSIP_ACTION_SET_CONFIG(action_cfg),
+			TSIP_ACTION_SET_NULL());
+	}
+	return (ret == 0);
+}
+
+bool PublicationAuthenticationSession::unPublish(const void* payload, unsigned len, ActionConfig* config/*=tsk_null*/)
+{
+	int ret;
+	const tsip_action_handle_t* action_cfg = config ? config->getHandle() : tsk_null;
+	if(payload && len){
+		ret = tsip_api_publish_send_unpublish_authentication(m_pHandle,
+			TSIP_ACTION_SET_PAYLOAD(payload, len),
+			TSIP_ACTION_SET_NULL());
+	}
+	else{
+		ret = tsip_api_publish_send_unpublish_affiliation(m_pHandle,
+			TSIP_ACTION_SET_CONFIG(action_cfg),
+			TSIP_ACTION_SET_NULL());
+	}
+	return (ret == 0);
+}
+
 
 /* ======================== RegistrationSession ========================*/
 RegistrationSession::RegistrationSession(SipStack* pStack)
@@ -1509,7 +1660,7 @@ SubscriptionAffiliationSession::~SubscriptionAffiliationSession()
 {
 }
 
-//MCPTT AFFILIATION by Eduardo
+//MCPTT AFFILIATION
 bool SubscriptionAffiliationSession::subscribeAffiliation()
 {
 	return (tsip_api_subscribe_affiliation_send_subscribe(m_pHandle,
@@ -1520,4 +1671,93 @@ bool SubscriptionAffiliationSession::unSubscribeAffiliation()
 {
 	return (tsip_api_subscribe_affiliation_unsubscribe(m_pHandle,
 		TSIP_ACTION_SET_NULL()) == 0);
+}
+
+/* ======================== SubscriptionCMSSession  ========================*/
+SubscriptionCMSSession::SubscriptionCMSSession(SipStack* pStack)
+		: SipSession(pStack)
+{
+}
+
+SubscriptionCMSSession::SubscriptionCMSSession(SipStack* pStack, tsip_ssession_handle_t* pHandle)
+		: SipSession(pStack, pHandle)
+{
+
+}
+
+
+SubscriptionCMSSession::~SubscriptionCMSSession()
+{
+}
+
+//MCPTT CMS
+bool SubscriptionCMSSession::subscribeCMS(const void* payload, unsigned len, const void* payload2, unsigned len2,ActionConfig* config/*=tsk_null*/)
+{
+	int ret;
+	const tsip_action_handle_t* action_cfg = config ? config->getHandle() : tsk_null;
+	if(payload && len){
+		ret = tsip_api_subscribe_cms_send_subscribe(m_pHandle,
+													TSIP_ACTION_SET_PAYLOAD(payload, len),
+													TSIP_ACTION_SET_PAYLOAD2(payload2, len2),
+													TSIP_ACTION_SET_CONFIG(action_cfg),
+													TSIP_ACTION_SET_NULL());
+	}
+	else{
+		ret = tsip_api_subscribe_cms_send_subscribe(m_pHandle,
+													TSIP_ACTION_SET_CONFIG(action_cfg),
+													TSIP_ACTION_SET_NULL());
+	}
+	return (ret == 0);
+
+}
+
+bool SubscriptionCMSSession::unSubscribeCMS()
+{
+	return (tsip_api_subscribe_cms_unsubscribe(m_pHandle,
+													   TSIP_ACTION_SET_NULL()) == 0);
+}
+
+
+/* ======================== SubscriptionGMSSession  ========================*/
+SubscriptionGMSSession::SubscriptionGMSSession(SipStack* pStack)
+: SipSession(pStack)
+		{
+		}
+
+SubscriptionGMSSession::SubscriptionGMSSession(SipStack* pStack, tsip_ssession_handle_t* pHandle)
+: SipSession(pStack, pHandle)
+{
+
+}
+
+
+SubscriptionGMSSession::~SubscriptionGMSSession()
+{
+}
+
+//MCPTT GMS
+bool SubscriptionGMSSession::subscribeGMS(const void* payload, unsigned len, const void* payload2, unsigned len2,ActionConfig* config/*=tsk_null*/)
+{
+	int ret;
+	const tsip_action_handle_t* action_cfg = config ? config->getHandle() : tsk_null;
+	if(payload && len){
+		ret = tsip_api_subscribe_gms_send_subscribe(m_pHandle,
+													TSIP_ACTION_SET_PAYLOAD(payload, len),
+													TSIP_ACTION_SET_PAYLOAD2(payload2, len2),
+													TSIP_ACTION_SET_CONFIG(action_cfg),
+													TSIP_ACTION_SET_NULL());
+	}
+	else{
+		ret = tsip_api_subscribe_gms_send_subscribe(m_pHandle,
+													TSIP_ACTION_SET_CONFIG(action_cfg),
+													TSIP_ACTION_SET_NULL());
+	}
+	return (ret == 0);
+
+}
+
+bool SubscriptionGMSSession::unSubscribeGMS()
+{
+	return (tsip_api_subscribe_gms_unsubscribe(m_pHandle,
+											   TSIP_ACTION_SET_NULL()) == 0);
 }

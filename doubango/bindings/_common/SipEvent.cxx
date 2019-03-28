@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -170,7 +169,7 @@ const MessagingSession* MessagingEvent::getSession() const
 }
 
 takeOwnership_Implement(Messaging, Messaging, Session);
-/* ======================== MessagingLocationEvent by Eduardo ========================*/
+/* ======================== MessagingLocationEvent ========================*/
 MessagingLocationEvent::MessagingLocationEvent(const tsip_event_t *_sipevent)
 :SipEvent(_sipevent)
 {
@@ -193,7 +192,8 @@ const MessagingLocationSession* MessagingLocationEvent::getSession() const
 takeOwnership_Implement(MessagingLocation, MessagingLocation, Session);
 //takeSessionOwnership
 
-/* ======================== MessagingAffiliationEvent by Eduardo ========================*/
+
+/* ======================== MessagingAffiliationEvent ========================*/
 MessagingAffiliationEvent::MessagingAffiliationEvent(const tsip_event_t *_sipevent)
 :SipEvent(_sipevent)
 {
@@ -216,7 +216,7 @@ const MessagingAffiliationSession* MessagingAffiliationEvent::getSession() const
 takeOwnership_Implement(MessagingAffiliation, MessagingAffiliation, Session);
 
 
-/* ======================== MessagingMbmsEvent by Eduardo ========================*/
+/* ======================== MessagingMbmsEvent ========================*/
 MessagingMbmsEvent::MessagingMbmsEvent(const tsip_event_t *_sipevent)
 :SipEvent(_sipevent)
 {
@@ -330,6 +330,27 @@ const PublicationAffiliationSession* PublicationAffiliationEvent::getSession() c
 }
 
 takeOwnership_Implement(PublicationAffiliation, PublicationAffiliation, Session);
+/* ======================== PublicationAuthenticationEvent ========================*/
+PublicationAuthenticationEvent::PublicationAuthenticationEvent(const tsip_event_t *_sipevent)
+:SipEvent(_sipevent)
+{
+}
+
+PublicationAuthenticationEvent::~PublicationAuthenticationEvent()
+{
+}
+
+tsip_publish_event_type_t PublicationAuthenticationEvent::getType() const
+{
+	return TSIP_PUBLISH_EVENT(this->sipevent)->type;
+}
+
+const PublicationAuthenticationSession* PublicationAuthenticationEvent::getSession() const
+{
+	return dyn_cast<const PublicationAuthenticationSession*>(this->getBaseSession());
+}
+
+takeOwnership_Implement(PublicationAuthentication, PublicationAuthentication, Session);
 
 
 /* ======================== RegistrationAuthenticationEvent ========================*/
@@ -397,7 +418,7 @@ takeOwnership_Implement(Subscription, Subscription, Session);
 
 /* ======================== SubscriptionAffiliationEvent ========================*/
 SubscriptionAffiliationEvent::SubscriptionAffiliationEvent(const tsip_event_t *sipevent)
-:SipEvent(sipevent)
+		:SipEvent(sipevent)
 {
 }
 
@@ -416,3 +437,47 @@ const SubscriptionAffiliationSession* SubscriptionAffiliationEvent::getSession()
 }
 
 takeOwnership_Implement(SubscriptionAffiliation, SubscriptionAffiliation, Session);
+
+/* ======================== SubscriptionCMSEvent ========================*/
+SubscriptionCMSEvent::SubscriptionCMSEvent(const tsip_event_t *sipevent)
+		:SipEvent(sipevent)
+{
+}
+
+SubscriptionCMSEvent::~SubscriptionCMSEvent()
+{
+}
+
+tsip_subscribe_event_type_t SubscriptionCMSEvent::getType() const
+{
+	return TSIP_SUBSCRIBE_EVENT(this->sipevent)->type;
+}
+
+const SubscriptionCMSSession* SubscriptionCMSEvent::getSession() const
+{
+	return dyn_cast<const SubscriptionCMSSession*>(this->getBaseSession());
+}
+
+takeOwnership_Implement(SubscriptionCMS, SubscriptionCMS, Session);
+
+/* ======================== SubscriptionGMSEvent ========================*/
+SubscriptionGMSEvent::SubscriptionGMSEvent(const tsip_event_t *sipevent)
+		:SipEvent(sipevent)
+{
+}
+
+SubscriptionGMSEvent::~SubscriptionGMSEvent()
+{
+}
+
+tsip_subscribe_event_type_t SubscriptionGMSEvent::getType() const
+{
+	return TSIP_SUBSCRIBE_EVENT(this->sipevent)->type;
+}
+
+const SubscriptionGMSSession* SubscriptionGMSEvent::getSession() const
+{
+	return dyn_cast<const SubscriptionGMSSession*>(this->getBaseSession());
+}
+
+takeOwnership_Implement(SubscriptionGMS, SubscriptionGMS, Session);

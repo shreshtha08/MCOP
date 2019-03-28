@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -101,8 +100,8 @@ typedef struct trtp_rtcp_session_s
 {
 	TSK_DECLARE_OBJECT;
 	
-	tsk_bool_t automated_reporting; //Added by Mikel
-	tsk_bool_t is_MCPTT_session; //Added by Eduardo MCPTT
+	tsk_bool_t automated_reporting;
+	tsk_bool_t is_MCPTT_session; //Added MCPTT
 	tsk_bool_t is_started;
 	tnet_fd_t local_fd;
 	const struct sockaddr * remote_addr;

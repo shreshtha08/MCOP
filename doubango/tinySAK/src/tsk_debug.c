@@ -35,6 +35,7 @@
 #else
 
 static const void* tsk_debug_arg_data = tsk_null;
+static tsk_debug_f tsk_debug_test_cb = tsk_null;
 static tsk_debug_f tsk_debug_info_cb = tsk_null;
 static tsk_debug_f tsk_debug_warn_cb = tsk_null;
 static tsk_debug_f tsk_debug_error_cb = tsk_null;
@@ -56,6 +57,21 @@ void tsk_debug_set_arg_data(const void* arg_data){
 */
 const void* tsk_debug_get_arg_data(){
 	return tsk_debug_arg_data;
+}
+/**@ingroup tsk_debug_group
+* Sets the callback function to call when @ref TSK_DEBUG_TEST() is internally used.
+* @param cb A pointer to the callback function.
+* @sa @ref tsk_debug_set_info_cb() @ref tsk_debug_set_warn_cb() @ref tsk_debug_set_fatal_cb().
+*/
+void tsk_debug_set_test_cb(tsk_debug_f cb){
+	tsk_debug_test_cb = cb;
+}
+/**@ingroup tsk_debug_group
+* Gets the callback function defined using @ref tsk_debug_set_test_cb().
+* @retval A pointer to the callback function.
+*/
+tsk_debug_f tsk_debug_get_test_cb(){
+	return tsk_debug_test_cb;
 }
 /**@ingroup tsk_debug_group
 * Sets the callback function to call when @ref TSK_DEBUG_INFO() is internally used.

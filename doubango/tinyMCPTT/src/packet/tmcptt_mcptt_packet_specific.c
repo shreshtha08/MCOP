@@ -4,7 +4,7 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /* 
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui, Mikel Ramos
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -263,6 +263,20 @@ int tmcptt_mcptt_packet_specific_binary_16_serialize_to(const tmcptt_mcptt_packe
 	return ret;
 }
 
+tsk_size_t tmcptt_mcptt_packet_specific_binary_32_get_size(const tmcptt_mcptt_packet_specific_ssrc_t* self)
+{
+	tsk_size_t size;
+
+	if(!self){
+		TSK_DEBUG_ERROR("Invalid parameter");
+		return 0;
+	}
+
+	size = 2*sizeof(uint8_t) + sizeof(uint32_t)+ 2*sizeof(uint8_t);
+
+	return size;
+}
+
 tsk_size_t tmcptt_mcptt_packet_specific_binary_16_get_size(const tmcptt_mcptt_packet_specific_binary_16_t* self)
 {
 	tsk_size_t size;
@@ -482,13 +496,11 @@ tmcptt_mcptt_packet_specific_ssrc_t* tmcptt_mcptt_packet_specific_ssrc_deseriali
 	specific->f_id = pdata[0];
 	specific->f_length = pdata[1];
 
-	pdata += 2*sizeof(uint8_t);
-	size -= 2*sizeof(uint8_t);
-
-	if(pdata[0]!=0x000 || pdata[1]!=0x000){//second and thiers byte is =0b00000000, value is 0;
-		TSK_DEBUG_ERROR("Error in format SSRC. It don´t has 2 bytes with value 0");
-		goto bail;
+	if(specific->f_length!=6){
+		TSK_DEBUG_ERROR("Error in SSRC format. incorrect length");
+		return tsk_null;
 	}
+
 	pdata += 2*sizeof(uint8_t);
 	size -= 2*sizeof(uint8_t);
 
@@ -498,6 +510,12 @@ tmcptt_mcptt_packet_specific_ssrc_t* tmcptt_mcptt_packet_specific_ssrc_deseriali
 		specific->f_value=tnet_ntohl(ssrc_net);
 		pdata += specific->f_length-2;
 		size -= specific->f_length-2;
+	}
+
+
+	if(pdata[0]!=0x000 || pdata[1]!=0x000){//second and thiers byte is =0b00000000, value is 0;
+		TSK_DEBUG_ERROR("Error in SSRC format. It does not have 2 bytes with value 0");
+		return tsk_null;
 	}
 
 bail:

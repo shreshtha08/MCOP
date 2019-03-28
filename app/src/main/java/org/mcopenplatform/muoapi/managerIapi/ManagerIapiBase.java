@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -26,6 +25,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -44,12 +44,11 @@ public abstract class ManagerIapiBase {
     protected Object mService;
     protected McopMessenger mcopMessenger;
     protected boolean isConnect;
-    protected String PACKET_MAIN_SERVICE="org.mcopenplatform.iapi";
     protected String PACKET_SERVICE="org.mcopenplatform.iapi.test";
     protected Context mContext;
     protected Handler handler;
     protected OnIapiListener onIapiListener;
-
+    protected boolean changedPacket=false;
     public ManagerIapiBase() {
         mContext=null;
         isConnect=false;
@@ -64,7 +63,16 @@ public abstract class ManagerIapiBase {
         mcopMessenger=new McopMessenger(handler);
     }
 
-    public boolean start(Context context) {
+    public boolean start(Context context
+            ,String packetService
+            ,String packetMainService
+        ) {
+        if(packetService!=null){
+            setPACKET_SERVICE(packetService);
+        }
+        if(packetMainService !=null){
+            setPACKET_MAIN_SERVICE(packetMainService);
+        }
         if(BuildConfig.DEBUG)Log.d(TAG, "Starting..."+getPACKET_SERVICE());
         mContext=context;
 
@@ -76,6 +84,7 @@ public abstract class ManagerIapiBase {
                     Log.d(TAG,"Service binded! "+getPACKET_SERVICE());
                     mService=registerInterface(service);
                     isConnect=true;
+                    isServiceConnected();
                 }
 
                 @Override
@@ -100,11 +109,16 @@ public abstract class ManagerIapiBase {
         serviceIntent.setAction(getPACKET_SERVICE());
 
         try{
-            ComponentName componentName=mContext.startService(serviceIntent);
+            ComponentName componentName=null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                componentName=mContext.startForegroundService(serviceIntent);
+            }
+            else
+                componentName=mContext.startService(serviceIntent);
             if(componentName!=null){
                 Log.d(TAG,"Start Service: "+componentName.getPackageName());
             }else{
-                Log.e(TAG,"Service Error: "+getPACKET_SERVICE());
+                if(BuildConfig.DEBUG)Log.e(TAG,"Service Error: "+getPACKET_SERVICE() +" "+getPACKET_MAIN_SERVICE());
             }
         }catch (Exception e){
             if(BuildConfig.DEBUG)Log.w(TAG,"Error in start service: "+e.getMessage());
@@ -124,6 +138,8 @@ public abstract class ManagerIapiBase {
         return true;
     }
 
+    abstract protected void isServiceConnected();
+
     abstract protected void startInternal();
 
     abstract protected void stopInternal();
@@ -140,6 +156,18 @@ public abstract class ManagerIapiBase {
     abstract protected String getPACKET_SERVICE();
 
     abstract protected String getPACKET_MAIN_SERVICE();
+
+
+    abstract protected void setPACKET_SERVICE(String packetService);
+
+    abstract protected void setPACKET_MAIN_SERVICE(String packetMainService);
+
+
+    abstract protected boolean checkChangedPacket();
+
+
+
+
 
     public boolean isConnect() {
         return isConnect;

@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -103,6 +102,7 @@ typedef enum tsip_header_type_e
 	tsip_htype_Organization,
 	tsip_htype_Path,
 	tsip_htype_Priv_Answer_Mode,
+	tsip_htype_Answer_Mode,
 	tsip_htype_Priority,
 	tsip_htype_Privacy,
 	tsip_htype_Proxy_Authenticate,

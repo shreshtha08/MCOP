@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -607,7 +606,7 @@ int send_PUBLISH(tsip_dialog_publish_t *self)
 		dialog->expires = 0;
 	}
 
-	//MCPTT AFFILIATION and AUTHENTICATION by eduardo
+	//MCPTT AFFILIATION and AUTHENTICATION
 	if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_affiliation) == tmedia_affiliation  ){
 		if(self->unpublishingAffiliationAndAuthentication){
 			dialog->expires = 0;//No Receive notify. 
@@ -623,8 +622,22 @@ int send_PUBLISH(tsip_dialog_publish_t *self)
 		TSK_DEBUG_INFO("info psi affiliation:%s",tsip_uri_tostring(TSIP_DIALOG_GET_STACK(self)->pttMCPTTAffiliation.psi_affiliation,tsk_false,tsk_false));
 		
 	}
+	else if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_authentication) == tmedia_authentication){
+		if(self->unpublishingAffiliationAndAuthentication){
+			TSIP_DIALOG(self)->expires = 0;
+		}else{
+			TSIP_DIALOG(self)->expires = NUM_MAX_EXPIRES;
+		}
+		//select URI_remote
+		if(TSIP_DIALOG_GET_STACK(self)->pttMCPTTAuthentication.psi_authentication!=tsk_null){
+			TSIP_DIALOG(self)->uri_remote_target=tsip_uri_clone(TSIP_DIALOG_GET_STACK(self)->pttMCPTTAuthentication.psi_authentication, tsk_false, tsk_false);
+			TSIP_DIALOG(self)->uri_remote=tsip_uri_clone(TSIP_DIALOG_GET_STACK(self)->pttMCPTTAuthentication.psi_authentication, tsk_false, tsk_false);
+		}
+		TSK_DEBUG_INFO("info psi authentication:%s",tsip_uri_tostring(TSIP_DIALOG_GET_STACK(self)->pttMCPTTAuthentication.psi_authentication,tsk_false,tsk_false));
+		
+	}
 
-	//MCPTT by Eduardo
+	//MCPTT
 	if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_mcptt) == tmedia_mcptt){
 		//The request_uri is PSI in New Invite to MCPTT
 		tsip_dialog_request_configure_mcptt(TSIP_DIALOG(self));
@@ -661,7 +674,7 @@ int send_PUBLISH(tsip_dialog_publish_t *self)
 			}
 		}
 		*/
-		//MCPTT by Eduardo Insert parameter in contact
+		//MCPTT Insert parameter in contact
 		if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_mcptt) == tmedia_mcptt){
 			TSIP_HEADER_ADD_PARAM(request->Contact, "+g.3gpp.icsi-ref", "\"urn%3Aurn-7%3A3gpp-service.ims.icsi.mcptt\"");
 			TSIP_HEADER_ADD_PARAM(request->Contact, "+g.3gpp.mcptt",tsk_null);
@@ -719,6 +732,46 @@ int send_PUBLISH(tsip_dialog_publish_t *self)
 								TSK_FREE(mcptt_info);
 					}
 				
+			}
+			else if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_mcptt_authentication) == tmedia_mcptt_authentication && 
+				self->poc_settings_authentication!=tsk_null && 
+				!tsk_strnullORempty(self->poc_settings_authentication) &&
+				self->mcptt_info_authentication!=tsk_null 
+				&& !tsk_strnullORempty(self->mcptt_info_authentication))
+			{
+				//Header
+				tsip_message_add_headers(request,
+					TSIP_HEADER_DUMMY_VA_ARGS("P-Preferred-Service", "urn:urn-7:3gpp-service.ims.icsi.mcptt"),
+					tsk_null);
+				tsip_message_add_headers(request,
+					TSIP_HEADER_DUMMY_VA_ARGS("Event","poc-settings"),tsk_null);
+				body = tmedia_content_multipart_body_create("multipart/mixed", tsk_null);
+				if(body)
+				{
+					mcptt_info_content = tmedia_content_multipart_create(self->mcptt_info_authentication, tsk_strlen(self->mcptt_info_authentication), "application/vnd.3gpp.mcptt-info+xml", tsk_null);
+					if(mcptt_info_content)
+								tmedia_content_multipart_body_add_content(body, mcptt_info_content);
+					poc_settings_content = tmedia_content_multipart_create(self->poc_settings_authentication,tsk_strlen(self->poc_settings_authentication), "application/poc-settings+xml", tsk_null);
+					if(poc_settings_content)
+								tmedia_content_multipart_body_add_content(body, poc_settings_content);
+						
+
+					body_string = tmedia_content_multipart_body_tostring(body);
+					content_type_hdr = tmedia_content_multipart_body_get_header(body);
+					tsip_message_add_content(request, content_type_hdr, body_string, tsk_strlen(body_string));
+						
+					//Free memory
+					if(poc_settings_content)
+						TSK_FREE(poc_settings_content);
+					if(body_string)
+						TSK_FREE(body_string);
+					if(content_type_hdr)
+						TSK_FREE(content_type_hdr);
+
+					
+				}
+				
+		
 			}
 			else if(!self->unpublishing){
 					tsip_message_add_content(request, tsk_null, TSK_BUFFER_DATA(action->payload), TSK_BUFFER_SIZE(action->payload));
@@ -796,7 +849,6 @@ static tsk_buffer_t* tsip_dialog_publish_create_mcpttinfo(const tsip_dialog_publ
 	}
 	tsk_buffer_append_2(output, "%s", tail);
 
-//#endif	
 
 	
 	return output;

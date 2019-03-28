@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -34,10 +33,16 @@ import org.mcopenplatform.muoapi.BuildConfig;
 public class ManagerConnectivityService extends ManagerIapiBase{
     private final static String TAG = org.mcopenplatform.muoapi.utils.Utils.getTAG(ManagerConnectivityService.class.getCanonicalName());
 
-    protected final String PACKET_SERVICE="org.mcopenplatform.iapi.ConnectivityService";
+    protected String PACKET_SERVICE="org.mcopenplatform.iapi.ConnectivityService";
+    protected String PACKET_MAIN_SERVICE="org.mcopenplatform.iapi";
 
     public ManagerConnectivityService() {
         super();
+    }
+
+    @Override
+    protected void isServiceConnected() {
+
     }
 
     @Override
@@ -69,8 +74,10 @@ public class ManagerConnectivityService extends ManagerIapiBase{
             int error=((IConnectivityService)mService).getErrorCode();
             String errorString=((IConnectivityService)mService).getErrorStr();
             Log.e(TAG,"Error "+getPACKET_SERVICE()+": "+error+" \""+errorString+"\"");
-        } catch (RemoteException e) {
-            e.printStackTrace();
+        }  catch (RemoteException e) {
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error in receiveEvent in ManagerConnectivityService:"+e.getMessage());
+        }catch (Exception e) {
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error in receiveEvent in ManagerConnectivityService:"+e.getMessage());
         }
         return false;
     }
@@ -88,4 +95,23 @@ public class ManagerConnectivityService extends ManagerIapiBase{
     protected String getPACKET_MAIN_SERVICE() {
         return PACKET_MAIN_SERVICE;
     }
+
+
+    @Override
+    protected void setPACKET_SERVICE(String packetService) {
+        changedPacket=true;
+        PACKET_SERVICE = packetService;
+    }
+
+    @Override
+    protected void setPACKET_MAIN_SERVICE(String packetMainService) {
+        changedPacket=true;
+        PACKET_MAIN_SERVICE = packetMainService;
+    }
+    @Override
+    protected boolean checkChangedPacket(){
+        return changedPacket;
+    }
+
+
 }

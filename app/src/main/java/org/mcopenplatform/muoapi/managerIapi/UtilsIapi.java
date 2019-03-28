@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -26,12 +25,13 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.support.v4.BuildConfig;
 import android.support.v4.app.ActivityCompat;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+
+import org.mcopenplatform.muoapi.BuildConfig;
 
 
 class UtilsIapi {
@@ -40,10 +40,14 @@ class UtilsIapi {
     protected static boolean isSimAvailable(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             SubscriptionManager sManager = (SubscriptionManager) context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
-            SubscriptionInfo infoSim1 = sManager.getActiveSubscriptionInfoForSimSlotIndex(0);
-            SubscriptionInfo infoSim2 = sManager.getActiveSubscriptionInfoForSimSlotIndex(1);
-            if (infoSim1 != null || infoSim2 != null) {
-                return true;
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }else{
+                SubscriptionInfo infoSim1 = sManager.getActiveSubscriptionInfoForSimSlotIndex(0);
+                SubscriptionInfo infoSim2 = sManager.getActiveSubscriptionInfoForSimSlotIndex(1);
+                if (infoSim1 != null || infoSim2 != null) {
+                    return true;
+                }
             }
         } else {
             TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);

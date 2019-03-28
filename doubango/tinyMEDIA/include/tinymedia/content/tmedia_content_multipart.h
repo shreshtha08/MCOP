@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui, Mikel Ramos
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -71,6 +71,7 @@ TINYMEDIA_API int tmedia_content_multipart_body_add_content(tmedia_multipart_bod
 TINYMEDIA_API tmedia_content_multipart_t* tmedia_content_multipart_body_get_content(tmedia_multipart_body_t* self, const char* content_type);
 TINYMEDIA_API char* tmedia_content_multipart_body_tostring(tmedia_multipart_body_t* self);
 TINYMEDIA_API char* tmedia_content_multipart_body_get_header(tmedia_multipart_body_t* self);
+
 
 TINYMEDIA_GEXTERN const tsk_object_def_t* tmedia_multipart_body_def_t;
 

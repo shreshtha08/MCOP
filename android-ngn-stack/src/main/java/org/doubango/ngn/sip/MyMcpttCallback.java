@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -26,6 +26,7 @@ import android.util.Log;
 
 import org.doubango.ngn.BuildConfig;
 import org.doubango.ngn.NgnApplication;
+import org.doubango.ngn.NgnEngine;
 import org.doubango.ngn.events.NgnMcpttEventArgs;
 import org.doubango.ngn.events.NgnMcpttEventTypes;
 import org.doubango.tinyWRAP.McpttCallback;
@@ -34,6 +35,8 @@ import org.doubango.tinyWRAP.McpttMessage;
 import org.doubango.tinyWRAP.SipSession;
 import org.doubango.tinyWRAP.tmcptt_event_type_t;
 import org.doubango.utils.Utils;
+
+import static org.doubango.ngn.events.NgnMcpttEventArgs.ACTION_MCPTT_EVENT;
 
 /**
  * MyMcpttCallback extends McpttCallback class, and onEvent method is overwritten. This allows to
@@ -45,6 +48,7 @@ public class MyMcpttCallback extends McpttCallback {
     private NgnAVSession mSession;
     final Context mAppContext;
     private String mContentType;
+    public final String ACTION_MCPTT;
 
 
 
@@ -53,6 +57,8 @@ public class MyMcpttCallback extends McpttCallback {
         this.mSession=session;
         mAppContext = NgnApplication.getContext();
         Log.d(TAG,"Create Callback for MCPTT calls");
+        ACTION_MCPTT=ACTION_MCPTT_EVENT+""+mSession.getId();
+
     }
 
 
@@ -77,10 +83,9 @@ public class MyMcpttCallback extends McpttCallback {
         switch (type){
             case tmcptt_event_type_token_granted:
                 Log.d(TAG,"tmcptt_event_type_token_granted");
-
                 message = e.getMessage();
                 eargs = new NgnMcpttEventArgs(this.mSession.getId(),NgnMcpttEventTypes.TOKEN_GRANTED);
-                intent = new Intent(NgnMcpttEventArgs.ACTION_MCPTT_EVENT);
+                intent = new Intent(ACTION_MCPTT);
                 intent.putExtra(NgnMcpttEventArgs.EXTRA_EMBEDDED,eargs);
                 user=message.getUser();
                 if(user!=null) {
@@ -104,7 +109,7 @@ public class MyMcpttCallback extends McpttCallback {
                 message = e.getMessage();
 
                 eargs = new NgnMcpttEventArgs(this.mSession.getId(),NgnMcpttEventTypes.TOKEN_TAKEN);
-                intent = new Intent(NgnMcpttEventArgs.ACTION_MCPTT_EVENT);
+                intent = new Intent(ACTION_MCPTT);
                 intent.putExtra(NgnMcpttEventArgs.EXTRA_EMBEDDED,eargs);
                 user=message.getUser();
                 if(user!=null){
@@ -125,7 +130,7 @@ public class MyMcpttCallback extends McpttCallback {
 
                 message = e.getMessage();
                 eargs = new NgnMcpttEventArgs(this.mSession.getId(),NgnMcpttEventTypes.IDLE_CHANNEL);
-                intent = new Intent(NgnMcpttEventArgs.ACTION_MCPTT_EVENT);
+                intent = new Intent(ACTION_MCPTT);
                 intent.putExtra(NgnMcpttEventArgs.EXTRA_EMBEDDED,eargs);
                 mAppContext.sendBroadcast(intent);
 
@@ -136,7 +141,7 @@ public class MyMcpttCallback extends McpttCallback {
                 Log.d(TAG,"tmcptt_event_type_request_sent");
                 message = e.getMessage();
                 eargs = new NgnMcpttEventArgs(this.mSession.getId(),NgnMcpttEventTypes.TOKEN_REQUESTED);
-                intent = new Intent(NgnMcpttEventArgs.ACTION_MCPTT_EVENT);
+                intent = new Intent(ACTION_MCPTT);
                 intent.putExtra(NgnMcpttEventArgs.EXTRA_EMBEDDED,eargs);
 
                 mAppContext.sendBroadcast(intent);
@@ -147,7 +152,7 @@ public class MyMcpttCallback extends McpttCallback {
 
                 message = e.getMessage();
                 eargs = new NgnMcpttEventArgs(this.mSession.getId(),NgnMcpttEventTypes.TOKEN_RELEASED);
-                intent = new Intent(NgnMcpttEventArgs.ACTION_MCPTT_EVENT);
+                intent = new Intent(ACTION_MCPTT);
                 intent.putExtra(NgnMcpttEventArgs.EXTRA_EMBEDDED,eargs);
                 mAppContext.sendBroadcast(intent);
 
@@ -157,7 +162,7 @@ public class MyMcpttCallback extends McpttCallback {
 
                 message = e.getMessage();
                 eargs = new NgnMcpttEventArgs(this.mSession.getId(),NgnMcpttEventTypes.TOKEN_REVOKED);
-                intent = new Intent(NgnMcpttEventArgs.ACTION_MCPTT_EVENT);
+                intent = new Intent(ACTION_MCPTT);
                 intent.putExtra(NgnMcpttEventArgs.EXTRA_EMBEDDED,eargs);
                 if(message!=null){
                     if(message.getRCode()>0){
@@ -178,7 +183,7 @@ public class MyMcpttCallback extends McpttCallback {
                 message = e.getMessage();
 
                     eargs = new NgnMcpttEventArgs(this.mSession.getId(),NgnMcpttEventTypes.TOKEN_DENIED);
-                    intent = new Intent(NgnMcpttEventArgs.ACTION_MCPTT_EVENT);
+                    intent = new Intent(ACTION_MCPTT);
                     intent.putExtra(NgnMcpttEventArgs.EXTRA_EMBEDDED,eargs);
                 if(message!=null){
                     if(message.getRCode()>0){

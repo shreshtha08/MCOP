@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -624,7 +623,7 @@ public class NgnApplication extends Application{
     	// FIXME: one-way audio on Galaxy SII and Nexus
     	 //return isSLEs2Supported() && Arrays.asList(sSLEs2FriendlyBuildModels).contains(sBuildModel); // AcceptOnlyIn(Array)
     	 //return isSLEs2Supported() && !Arrays.asList(sSLEs2UnFriendlyBuildModels).contains(sBuildModel); // AcceptAllExceptIn(Array)
-    	//return true;
+		//return false;
 		return true;
 		//return isHovis(); //false;
     }

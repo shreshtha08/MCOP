@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -82,7 +81,7 @@ tnet_socket_type_udp_ipv46 // the socket type (IPv4 or IPv6)
 * -	The socket type (stream, dgram),
 * -	The socket protocol (udp, tcp, tls, sctp, ipsec),
 * -	The IP version (ipv6, ipv4),
-* -	…
+* -	ï¿½
 * <br>
 * A socket is a well-defined object and should be destroyed using @a TSK_DECLARE_SAFE_FREE() macro.
 * A socket will be automatically closed when destroyed.

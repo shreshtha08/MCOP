@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -32,7 +31,7 @@ public:
 	DDebugCallback() {  }
 	virtual ~DDebugCallback() {}
 
-
+	virtual int OnDebugTest(const char* message) { return -1; }
 	virtual int OnDebugInfo(const char* message) { return -1; }
 	virtual int OnDebugWarn(const char* message) { return -1; }
 	virtual int OnDebugError(const char* message) { return -1; }
@@ -40,6 +39,7 @@ public:
 
 #if !defined(SWIG)
 public:
+	static int debug_test_cb(const void* arg, const char* fmt, ...);
 	static int debug_info_cb(const void* arg, const char* fmt, ...);
 	static int debug_warn_cb(const void* arg, const char* fmt, ...);
 	static int debug_error_cb(const void* arg, const char* fmt, ...);

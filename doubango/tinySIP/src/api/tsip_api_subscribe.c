@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -59,6 +58,12 @@ int tsip_subscribe_event_signal(tsip_subscribe_event_type_t type, tsip_ssession_
 	if((((tsip_ssession_t*)ss)->media.type & tmedia_affiliation) == tmedia_affiliation ){
 		TSK_DEBUG_INFO("Send notify to user of affiliation.");
 		tsip_event_init(TSIP_EVENT(sipevent), ss, status_code, phrase, sipmessage, tsip_event_subscribe_affiliation);
+	}else if((((tsip_ssession_t*)ss)->media.type & tmedia_cms) == tmedia_cms ){
+		TSK_DEBUG_INFO("Send notify to user of CMS.");
+		tsip_event_init(TSIP_EVENT(sipevent), ss, status_code, phrase, sipmessage, tsip_event_subscribe_cms);
+	}else if((((tsip_ssession_t*)ss)->media.type & tmedia_gms) == tmedia_gms ){
+		TSK_DEBUG_INFO("Send notify to user of GMS.");
+		tsip_event_init(TSIP_EVENT(sipevent), ss, status_code, phrase, sipmessage, tsip_event_subscribe_gms);
 	}else{
 	tsip_event_init(TSIP_EVENT(sipevent), ss, status_code, phrase, sipmessage, tsip_event_subscribe);
 	}
@@ -132,7 +137,7 @@ int tsip_api_subscribe_send_unsubscribe(const tsip_ssession_handle_t *ss, ...)
 	return 0;
 }
 
-//MCPTT AFFILIATION by Eduardo
+//MCPTT AFFILIATION
 int tsip_api_subscribe_affiliation_send_subscribe(const tsip_ssession_handle_t *ss, ...)
 {
 	const tsip_ssession_t* _ss;
@@ -171,7 +176,7 @@ int tsip_api_subscribe_affiliation_send_subscribe(const tsip_ssession_handle_t *
 
 
 
-//MCPTT AFFILIATION by Eduardo
+//MCPTT AFFILIATION
 int tsip_api_subscribe_affiliation_unsubscribe(const tsip_ssession_handle_t *ss, ...)
 {
 	
@@ -208,11 +213,158 @@ int tsip_api_subscribe_affiliation_unsubscribe(const tsip_ssession_handle_t *ss,
 	return 0;
 }
 
+//MCPTT CMS
+int tsip_api_subscribe_cms_send_subscribe(const tsip_ssession_handle_t *ss, ...)
+{
+	const tsip_ssession_t* _ss;
+	va_list ap;
+	tsip_action_t* action;
+	tsip_dialog_t* dialog;
+	int ret = -1;
+	//Session is Affiliation mcptt
+	((tsip_ssession_t*)ss)->media.type=tmedia_mcptt_cms;
+	if(!(_ss = ss) || !_ss->stack){
+		TSK_DEBUG_ERROR("Invalid parameter.");
+		return ret;
+	}
+
+	/* Checks if the stack has been started */
+	if(!TSK_RUNNABLE(_ss->stack)->started){
+		TSK_DEBUG_ERROR("Stack not started.");
+		return -2;
+	}
+
+	va_start(ap, ss);
+	if((action = _tsip_action_create(tsip_atype_subscribe, &ap))){
+		if(!(dialog = tsip_dialog_layer_find_by_ss(_ss->stack->layer_dialog, ss))){
+			dialog = tsip_dialog_layer_new(_ss->stack->layer_dialog, tsip_dialog_SUBSCRIBE, ss);
+		}
+		//send subscribe.
+		ret = tsip_dialog_fsm_act(dialog, action->type, tsk_null, action);
+
+		tsk_object_unref(dialog);
+		TSK_OBJECT_SAFE_FREE(action);
+	}
+	va_end(ap);
+
+	return ret;
+}
+
+
+
+//MCPTT AFFILIATION
+int tsip_api_subscribe_cms_unsubscribe(const tsip_ssession_handle_t *ss, ...)
+{
+
+
+	const tsip_ssession_t* _ss;
+	va_list ap;
+	tsip_action_t* action;
+
+	int ret = -1;
 
 
 
 
+	if(!(_ss = ss) || !_ss->stack){
+		TSK_DEBUG_ERROR("Invalid parameter.");
+		return ret;
+	}
 
+	/* Checks if the stack is running */
+	if(!TSK_RUNNABLE(_ss->stack)->running){
+		TSK_DEBUG_ERROR("Stack not running.");
+		return -2;
+	}
+
+	va_start(ap, ss);
+
+	if((action = _tsip_action_create(tsip_atype_unsubscribe, &ap))){
+
+		ret = tsip_ssession_handle(ss, action);
+		TSK_OBJECT_SAFE_FREE(action);
+	}
+	va_end(ap);
+
+	return 0;
+}
+
+
+//MCPTT CMS
+int tsip_api_subscribe_gms_send_subscribe(const tsip_ssession_handle_t *ss, ...)
+{
+	const tsip_ssession_t* _ss;
+	va_list ap;
+	tsip_action_t* action;
+	tsip_dialog_t* dialog;
+	int ret = -1;
+	//Session is Affiliation mcptt
+	((tsip_ssession_t*)ss)->media.type=tmedia_mcptt_gms;
+	if(!(_ss = ss) || !_ss->stack){
+		TSK_DEBUG_ERROR("Invalid parameter.");
+		return ret;
+	}
+
+	/* Checks if the stack has been started */
+	if(!TSK_RUNNABLE(_ss->stack)->started){
+		TSK_DEBUG_ERROR("Stack not started.");
+		return -2;
+	}
+
+	va_start(ap, ss);
+	if((action = _tsip_action_create(tsip_atype_subscribe, &ap))){
+		if(!(dialog = tsip_dialog_layer_find_by_ss(_ss->stack->layer_dialog, ss))){
+			dialog = tsip_dialog_layer_new(_ss->stack->layer_dialog, tsip_dialog_SUBSCRIBE, ss);
+		}
+		//send subscribe.
+		ret = tsip_dialog_fsm_act(dialog, action->type, tsk_null, action);
+
+		tsk_object_unref(dialog);
+		TSK_OBJECT_SAFE_FREE(action);
+	}
+	va_end(ap);
+
+	return ret;
+}
+
+
+
+//MCPTT AFFILIATION
+int tsip_api_subscribe_gms_unsubscribe(const tsip_ssession_handle_t *ss, ...)
+{
+
+
+	const tsip_ssession_t* _ss;
+	va_list ap;
+	tsip_action_t* action;
+
+	int ret = -1;
+
+
+
+
+	if(!(_ss = ss) || !_ss->stack){
+		TSK_DEBUG_ERROR("Invalid parameter.");
+		return ret;
+	}
+
+	/* Checks if the stack is running */
+	if(!TSK_RUNNABLE(_ss->stack)->running){
+		TSK_DEBUG_ERROR("Stack not running.");
+		return -2;
+	}
+
+	va_start(ap, ss);
+
+	if((action = _tsip_action_create(tsip_atype_unsubscribe, &ap))){
+
+		ret = tsip_ssession_handle(ss, action);
+		TSK_OBJECT_SAFE_FREE(action);
+	}
+	va_end(ap);
+
+	return 0;
+}
 
 
 //========================================================

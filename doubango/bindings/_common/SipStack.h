@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -35,7 +34,7 @@
 #include "tinysip.h"
 
 class DDebugCallback;
-//By Eduardo
+//
 class DRegisterCallback;
 
 
@@ -49,7 +48,7 @@ public: /* ctor() and dtor() */
 public: /* API functions */
 	bool start();
 	bool setDebugCallback(DDebugCallback* pCallback);
-	//by Eduardo
+
 	bool setRegisterCallback(DRegisterCallback* pCallback,void* dataResponseRegisterCallback,int size);
 	bool setDisplayName(const char* display_name);
 	bool setRealm(const char* realm_uri);
@@ -90,7 +89,14 @@ public: /* API functions */
 	bool setMCPTTPSIPrivate(const char* mcptt_psi_private);
 	bool setMCPTTPSIGroup(const char* mcptt_psi_group);
 	bool setMCPTTPSIPreestablished(const char* mcptt_psi_preestablished);
+
+	bool setMCPTTPSICMS(const char* mcptt_psi_cms);
+
+	bool setMCPTTPSIGMS(const char* mcptt_psi_gms);
+
 	bool setMCPTTID(const char* mcptt_id);
+	bool setMCPTTClientID(const char* mcptt_client_id);
+
 
 	bool setMCPTTPriority(const int mcptt_priority);
 	bool setMCPTTImplicit(const bool mcptt_implicit);
@@ -99,7 +105,7 @@ public: /* API functions */
 	bool setMCPTTPrivAnswerMode(const bool mcptt_priv_answer_mode);
 	bool setMCPTTNameSpace(const bool mcptt_namespace);
 	bool setMCPTTInsertXFramedIP(const bool mcptt_insert_x_framed_ip);
-	//Timers recived from CMS by Eduardo
+	//Timers recived from CMS
 	bool setMCPTTTimerT100(const int mcptt_timer_t100);
 	bool setMCPTTTimerT101(const int mcptt_timer_t101);
 	bool setMCPTTTimerT103(const int mcptt_timer_t103);
@@ -113,10 +119,15 @@ public: /* API functions */
 	bool setMbmsAddrManager(const char* addrManager);
 	bool setMbmsIsRTCPMux(const bool isRTCPMux);
 
+
+
+
 	//MCPTT AFFILIATION
 	bool setMCPTTPSIAffiliation(const char* mcptt_psi_affiliation);
 	bool setMCPTTAffiliationIsEnable(const bool mcptt_affiliation_is_enable);
 	bool setMCPTTAffiliationGroupsDefualt(const char* mcptt_affiliation_groups_default);
+	//MCPTT AUTHENTICATION
+	bool setMCPTTPSIAuthentication(const char* mcptt_psi_authentication);
 	char* dnsENUM(const char* service, const char* e164num, const char* domain);
 	char* dnsNaptrSrv(const char* domain, const char* service, unsigned short *OUTPUT);
 	char* dnsSrv(const char* service, unsigned short* OUTPUT);
@@ -150,7 +161,7 @@ public: /* Public helper function */
 	inline DDebugCallback* getDebugCallback() const{
 		return m_pDebugCallback;
 	}
-	//By Eduardo
+	//
 	//This CallBack is from Register session.
 	inline DRegisterCallback* getRegisterCallback() const{
 		return m_pRegisterCallback;
@@ -169,7 +180,7 @@ public: /* Public helper function */
 private:
 	SipCallback* m_pCallback;
 	DDebugCallback* m_pDebugCallback;
-	//By Eduardo
+	//
 	DRegisterCallback* m_pRegisterCallback;
 	int size_dataResponseRegisterCallback;
 	void* m_dataResponseRegisterCallback;

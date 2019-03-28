@@ -6,7 +6,6 @@
 
 /* #line 1 "./ragel/tsdp_parser_header_T.rl" */
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *

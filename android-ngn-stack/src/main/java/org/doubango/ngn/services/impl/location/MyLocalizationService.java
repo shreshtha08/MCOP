@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -49,13 +49,14 @@ public class MyLocalizationService   implements IMyLocalizationService, Location
     private static byte[] currentLocationInfo;
     private static boolean isStart;
     private static IMyProfilesService myProfilesService;
-
+    private static org.doubango.ngn.services.emergency.IMyEmergencyService myEmergencyService;
     private OnErrorLocationListener onErrorLocationListener;
 
 
     @Override
     public boolean start() {
         myProfilesService=NgnEngine.getInstance().getProfilesService();
+        myEmergencyService=NgnEngine.getInstance().getEmergencyService();
         Log.d(TAG,"Start "+"LocalizationService.");
         isStart=false;
         return true;
@@ -158,9 +159,20 @@ public class MyLocalizationService   implements IMyLocalizationService, Location
         if(onErrorLocationListener!=null)onErrorLocationListener.onErrorLocation(error,code);
     }
 
+    @Override
+    public boolean isEmergency() {
+        return
+         myEmergencyService!=null?myEmergencyService.isStateEmergency():
+        false;
+
+    }
+
+    public String createReport(Context context) {
+        return mLocationServer!=null?mLocationServer.createReport(context):null;
+    }
+
 
     public void stopServiceLocation(){
-
         if(mLocationServer!=null)mLocationServer.onDestroy();
     }
 

@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -61,7 +60,8 @@ typedef enum tsip_event_type_e
 	tsip_event_subscribe,
 	//MCPTT affiliation
 	tsip_event_subscribe_affiliation,
-
+	tsip_event_subscribe_cms,
+	tsip_event_subscribe_gms,
 	tsip_event_dialog,
 	tsip_event_stack,
 }

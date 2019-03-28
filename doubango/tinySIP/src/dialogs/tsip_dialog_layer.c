@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -102,11 +101,14 @@ tsip_dialog_t* tsip_dialog_layer_find_by_ssid(tsip_dialog_layer_t *self, tsip_ss
 	tsip_dialog_t *ret = 0;
 	tsip_dialog_t *dialog;
 	tsk_list_item_t *item;
+	TSK_DEBUG_INFO("tsip_dialog_layer_find_by_ssid");
 
 	tsk_safeobj_lock(self);
 
 	tsk_list_foreach(item, self->dialogs){
 		dialog = item->data;
+
+
 		if(tsip_ssession_get_id(dialog->ss) == ssid){
 			ret = dialog;
 			break;

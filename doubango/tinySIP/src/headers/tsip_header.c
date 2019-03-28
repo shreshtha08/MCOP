@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -157,6 +156,7 @@ const char *tsip_header_get_name(tsip_header_type_t type)
 		case tsip_htype_Organization: return "Organization";
 		case tsip_htype_Path: return "Path";
 		case tsip_htype_Priv_Answer_Mode: return "Priv-Answer-Mode";
+		case tsip_htype_Answer_Mode: return "Answer-Mode";
 		case tsip_htype_Priority: return "Priority";
 		case tsip_htype_Privacy: return "Privacy";
 		case tsip_htype_Proxy_Authenticate: return "Proxy-Authenticate";
@@ -321,7 +321,10 @@ char* tsip_header_value_tostring(const tsip_header_t *self)
 	char* ret = tsk_null;
 	if(self && (output = tsk_buffer_create_null())){
 		if(!tsip_header_value_serialize(self, output)){
-			ret = tsk_strndup(output->data, output->size);
+            if ((ret = (char*)tsk_calloc((output->size + 1), sizeof(uint8_t)))) {
+                memset(ret, 0, (output->size + 1) * sizeof(uint8_t));
+                memcpy(ret, output->data, output->size);
+            }
 		}
 		TSK_OBJECT_SAFE_FREE(output);
 	}

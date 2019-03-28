@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2017 Eduardo Zarate Lasurtegui
+
  *   Copyright (C) 2017, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -54,6 +54,7 @@ public interface IMyLocalizationService extends INgnBaseService {
 
      void stopServiceLocation();
 
+     String createReport(Context context);
 
      boolean sendLocationNow();
 

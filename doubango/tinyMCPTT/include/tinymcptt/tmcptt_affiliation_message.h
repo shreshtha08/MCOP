@@ -1,6 +1,4 @@
-/*
-* Copyright (C) 2015 Eduardo Zarate
-*/
+
 
 /*
  * @file tmcptt_affiliation_message.h

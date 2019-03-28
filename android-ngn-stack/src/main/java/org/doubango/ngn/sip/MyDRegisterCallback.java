@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -35,7 +34,6 @@ import java.nio.ByteBuffer;
 //import org.mcopenplatform.iapi.ISimService;
 
 /**
- * Created by Eduardo Zarate Lasurtegui.
  */
 
 public class MyDRegisterCallback extends org.doubango.tinyWRAP.DRegisterCallback {

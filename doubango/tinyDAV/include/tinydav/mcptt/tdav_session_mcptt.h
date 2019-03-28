@@ -1,5 +1,5 @@
 /* 
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui, Mikel Ramos
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -68,13 +68,13 @@ typedef enum
 
 typedef enum tdav_mcptt_status_e
 {
-	mcptt_status_start_stop,
-	mcptt_status_no_permission,
-	mcptt_status_pending_request,
-	mcptt_status_permission,
-	mcptt_status_pending_release,
-	mcptt_status_releasing,
-	mcptt_status_queued
+	mcptt_status_start_stop = 1,
+	mcptt_status_no_permission = 2,
+	mcptt_status_pending_request = 3,
+	mcptt_status_permission = 4,
+	mcptt_status_pending_release = 5,
+	mcptt_status_releasing = 6,
+	mcptt_status_queued = 7
 }
 tdav_mcptt_status_t;
 
@@ -85,6 +85,7 @@ typedef struct tdav_session_mcptt_s
 	uint32_t priority_local;
 	tsk_bool_t implicit_local;
 	tsk_bool_t granted_local;
+	tsk_bool_t with_floor_control;
 	tmedia_type_t type_session;
 	tsip_uri_t* mcptt_id_local;
 	tsip_uri_t* mcptt_request_uri;
@@ -178,7 +179,7 @@ typedef struct tdav_session_mcptt_s
 	struct tmcptt_manager_s* mcptt_manager;
 	tmedia_session_audio_t* audio_session;
 	tmedia_session_audio_t* multicast_audio_session;
-	//MCPTT by Eduardo
+	//MCPTT
 	//This boolean indicates if the device sends floor indicator in MCPTT floor controler packet
 	tsk_bool_t has_floor_incator;
 }

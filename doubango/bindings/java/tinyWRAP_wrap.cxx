@@ -412,7 +412,7 @@ namespace Swig {
 namespace Swig {
   namespace {
     jclass jclass_tinyWRAPJNI = NULL;
-    jmethodID director_methids[46];
+    jmethodID director_methids[50];
   }
 }
 
@@ -469,7 +469,7 @@ SwigDirector_DDebugCallback::~SwigDirector_DDebugCallback() {
 }
 
 
-int SwigDirector_DDebugCallback::OnDebugInfo(char const *message) {
+int SwigDirector_DDebugCallback::OnDebugTest(char const *message) {
   int c_result = SwigValueInit< int >() ;
   jint jresult = 0 ;
   JNIEnvWrapper swigjnienv(this) ;
@@ -478,7 +478,7 @@ int SwigDirector_DDebugCallback::OnDebugInfo(char const *message) {
   jstring jmessage = 0 ;
   
   if (!swig_override[0]) {
-    return DDebugCallback::OnDebugInfo(message);
+    return DDebugCallback::OnDebugTest(message);
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
@@ -497,7 +497,7 @@ int SwigDirector_DDebugCallback::OnDebugInfo(char const *message) {
   return c_result;
 }
 
-int SwigDirector_DDebugCallback::OnDebugWarn(char const *message) {
+int SwigDirector_DDebugCallback::OnDebugInfo(char const *message) {
   int c_result = SwigValueInit< int >() ;
   jint jresult = 0 ;
   JNIEnvWrapper swigjnienv(this) ;
@@ -506,7 +506,7 @@ int SwigDirector_DDebugCallback::OnDebugWarn(char const *message) {
   jstring jmessage = 0 ;
   
   if (!swig_override[1]) {
-    return DDebugCallback::OnDebugWarn(message);
+    return DDebugCallback::OnDebugInfo(message);
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
@@ -525,7 +525,7 @@ int SwigDirector_DDebugCallback::OnDebugWarn(char const *message) {
   return c_result;
 }
 
-int SwigDirector_DDebugCallback::OnDebugError(char const *message) {
+int SwigDirector_DDebugCallback::OnDebugWarn(char const *message) {
   int c_result = SwigValueInit< int >() ;
   jint jresult = 0 ;
   JNIEnvWrapper swigjnienv(this) ;
@@ -534,7 +534,7 @@ int SwigDirector_DDebugCallback::OnDebugError(char const *message) {
   jstring jmessage = 0 ;
   
   if (!swig_override[2]) {
-    return DDebugCallback::OnDebugError(message);
+    return DDebugCallback::OnDebugWarn(message);
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
@@ -553,7 +553,7 @@ int SwigDirector_DDebugCallback::OnDebugError(char const *message) {
   return c_result;
 }
 
-int SwigDirector_DDebugCallback::OnDebugFatal(char const *message) {
+int SwigDirector_DDebugCallback::OnDebugError(char const *message) {
   int c_result = SwigValueInit< int >() ;
   jint jresult = 0 ;
   JNIEnvWrapper swigjnienv(this) ;
@@ -562,7 +562,7 @@ int SwigDirector_DDebugCallback::OnDebugFatal(char const *message) {
   jstring jmessage = 0 ;
   
   if (!swig_override[3]) {
-    return DDebugCallback::OnDebugFatal(message);
+    return DDebugCallback::OnDebugError(message);
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
@@ -581,12 +581,43 @@ int SwigDirector_DDebugCallback::OnDebugFatal(char const *message) {
   return c_result;
 }
 
+int SwigDirector_DDebugCallback::OnDebugFatal(char const *message) {
+  int c_result = SwigValueInit< int >() ;
+  jint jresult = 0 ;
+  JNIEnvWrapper swigjnienv(this) ;
+  JNIEnv * jenv = swigjnienv.getJNIEnv() ;
+  jobject swigjobj = (jobject) NULL ;
+  jstring jmessage = 0 ;
+  
+  if (!swig_override[4]) {
+    return DDebugCallback::OnDebugFatal(message);
+  }
+  swigjobj = swig_get_self(jenv);
+  if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
+    jmessage = 0;
+    if (message) {
+      jmessage = jenv->NewStringUTF((const char *)message);
+      if (!jmessage) return c_result;
+    }
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[4], swigjobj, jmessage);
+    if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
+    c_result = (int)jresult; 
+  } else {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null upcall object");
+  }
+  if (swigjobj) jenv->DeleteLocalRef(swigjobj);
+  return c_result;
+}
+
 void SwigDirector_DDebugCallback::swig_connect_director(JNIEnv *jenv, jobject jself, jclass jcls, bool swig_mem_own, bool weak_global) {
   static struct {
     const char *mname;
     const char *mdesc;
     jmethodID base_methid;
   } methods[] = {
+    {
+      "OnDebugTest", "(Ljava/lang/String;)I", NULL 
+    },
     {
       "OnDebugInfo", "(Ljava/lang/String;)I", NULL 
     },
@@ -610,7 +641,7 @@ void SwigDirector_DDebugCallback::swig_connect_director(JNIEnv *jenv, jobject js
       baseclass = (jclass) jenv->NewGlobalRef(baseclass);
     }
     bool derived = (jenv->IsSameObject(baseclass, jcls) ? false : true);
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 5; ++i) {
       if (!methods[i].base_methid) {
         methods[i].base_methid = jenv->GetMethodID(baseclass, methods[i].mname, methods[i].mdesc);
         if (!methods[i].base_methid) return;
@@ -652,7 +683,7 @@ int SwigDirector_DRegisterCallback::onAuthRegister(char const *message) {
       jmessage = jenv->NewStringUTF((const char *)message);
       if (!jmessage) return c_result;
     }
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[4], swigjobj, jmessage);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[5], swigjobj, jmessage);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -720,7 +751,7 @@ int SwigDirector_T140Callback::ondata(T140CallbackData const *pData) {
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((T140CallbackData **)&jpData) = (T140CallbackData *) pData; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[5], swigjobj, jpData);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[6], swigjobj, jpData);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -806,7 +837,7 @@ int SwigDirector_ProxyPluginMgrCallback::OnPluginCreated(uint64_t id, enum twrap
       jid = bigint;
     }
     jtype = (jint) type;
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[6], swigjobj, jid, jtype);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[7], swigjobj, jid, jtype);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -848,7 +879,7 @@ int SwigDirector_ProxyPluginMgrCallback::OnPluginDestroyed(uint64_t id, enum twr
       jid = bigint;
     }
     jtype = (jint) type;
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[7], swigjobj, jid, jtype);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[8], swigjobj, jid, jtype);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -923,7 +954,7 @@ int SwigDirector_ProxyAudioConsumerCallback::prepare(int ptime, int rate, int ch
     jptime = (jint) ptime;
     jrate = (jint) rate;
     jchannels = (jint) channels;
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[8], swigjobj, jptime, jrate, jchannels);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[9], swigjobj, jptime, jrate, jchannels);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -945,7 +976,7 @@ int SwigDirector_ProxyAudioConsumerCallback::start() {
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[9], swigjobj);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[10], swigjobj);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -967,7 +998,7 @@ int SwigDirector_ProxyAudioConsumerCallback::pause() {
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[10], swigjobj);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[11], swigjobj);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -989,7 +1020,7 @@ int SwigDirector_ProxyAudioConsumerCallback::stop() {
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[11], swigjobj);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[12], swigjobj);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1070,7 +1101,7 @@ int SwigDirector_ProxyVideoConsumerCallback::prepare(int nWidth, int nHeight, in
     jnWidth = (jint) nWidth;
     jnHeight = (jint) nHeight;
     jnFps = (jint) nFps;
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[12], swigjobj, jnWidth, jnHeight, jnFps);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[13], swigjobj, jnWidth, jnHeight, jnFps);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1094,7 +1125,7 @@ int SwigDirector_ProxyVideoConsumerCallback::consume(ProxyVideoFrame const *fram
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((ProxyVideoFrame **)&jframe) = (ProxyVideoFrame *) frame; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[13], swigjobj, jframe);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[14], swigjobj, jframe);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1120,7 +1151,7 @@ int SwigDirector_ProxyVideoConsumerCallback::bufferCopied(unsigned int nCopiedSi
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     jnCopiedSize = (jlong) nCopiedSize;
     jnAvailableSize = (jlong) nAvailableSize;
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[14], swigjobj, jnCopiedSize, jnAvailableSize);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[15], swigjobj, jnCopiedSize, jnAvailableSize);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1142,7 +1173,7 @@ int SwigDirector_ProxyVideoConsumerCallback::start() {
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[15], swigjobj);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[16], swigjobj);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1164,7 +1195,7 @@ int SwigDirector_ProxyVideoConsumerCallback::pause() {
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[16], swigjobj);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[17], swigjobj);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1186,7 +1217,7 @@ int SwigDirector_ProxyVideoConsumerCallback::stop() {
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[17], swigjobj);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[18], swigjobj);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1273,7 +1304,7 @@ int SwigDirector_ProxyAudioProducerCallback::prepare(int ptime, int rate, int ch
     jptime = (jint) ptime;
     jrate = (jint) rate;
     jchannels = (jint) channels;
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[18], swigjobj, jptime, jrate, jchannels);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[19], swigjobj, jptime, jrate, jchannels);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1295,7 +1326,7 @@ int SwigDirector_ProxyAudioProducerCallback::start() {
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[19], swigjobj);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[20], swigjobj);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1317,7 +1348,7 @@ int SwigDirector_ProxyAudioProducerCallback::pause() {
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[20], swigjobj);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[21], swigjobj);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1339,7 +1370,7 @@ int SwigDirector_ProxyAudioProducerCallback::stop() {
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[21], swigjobj);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[22], swigjobj);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1361,7 +1392,7 @@ int SwigDirector_ProxyAudioProducerCallback::fillPushBuffer() {
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[22], swigjobj);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[23], swigjobj);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1445,7 +1476,7 @@ int SwigDirector_ProxyVideoProducerCallback::prepare(int width, int height, int 
     jwidth = (jint) width;
     jheight = (jint) height;
     jfps = (jint) fps;
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[23], swigjobj, jwidth, jheight, jfps);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[24], swigjobj, jwidth, jheight, jfps);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1467,7 +1498,7 @@ int SwigDirector_ProxyVideoProducerCallback::start() {
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[24], swigjobj);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[25], swigjobj);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1489,7 +1520,7 @@ int SwigDirector_ProxyVideoProducerCallback::pause() {
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[25], swigjobj);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[26], swigjobj);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1511,7 +1542,7 @@ int SwigDirector_ProxyVideoProducerCallback::stop() {
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[26], swigjobj);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[27], swigjobj);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1588,7 +1619,7 @@ int SwigDirector_SipCallback::OnDialogEvent(DialogEvent const *e) {
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((DialogEvent **)&je) = (DialogEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[27], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[28], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1612,7 +1643,7 @@ int SwigDirector_SipCallback::OnStackEvent(StackEvent const *e) {
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((StackEvent **)&je) = (StackEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[28], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[29], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1636,7 +1667,7 @@ int SwigDirector_SipCallback::OnInviteEvent(InviteEvent const *e) {
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((InviteEvent **)&je) = (InviteEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[29], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[30], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1660,7 +1691,7 @@ int SwigDirector_SipCallback::OnMessagingEvent(MessagingEvent const *e) {
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((MessagingEvent **)&je) = (MessagingEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[30], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[31], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1684,7 +1715,7 @@ int SwigDirector_SipCallback::OnMessagingAffiliationEvent(MessagingAffiliationEv
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((MessagingAffiliationEvent **)&je) = (MessagingAffiliationEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[31], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[32], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1708,7 +1739,7 @@ int SwigDirector_SipCallback::OnMessagingMbmsEvent(MessagingMbmsEvent const *e) 
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((MessagingMbmsEvent **)&je) = (MessagingMbmsEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[32], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[33], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1732,7 +1763,7 @@ int SwigDirector_SipCallback::OnMessagingLocationEvent(MessagingLocationEvent co
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((MessagingLocationEvent **)&je) = (MessagingLocationEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[33], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[34], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1756,7 +1787,7 @@ int SwigDirector_SipCallback::OnInfoEvent(InfoEvent const *e) {
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((InfoEvent **)&je) = (InfoEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[34], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[35], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1780,7 +1811,7 @@ int SwigDirector_SipCallback::OnOptionsEvent(OptionsEvent const *e) {
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((OptionsEvent **)&je) = (OptionsEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[35], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[36], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1804,7 +1835,7 @@ int SwigDirector_SipCallback::OnPublicationEvent(PublicationEvent const *e) {
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((PublicationEvent **)&je) = (PublicationEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[36], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[37], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1828,7 +1859,31 @@ int SwigDirector_SipCallback::OnPublicationAffiliationEvent(PublicationAffiliati
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((PublicationAffiliationEvent **)&je) = (PublicationAffiliationEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[37], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[38], swigjobj, je);
+    if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
+    c_result = (int)jresult; 
+  } else {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null upcall object");
+  }
+  if (swigjobj) jenv->DeleteLocalRef(swigjobj);
+  return c_result;
+}
+
+int SwigDirector_SipCallback::OnPublicationAuthenticationEvent(PublicationAuthenticationEvent const *e) {
+  int c_result = SwigValueInit< int >() ;
+  jint jresult = 0 ;
+  JNIEnvWrapper swigjnienv(this) ;
+  JNIEnv * jenv = swigjnienv.getJNIEnv() ;
+  jobject swigjobj = (jobject) NULL ;
+  jlong je = 0 ;
+  
+  if (!swig_override[11]) {
+    return SipCallback::OnPublicationAuthenticationEvent(e);
+  }
+  swigjobj = swig_get_self(jenv);
+  if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
+    *((PublicationAuthenticationEvent **)&je) = (PublicationAuthenticationEvent *) e; 
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[39], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1846,13 +1901,13 @@ int SwigDirector_SipCallback::OnRegistrationAuthenticationEvent(RegistrationAuth
   jobject swigjobj = (jobject) NULL ;
   jlong je = 0 ;
   
-  if (!swig_override[11]) {
+  if (!swig_override[12]) {
     return SipCallback::OnRegistrationAuthenticationEvent(e);
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((RegistrationAuthenticationEvent **)&je) = (RegistrationAuthenticationEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[38], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[40], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1870,13 +1925,13 @@ int SwigDirector_SipCallback::OnRegistrationEvent(RegistrationEvent const *e) {
   jobject swigjobj = (jobject) NULL ;
   jlong je = 0 ;
   
-  if (!swig_override[12]) {
+  if (!swig_override[13]) {
     return SipCallback::OnRegistrationEvent(e);
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((RegistrationEvent **)&je) = (RegistrationEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[39], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[41], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1894,13 +1949,13 @@ int SwigDirector_SipCallback::OnSubscriptionEvent(SubscriptionEvent const *e) {
   jobject swigjobj = (jobject) NULL ;
   jlong je = 0 ;
   
-  if (!swig_override[13]) {
+  if (!swig_override[14]) {
     return SipCallback::OnSubscriptionEvent(e);
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((SubscriptionEvent **)&je) = (SubscriptionEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[40], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[42], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1918,13 +1973,61 @@ int SwigDirector_SipCallback::OnSubscriptionAffiliationEvent(SubscriptionAffilia
   jobject swigjobj = (jobject) NULL ;
   jlong je = 0 ;
   
-  if (!swig_override[14]) {
+  if (!swig_override[15]) {
     return SipCallback::OnSubscriptionAffiliationEvent(e);
   }
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((SubscriptionAffiliationEvent **)&je) = (SubscriptionAffiliationEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[41], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[43], swigjobj, je);
+    if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
+    c_result = (int)jresult; 
+  } else {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null upcall object");
+  }
+  if (swigjobj) jenv->DeleteLocalRef(swigjobj);
+  return c_result;
+}
+
+int SwigDirector_SipCallback::OnSubscriptionCMSEvent(SubscriptionCMSEvent const *e) {
+  int c_result = SwigValueInit< int >() ;
+  jint jresult = 0 ;
+  JNIEnvWrapper swigjnienv(this) ;
+  JNIEnv * jenv = swigjnienv.getJNIEnv() ;
+  jobject swigjobj = (jobject) NULL ;
+  jlong je = 0 ;
+  
+  if (!swig_override[16]) {
+    return SipCallback::OnSubscriptionCMSEvent(e);
+  }
+  swigjobj = swig_get_self(jenv);
+  if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
+    *((SubscriptionCMSEvent **)&je) = (SubscriptionCMSEvent *) e; 
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[44], swigjobj, je);
+    if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
+    c_result = (int)jresult; 
+  } else {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null upcall object");
+  }
+  if (swigjobj) jenv->DeleteLocalRef(swigjobj);
+  return c_result;
+}
+
+int SwigDirector_SipCallback::OnSubscriptionGMSEvent(SubscriptionGMSEvent const *e) {
+  int c_result = SwigValueInit< int >() ;
+  jint jresult = 0 ;
+  JNIEnvWrapper swigjnienv(this) ;
+  JNIEnv * jenv = swigjnienv.getJNIEnv() ;
+  jobject swigjobj = (jobject) NULL ;
+  jlong je = 0 ;
+  
+  if (!swig_override[17]) {
+    return SipCallback::OnSubscriptionGMSEvent(e);
+  }
+  swigjobj = swig_get_self(jenv);
+  if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
+    *((SubscriptionGMSEvent **)&je) = (SubscriptionGMSEvent *) e; 
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[45], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -1974,6 +2077,9 @@ void SwigDirector_SipCallback::swig_connect_director(JNIEnv *jenv, jobject jself
       "OnPublicationAffiliationEvent", "(Lorg/doubango/tinyWRAP/PublicationAffiliationEvent;)I", NULL 
     },
     {
+      "OnPublicationAuthenticationEvent", "(Lorg/doubango/tinyWRAP/PublicationAuthenticationEvent;)I", NULL 
+    },
+    {
       "OnRegistrationAuthenticationEvent", "(Lorg/doubango/tinyWRAP/RegistrationAuthenticationEvent;)I", NULL 
     },
     {
@@ -1984,6 +2090,12 @@ void SwigDirector_SipCallback::swig_connect_director(JNIEnv *jenv, jobject jself
     },
     {
       "OnSubscriptionAffiliationEvent", "(Lorg/doubango/tinyWRAP/SubscriptionAffiliationEvent;)I", NULL 
+    },
+    {
+      "OnSubscriptionCMSEvent", "(Lorg/doubango/tinyWRAP/SubscriptionCMSEvent;)I", NULL 
+    },
+    {
+      "OnSubscriptionGMSEvent", "(Lorg/doubango/tinyWRAP/SubscriptionGMSEvent;)I", NULL 
     }
   };
   
@@ -1996,7 +2108,7 @@ void SwigDirector_SipCallback::swig_connect_director(JNIEnv *jenv, jobject jself
       baseclass = (jclass) jenv->NewGlobalRef(baseclass);
     }
     bool derived = (jenv->IsSameObject(baseclass, jcls) ? false : true);
-    for (int i = 0; i < 15; ++i) {
+    for (int i = 0; i < 18; ++i) {
       if (!methods[i].base_methid) {
         methods[i].base_methid = jenv->GetMethodID(baseclass, methods[i].mname, methods[i].mdesc);
         if (!methods[i].base_methid) return;
@@ -2034,7 +2146,7 @@ int SwigDirector_XcapCallback::onEvent(XcapEvent const *e) const {
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((XcapEvent **)&je) = (XcapEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[42], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[46], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -2102,7 +2214,7 @@ int SwigDirector_MsrpCallback::OnEvent(MsrpEvent const *e) {
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((MsrpEvent **)&je) = (MsrpEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[43], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[47], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -2170,7 +2282,7 @@ int SwigDirector_McpttCallback::OnEvent(McpttEvent const *e) {
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((McpttEvent **)&je) = (McpttEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[44], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[48], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -2238,7 +2350,7 @@ int SwigDirector_McpttMbmsCallback::OnEvent(McpttMbmsEvent const *e) {
   swigjobj = swig_get_self(jenv);
   if (swigjobj && jenv->IsSameObject(swigjobj, NULL) == JNI_FALSE) {
     *((McpttMbmsEvent **)&je) = (McpttMbmsEvent *) e; 
-    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[45], swigjobj, je);
+    jresult = (jint) jenv->CallStaticIntMethod(Swig::jclass_tinyWRAPJNI, Swig::director_methids[49], swigjobj, je);
     if (jenv->ExceptionCheck() == JNI_TRUE) return c_result;
     c_result = (int)jresult; 
   } else {
@@ -2308,6 +2420,50 @@ SWIGEXPORT void JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_delete_1DDebugCal
   (void)jcls;
   arg1 = *(DDebugCallback **)&jarg1; 
   delete arg1;
+}
+
+
+SWIGEXPORT jint JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_DDebugCallback_1OnDebugTest(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+  jint jresult = 0 ;
+  DDebugCallback *arg1 = (DDebugCallback *) 0 ;
+  char *arg2 = (char *) 0 ;
+  int result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(DDebugCallback **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return 0;
+  }
+  result = (int)(arg1)->OnDebugTest((char const *)arg2);
+  jresult = (jint)result; 
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_DDebugCallback_1OnDebugTestSwigExplicitDDebugCallback(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+  jint jresult = 0 ;
+  DDebugCallback *arg1 = (DDebugCallback *) 0 ;
+  char *arg2 = (char *) 0 ;
+  int result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(DDebugCallback **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return 0;
+  }
+  result = (int)(arg1)->DDebugCallback::OnDebugTest((char const *)arg2);
+  jresult = (jint)result; 
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+  return jresult;
 }
 
 
@@ -3246,6 +3402,18 @@ SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_MediaSessionMgr_
   result = (unsigned int)MediaSessionMgr::registerAudioPluginFromFile((char const *)arg1);
   jresult = (jlong)result; 
   if (arg1) jenv->ReleaseStringUTFChars(jarg1, (const char *)arg1);
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_MediaSessionMgr_1registerAudioPluginOpenSLES(JNIEnv *jenv, jclass jcls) {
+  jlong jresult = 0 ;
+  unsigned int result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (unsigned int)MediaSessionMgr::registerAudioPluginOpenSLES();
+  jresult = (jlong)result; 
   return jresult;
 }
 
@@ -5802,6 +5970,61 @@ SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_PublicationAffil
 }
 
 
+SWIGEXPORT void JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_delete_1PublicationAuthenticationEvent(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  PublicationAuthenticationEvent *arg1 = (PublicationAuthenticationEvent *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = *(PublicationAuthenticationEvent **)&jarg1; 
+  delete arg1;
+}
+
+
+SWIGEXPORT jint JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_PublicationAuthenticationEvent_1getType(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jint jresult = 0 ;
+  PublicationAuthenticationEvent *arg1 = (PublicationAuthenticationEvent *) 0 ;
+  tsip_publish_event_type_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(PublicationAuthenticationEvent **)&jarg1; 
+  result = (tsip_publish_event_type_t)((PublicationAuthenticationEvent const *)arg1)->getType();
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_PublicationAuthenticationEvent_1getSession(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  PublicationAuthenticationEvent *arg1 = (PublicationAuthenticationEvent *) 0 ;
+  PublicationAuthenticationSession *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(PublicationAuthenticationEvent **)&jarg1; 
+  result = (PublicationAuthenticationSession *)((PublicationAuthenticationEvent const *)arg1)->getSession();
+  *(PublicationAuthenticationSession **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_PublicationAuthenticationEvent_1takeSessionOwnership(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  PublicationAuthenticationEvent *arg1 = (PublicationAuthenticationEvent *) 0 ;
+  PublicationAuthenticationSession *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(PublicationAuthenticationEvent **)&jarg1; 
+  result = (PublicationAuthenticationSession *)((PublicationAuthenticationEvent const *)arg1)->takeSessionOwnership();
+  *(PublicationAuthenticationSession **)&jresult = result; 
+  return jresult;
+}
+
+
 SWIGEXPORT void JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_delete_1RegistrationAuthenticationEvent(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   RegistrationAuthenticationEvent *arg1 = (RegistrationAuthenticationEvent *) 0 ;
   
@@ -5988,6 +6211,116 @@ SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionAffi
   arg1 = *(SubscriptionAffiliationEvent **)&jarg1; 
   result = (SubscriptionAffiliationSession *)((SubscriptionAffiliationEvent const *)arg1)->takeSessionOwnership();
   *(SubscriptionAffiliationSession **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_delete_1SubscriptionCMSEvent(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  SubscriptionCMSEvent *arg1 = (SubscriptionCMSEvent *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = *(SubscriptionCMSEvent **)&jarg1; 
+  delete arg1;
+}
+
+
+SWIGEXPORT jint JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionCMSEvent_1getType(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jint jresult = 0 ;
+  SubscriptionCMSEvent *arg1 = (SubscriptionCMSEvent *) 0 ;
+  tsip_subscribe_event_type_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SubscriptionCMSEvent **)&jarg1; 
+  result = (tsip_subscribe_event_type_t)((SubscriptionCMSEvent const *)arg1)->getType();
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionCMSEvent_1getSession(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  SubscriptionCMSEvent *arg1 = (SubscriptionCMSEvent *) 0 ;
+  SubscriptionCMSSession *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SubscriptionCMSEvent **)&jarg1; 
+  result = (SubscriptionCMSSession *)((SubscriptionCMSEvent const *)arg1)->getSession();
+  *(SubscriptionCMSSession **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionCMSEvent_1takeSessionOwnership(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  SubscriptionCMSEvent *arg1 = (SubscriptionCMSEvent *) 0 ;
+  SubscriptionCMSSession *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SubscriptionCMSEvent **)&jarg1; 
+  result = (SubscriptionCMSSession *)((SubscriptionCMSEvent const *)arg1)->takeSessionOwnership();
+  *(SubscriptionCMSSession **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_delete_1SubscriptionGMSEvent(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  SubscriptionGMSEvent *arg1 = (SubscriptionGMSEvent *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = *(SubscriptionGMSEvent **)&jarg1; 
+  delete arg1;
+}
+
+
+SWIGEXPORT jint JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionGMSEvent_1getType(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jint jresult = 0 ;
+  SubscriptionGMSEvent *arg1 = (SubscriptionGMSEvent *) 0 ;
+  tsip_subscribe_event_type_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SubscriptionGMSEvent **)&jarg1; 
+  result = (tsip_subscribe_event_type_t)((SubscriptionGMSEvent const *)arg1)->getType();
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionGMSEvent_1getSession(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  SubscriptionGMSEvent *arg1 = (SubscriptionGMSEvent *) 0 ;
+  SubscriptionGMSSession *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SubscriptionGMSEvent **)&jarg1; 
+  result = (SubscriptionGMSSession *)((SubscriptionGMSEvent const *)arg1)->getSession();
+  *(SubscriptionGMSSession **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionGMSEvent_1takeSessionOwnership(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  SubscriptionGMSEvent *arg1 = (SubscriptionGMSEvent *) 0 ;
+  SubscriptionGMSSession *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SubscriptionGMSEvent **)&jarg1; 
+  result = (SubscriptionGMSSession *)((SubscriptionGMSEvent const *)arg1)->takeSessionOwnership();
+  *(SubscriptionGMSSession **)&jresult = result; 
   return jresult;
 }
 
@@ -6945,18 +7278,19 @@ SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1call_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jint jarg3, jlong jarg4, jobject jarg4_) {
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1call_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jint jarg3, jboolean jarg4, jlong jarg5, jobject jarg5_) {
   jboolean jresult = 0 ;
   CallSession *arg1 = (CallSession *) 0 ;
   char *arg2 = (char *) 0 ;
   twrap_media_type_t arg3 ;
-  ActionConfig *arg4 = (ActionConfig *) 0 ;
+  bool arg4 ;
+  ActionConfig *arg5 = (ActionConfig *) 0 ;
   bool result;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  (void)jarg4_;
+  (void)jarg5_;
   arg1 = *(CallSession **)&jarg1; 
   arg2 = 0;
   if (jarg2) {
@@ -6964,7 +7298,34 @@ SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1
     if (!arg2) return 0;
   }
   arg3 = (twrap_media_type_t)jarg3; 
-  arg4 = *(ActionConfig **)&jarg4; 
+  arg4 = jarg4 ? true : false; 
+  arg5 = *(ActionConfig **)&jarg5; 
+  result = (bool)(arg1)->call((char const *)arg2,arg3,arg4,arg5);
+  jresult = (jboolean)result; 
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1call_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jint jarg3, jboolean jarg4) {
+  jboolean jresult = 0 ;
+  CallSession *arg1 = (CallSession *) 0 ;
+  char *arg2 = (char *) 0 ;
+  twrap_media_type_t arg3 ;
+  bool arg4 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(CallSession **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return 0;
+  }
+  arg3 = (twrap_media_type_t)jarg3; 
+  arg4 = jarg4 ? true : false; 
   result = (bool)(arg1)->call((char const *)arg2,arg3,arg4);
   jresult = (jboolean)result; 
   if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
@@ -6972,11 +7333,99 @@ SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1call_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jint jarg3) {
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1call_1_1SWIG_12(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jint jarg3, jboolean jarg4, jlong jarg5, jobject jarg5_) {
+  jboolean jresult = 0 ;
+  CallSession *arg1 = (CallSession *) 0 ;
+  SipUri *arg2 = (SipUri *) 0 ;
+  twrap_media_type_t arg3 ;
+  bool arg4 ;
+  ActionConfig *arg5 = (ActionConfig *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  (void)jarg5_;
+  arg1 = *(CallSession **)&jarg1; 
+  arg2 = *(SipUri **)&jarg2; 
+  arg3 = (twrap_media_type_t)jarg3; 
+  arg4 = jarg4 ? true : false; 
+  arg5 = *(ActionConfig **)&jarg5; 
+  result = (bool)(arg1)->call((SipUri const *)arg2,arg3,arg4,arg5);
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1call_1_1SWIG_13(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jint jarg3, jboolean jarg4) {
+  jboolean jresult = 0 ;
+  CallSession *arg1 = (CallSession *) 0 ;
+  SipUri *arg2 = (SipUri *) 0 ;
+  twrap_media_type_t arg3 ;
+  bool arg4 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(CallSession **)&jarg1; 
+  arg2 = *(SipUri **)&jarg2; 
+  arg3 = (twrap_media_type_t)jarg3; 
+  arg4 = jarg4 ? true : false; 
+  result = (bool)(arg1)->call((SipUri const *)arg2,arg3,arg4);
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1callEmergency_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jint jarg3, jboolean jarg4, jstring jarg5, jint jarg6, jlong jarg7, jobject jarg7_) {
   jboolean jresult = 0 ;
   CallSession *arg1 = (CallSession *) 0 ;
   char *arg2 = (char *) 0 ;
   twrap_media_type_t arg3 ;
+  bool arg4 ;
+  char *arg5 = (char *) 0 ;
+  int arg6 ;
+  ActionConfig *arg7 = (ActionConfig *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg7_;
+  arg1 = *(CallSession **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return 0;
+  }
+  arg3 = (twrap_media_type_t)jarg3; 
+  arg4 = jarg4 ? true : false; 
+  arg5 = 0;
+  if (jarg5) {
+    arg5 = (char *)jenv->GetStringUTFChars(jarg5, 0);
+    if (!arg5) return 0;
+  }
+  arg6 = (int)jarg6; 
+  arg7 = *(ActionConfig **)&jarg7; 
+  result = (bool)(arg1)->callEmergency((char const *)arg2,arg3,arg4,(char const *)arg5,arg6,arg7);
+  jresult = (jboolean)result; 
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+  if (arg5) jenv->ReleaseStringUTFChars(jarg5, (const char *)arg5);
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1callEmergency_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jint jarg3, jboolean jarg4, jstring jarg5, jint jarg6) {
+  jboolean jresult = 0 ;
+  CallSession *arg1 = (CallSession *) 0 ;
+  char *arg2 = (char *) 0 ;
+  twrap_media_type_t arg3 ;
+  bool arg4 ;
+  char *arg5 = (char *) 0 ;
+  int arg6 ;
   bool result;
   
   (void)jenv;
@@ -6989,41 +7438,63 @@ SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1
     if (!arg2) return 0;
   }
   arg3 = (twrap_media_type_t)jarg3; 
-  result = (bool)(arg1)->call((char const *)arg2,arg3);
+  arg4 = jarg4 ? true : false; 
+  arg5 = 0;
+  if (jarg5) {
+    arg5 = (char *)jenv->GetStringUTFChars(jarg5, 0);
+    if (!arg5) return 0;
+  }
+  arg6 = (int)jarg6; 
+  result = (bool)(arg1)->callEmergency((char const *)arg2,arg3,arg4,(char const *)arg5,arg6);
   jresult = (jboolean)result; 
   if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+  if (arg5) jenv->ReleaseStringUTFChars(jarg5, (const char *)arg5);
   return jresult;
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1call_1_1SWIG_12(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jint jarg3, jlong jarg4, jobject jarg4_) {
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1callEmergency_1_1SWIG_12(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jint jarg3, jboolean jarg4, jstring jarg5, jint jarg6, jlong jarg7, jobject jarg7_) {
   jboolean jresult = 0 ;
   CallSession *arg1 = (CallSession *) 0 ;
   SipUri *arg2 = (SipUri *) 0 ;
   twrap_media_type_t arg3 ;
-  ActionConfig *arg4 = (ActionConfig *) 0 ;
+  bool arg4 ;
+  char *arg5 = (char *) 0 ;
+  int arg6 ;
+  ActionConfig *arg7 = (ActionConfig *) 0 ;
   bool result;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
   (void)jarg2_;
-  (void)jarg4_;
+  (void)jarg7_;
   arg1 = *(CallSession **)&jarg1; 
   arg2 = *(SipUri **)&jarg2; 
   arg3 = (twrap_media_type_t)jarg3; 
-  arg4 = *(ActionConfig **)&jarg4; 
-  result = (bool)(arg1)->call((SipUri const *)arg2,arg3,arg4);
+  arg4 = jarg4 ? true : false; 
+  arg5 = 0;
+  if (jarg5) {
+    arg5 = (char *)jenv->GetStringUTFChars(jarg5, 0);
+    if (!arg5) return 0;
+  }
+  arg6 = (int)jarg6; 
+  arg7 = *(ActionConfig **)&jarg7; 
+  result = (bool)(arg1)->callEmergency((SipUri const *)arg2,arg3,arg4,(char const *)arg5,arg6,arg7);
   jresult = (jboolean)result; 
+  if (arg5) jenv->ReleaseStringUTFChars(jarg5, (const char *)arg5);
   return jresult;
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1call_1_1SWIG_13(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jint jarg3) {
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1callEmergency_1_1SWIG_13(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jint jarg3, jboolean jarg4, jstring jarg5, jint jarg6) {
   jboolean jresult = 0 ;
   CallSession *arg1 = (CallSession *) 0 ;
   SipUri *arg2 = (SipUri *) 0 ;
   twrap_media_type_t arg3 ;
+  bool arg4 ;
+  char *arg5 = (char *) 0 ;
+  int arg6 ;
   bool result;
   
   (void)jenv;
@@ -7033,8 +7504,16 @@ SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1
   arg1 = *(CallSession **)&jarg1; 
   arg2 = *(SipUri **)&jarg2; 
   arg3 = (twrap_media_type_t)jarg3; 
-  result = (bool)(arg1)->call((SipUri const *)arg2,arg3);
+  arg4 = jarg4 ? true : false; 
+  arg5 = 0;
+  if (jarg5) {
+    arg5 = (char *)jenv->GetStringUTFChars(jarg5, 0);
+    if (!arg5) return 0;
+  }
+  arg6 = (int)jarg6; 
+  result = (bool)(arg1)->callEmergency((SipUri const *)arg2,arg3,arg4,(char const *)arg5,arg6);
   jresult = (jboolean)result; 
+  if (arg5) jenv->ReleaseStringUTFChars(jarg5, (const char *)arg5);
   return jresult;
 }
 
@@ -7900,6 +8379,36 @@ SWIGEXPORT jstring JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1g
   arg2 = (int)jarg2; 
   result = (char *)(arg1)->getPTTMcpttGroupMemberAtPosition(arg2);
   if (result) jresult = jenv->NewStringUTF((const char *)result);
+  return jresult;
+}
+
+
+SWIGEXPORT jstring JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1getPttMcpttEmergencyResourcePriorityString(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jstring jresult = 0 ;
+  CallSession *arg1 = (CallSession *) 0 ;
+  char *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(CallSession **)&jarg1; 
+  result = (char *)(arg1)->getPttMcpttEmergencyResourcePriorityString();
+  if (result) jresult = jenv->NewStringUTF((const char *)result);
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_CallSession_1getPttMcpttEmergencyResourcePriority(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jint jresult = 0 ;
+  CallSession *arg1 = (CallSession *) 0 ;
+  int result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(CallSession **)&jarg1; 
+  result = (int)(arg1)->getPttMcpttEmergencyResourcePriority();
+  jresult = (jint)result; 
   return jresult;
 }
 
@@ -9230,6 +9739,149 @@ SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_PublicationAf
 }
 
 
+SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_new_1PublicationAuthenticationSession(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  SipStack *arg1 = (SipStack *) 0 ;
+  PublicationAuthenticationSession *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SipStack **)&jarg1; 
+  result = (PublicationAuthenticationSession *)new PublicationAuthenticationSession(arg1);
+  *(PublicationAuthenticationSession **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_delete_1PublicationAuthenticationSession(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  PublicationAuthenticationSession *arg1 = (PublicationAuthenticationSession *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = *(PublicationAuthenticationSession **)&jarg1; 
+  delete arg1;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_PublicationAuthenticationSession_1publish_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jstring jarg3, jbyteArray jarg4, jlong jarg5, jlong jarg6, jobject jarg6_) {
+  jboolean jresult = 0 ;
+  PublicationAuthenticationSession *arg1 = (PublicationAuthenticationSession *) 0 ;
+  char *arg2 = (char *) 0 ;
+  char *arg3 = (char *) 0 ;
+  void *arg4 = (void *) 0 ;
+  unsigned int arg5 ;
+  ActionConfig *arg6 = (ActionConfig *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg6_;
+  arg1 = *(PublicationAuthenticationSession **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return 0;
+  }
+  arg3 = 0;
+  if (jarg3) {
+    arg3 = (char *)jenv->GetStringUTFChars(jarg3, 0);
+    if (!arg3) return 0;
+  }
+  
+  arg4 = jenv->GetDirectBufferAddress(jarg4); 
+  
+  arg5 = (unsigned int)jarg5; 
+  arg6 = *(ActionConfig **)&jarg6; 
+  result = (bool)(arg1)->publish((char const *)arg2,(char const *)arg3,(void const *)arg4,arg5,arg6);
+  jresult = (jboolean)result; 
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+  if (arg3) jenv->ReleaseStringUTFChars(jarg3, (const char *)arg3);
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_PublicationAuthenticationSession_1publish_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jstring jarg3, jbyteArray jarg4, jlong jarg5) {
+  jboolean jresult = 0 ;
+  PublicationAuthenticationSession *arg1 = (PublicationAuthenticationSession *) 0 ;
+  char *arg2 = (char *) 0 ;
+  char *arg3 = (char *) 0 ;
+  void *arg4 = (void *) 0 ;
+  unsigned int arg5 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(PublicationAuthenticationSession **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return 0;
+  }
+  arg3 = 0;
+  if (jarg3) {
+    arg3 = (char *)jenv->GetStringUTFChars(jarg3, 0);
+    if (!arg3) return 0;
+  }
+  
+  arg4 = jenv->GetDirectBufferAddress(jarg4); 
+  
+  arg5 = (unsigned int)jarg5; 
+  result = (bool)(arg1)->publish((char const *)arg2,(char const *)arg3,(void const *)arg4,arg5);
+  jresult = (jboolean)result; 
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+  if (arg3) jenv->ReleaseStringUTFChars(jarg3, (const char *)arg3);
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_PublicationAuthenticationSession_1unPublish_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jbyteArray jarg2, jlong jarg3, jlong jarg4, jobject jarg4_) {
+  jboolean jresult = 0 ;
+  PublicationAuthenticationSession *arg1 = (PublicationAuthenticationSession *) 0 ;
+  void *arg2 = (void *) 0 ;
+  unsigned int arg3 ;
+  ActionConfig *arg4 = (ActionConfig *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg4_;
+  arg1 = *(PublicationAuthenticationSession **)&jarg1; 
+  
+  arg2 = jenv->GetDirectBufferAddress(jarg2); 
+  
+  arg3 = (unsigned int)jarg3; 
+  arg4 = *(ActionConfig **)&jarg4; 
+  result = (bool)(arg1)->unPublish((void const *)arg2,arg3,arg4);
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_PublicationAuthenticationSession_1unPublish_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jbyteArray jarg2, jlong jarg3) {
+  jboolean jresult = 0 ;
+  PublicationAuthenticationSession *arg1 = (PublicationAuthenticationSession *) 0 ;
+  void *arg2 = (void *) 0 ;
+  unsigned int arg3 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(PublicationAuthenticationSession **)&jarg1; 
+  
+  arg2 = jenv->GetDirectBufferAddress(jarg2); 
+  
+  arg3 = (unsigned int)jarg3; 
+  result = (bool)(arg1)->unPublish((void const *)arg2,arg3);
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
 SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_new_1RegistrationSession(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jlong jresult = 0 ;
   SipStack *arg1 = (SipStack *) 0 ;
@@ -9537,6 +10189,200 @@ SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionA
   (void)jarg1_;
   arg1 = *(SubscriptionAffiliationSession **)&jarg1; 
   result = (bool)(arg1)->unSubscribeAffiliation();
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_new_1SubscriptionCMSSession(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  SipStack *arg1 = (SipStack *) 0 ;
+  SubscriptionCMSSession *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SipStack **)&jarg1; 
+  result = (SubscriptionCMSSession *)new SubscriptionCMSSession(arg1);
+  *(SubscriptionCMSSession **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_delete_1SubscriptionCMSSession(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  SubscriptionCMSSession *arg1 = (SubscriptionCMSSession *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = *(SubscriptionCMSSession **)&jarg1; 
+  delete arg1;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionCMSSession_1subscribeCMS_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jbyteArray jarg2, jlong jarg3, jbyteArray jarg4, jlong jarg5, jlong jarg6, jobject jarg6_) {
+  jboolean jresult = 0 ;
+  SubscriptionCMSSession *arg1 = (SubscriptionCMSSession *) 0 ;
+  void *arg2 = (void *) 0 ;
+  unsigned int arg3 ;
+  void *arg4 = (void *) 0 ;
+  unsigned int arg5 ;
+  ActionConfig *arg6 = (ActionConfig *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg6_;
+  arg1 = *(SubscriptionCMSSession **)&jarg1; 
+  
+  arg2 = jenv->GetDirectBufferAddress(jarg2); 
+  
+  arg3 = (unsigned int)jarg3; 
+  
+  arg4 = jenv->GetDirectBufferAddress(jarg4); 
+  
+  arg5 = (unsigned int)jarg5; 
+  arg6 = *(ActionConfig **)&jarg6; 
+  result = (bool)(arg1)->subscribeCMS((void const *)arg2,arg3,(void const *)arg4,arg5,arg6);
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionCMSSession_1subscribeCMS_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jbyteArray jarg2, jlong jarg3, jbyteArray jarg4, jlong jarg5) {
+  jboolean jresult = 0 ;
+  SubscriptionCMSSession *arg1 = (SubscriptionCMSSession *) 0 ;
+  void *arg2 = (void *) 0 ;
+  unsigned int arg3 ;
+  void *arg4 = (void *) 0 ;
+  unsigned int arg5 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SubscriptionCMSSession **)&jarg1; 
+  
+  arg2 = jenv->GetDirectBufferAddress(jarg2); 
+  
+  arg3 = (unsigned int)jarg3; 
+  
+  arg4 = jenv->GetDirectBufferAddress(jarg4); 
+  
+  arg5 = (unsigned int)jarg5; 
+  result = (bool)(arg1)->subscribeCMS((void const *)arg2,arg3,(void const *)arg4,arg5);
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionCMSSession_1unSubscribeCMS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jboolean jresult = 0 ;
+  SubscriptionCMSSession *arg1 = (SubscriptionCMSSession *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SubscriptionCMSSession **)&jarg1; 
+  result = (bool)(arg1)->unSubscribeCMS();
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_new_1SubscriptionGMSSession(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  SipStack *arg1 = (SipStack *) 0 ;
+  SubscriptionGMSSession *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SipStack **)&jarg1; 
+  result = (SubscriptionGMSSession *)new SubscriptionGMSSession(arg1);
+  *(SubscriptionGMSSession **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_delete_1SubscriptionGMSSession(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  SubscriptionGMSSession *arg1 = (SubscriptionGMSSession *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = *(SubscriptionGMSSession **)&jarg1; 
+  delete arg1;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionGMSSession_1subscribeGMS_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jbyteArray jarg2, jlong jarg3, jbyteArray jarg4, jlong jarg5, jlong jarg6, jobject jarg6_) {
+  jboolean jresult = 0 ;
+  SubscriptionGMSSession *arg1 = (SubscriptionGMSSession *) 0 ;
+  void *arg2 = (void *) 0 ;
+  unsigned int arg3 ;
+  void *arg4 = (void *) 0 ;
+  unsigned int arg5 ;
+  ActionConfig *arg6 = (ActionConfig *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg6_;
+  arg1 = *(SubscriptionGMSSession **)&jarg1; 
+  
+  arg2 = jenv->GetDirectBufferAddress(jarg2); 
+  
+  arg3 = (unsigned int)jarg3; 
+  
+  arg4 = jenv->GetDirectBufferAddress(jarg4); 
+  
+  arg5 = (unsigned int)jarg5; 
+  arg6 = *(ActionConfig **)&jarg6; 
+  result = (bool)(arg1)->subscribeGMS((void const *)arg2,arg3,(void const *)arg4,arg5,arg6);
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionGMSSession_1subscribeGMS_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jbyteArray jarg2, jlong jarg3, jbyteArray jarg4, jlong jarg5) {
+  jboolean jresult = 0 ;
+  SubscriptionGMSSession *arg1 = (SubscriptionGMSSession *) 0 ;
+  void *arg2 = (void *) 0 ;
+  unsigned int arg3 ;
+  void *arg4 = (void *) 0 ;
+  unsigned int arg5 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SubscriptionGMSSession **)&jarg1; 
+  
+  arg2 = jenv->GetDirectBufferAddress(jarg2); 
+  
+  arg3 = (unsigned int)jarg3; 
+  
+  arg4 = jenv->GetDirectBufferAddress(jarg4); 
+  
+  arg5 = (unsigned int)jarg5; 
+  result = (bool)(arg1)->subscribeGMS((void const *)arg2,arg3,(void const *)arg4,arg5);
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionGMSSession_1unSubscribeGMS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jboolean jresult = 0 ;
+  SubscriptionGMSSession *arg1 = (SubscriptionGMSSession *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SubscriptionGMSSession **)&jarg1; 
+  result = (bool)(arg1)->unSubscribeGMS();
   jresult = (jboolean)result; 
   return jresult;
 }
@@ -12221,6 +13067,42 @@ SWIGEXPORT jint JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipCallback_1OnPu
 }
 
 
+SWIGEXPORT jint JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipCallback_1OnPublicationAuthenticationEvent(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  jint jresult = 0 ;
+  SipCallback *arg1 = (SipCallback *) 0 ;
+  PublicationAuthenticationEvent *arg2 = (PublicationAuthenticationEvent *) 0 ;
+  int result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(SipCallback **)&jarg1; 
+  arg2 = *(PublicationAuthenticationEvent **)&jarg2; 
+  result = (int)(arg1)->OnPublicationAuthenticationEvent((PublicationAuthenticationEvent const *)arg2);
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipCallback_1OnPublicationAuthenticationEventSwigExplicitSipCallback(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  jint jresult = 0 ;
+  SipCallback *arg1 = (SipCallback *) 0 ;
+  PublicationAuthenticationEvent *arg2 = (PublicationAuthenticationEvent *) 0 ;
+  int result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(SipCallback **)&jarg1; 
+  arg2 = *(PublicationAuthenticationEvent **)&jarg2; 
+  result = (int)(arg1)->SipCallback::OnPublicationAuthenticationEvent((PublicationAuthenticationEvent const *)arg2);
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
 SWIGEXPORT jint JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipCallback_1OnRegistrationAuthenticationEvent(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
   jint jresult = 0 ;
   SipCallback *arg1 = (SipCallback *) 0 ;
@@ -12360,6 +13242,78 @@ SWIGEXPORT jint JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipCallback_1OnSu
   arg1 = *(SipCallback **)&jarg1; 
   arg2 = *(SubscriptionAffiliationEvent **)&jarg2; 
   result = (int)(arg1)->SipCallback::OnSubscriptionAffiliationEvent((SubscriptionAffiliationEvent const *)arg2);
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipCallback_1OnSubscriptionCMSEvent(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  jint jresult = 0 ;
+  SipCallback *arg1 = (SipCallback *) 0 ;
+  SubscriptionCMSEvent *arg2 = (SubscriptionCMSEvent *) 0 ;
+  int result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(SipCallback **)&jarg1; 
+  arg2 = *(SubscriptionCMSEvent **)&jarg2; 
+  result = (int)(arg1)->OnSubscriptionCMSEvent((SubscriptionCMSEvent const *)arg2);
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipCallback_1OnSubscriptionCMSEventSwigExplicitSipCallback(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  jint jresult = 0 ;
+  SipCallback *arg1 = (SipCallback *) 0 ;
+  SubscriptionCMSEvent *arg2 = (SubscriptionCMSEvent *) 0 ;
+  int result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(SipCallback **)&jarg1; 
+  arg2 = *(SubscriptionCMSEvent **)&jarg2; 
+  result = (int)(arg1)->SipCallback::OnSubscriptionCMSEvent((SubscriptionCMSEvent const *)arg2);
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipCallback_1OnSubscriptionGMSEvent(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  jint jresult = 0 ;
+  SipCallback *arg1 = (SipCallback *) 0 ;
+  SubscriptionGMSEvent *arg2 = (SubscriptionGMSEvent *) 0 ;
+  int result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(SipCallback **)&jarg1; 
+  arg2 = *(SubscriptionGMSEvent **)&jarg2; 
+  result = (int)(arg1)->OnSubscriptionGMSEvent((SubscriptionGMSEvent const *)arg2);
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipCallback_1OnSubscriptionGMSEventSwigExplicitSipCallback(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  jint jresult = 0 ;
+  SipCallback *arg1 = (SipCallback *) 0 ;
+  SubscriptionGMSEvent *arg2 = (SubscriptionGMSEvent *) 0 ;
+  int result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(SipCallback **)&jarg1; 
+  arg2 = *(SubscriptionGMSEvent **)&jarg2; 
+  result = (int)(arg1)->SipCallback::OnSubscriptionGMSEvent((SubscriptionGMSEvent const *)arg2);
   jresult = (jint)result; 
   return jresult;
 }
@@ -13422,6 +14376,50 @@ SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipStack_1set
 }
 
 
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipStack_1setMCPTTPSICMS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+  jboolean jresult = 0 ;
+  SipStack *arg1 = (SipStack *) 0 ;
+  char *arg2 = (char *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SipStack **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return 0;
+  }
+  result = (bool)(arg1)->setMCPTTPSICMS((char const *)arg2);
+  jresult = (jboolean)result; 
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipStack_1setMCPTTPSIGMS(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+  jboolean jresult = 0 ;
+  SipStack *arg1 = (SipStack *) 0 ;
+  char *arg2 = (char *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SipStack **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return 0;
+  }
+  result = (bool)(arg1)->setMCPTTPSIGMS((char const *)arg2);
+  jresult = (jboolean)result; 
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+  return jresult;
+}
+
+
 SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipStack_1setMCPTTID(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
   jboolean jresult = 0 ;
   SipStack *arg1 = (SipStack *) 0 ;
@@ -13438,6 +14436,28 @@ SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipStack_1set
     if (!arg2) return 0;
   }
   result = (bool)(arg1)->setMCPTTID((char const *)arg2);
+  jresult = (jboolean)result; 
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipStack_1setMCPTTClientID(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+  jboolean jresult = 0 ;
+  SipStack *arg1 = (SipStack *) 0 ;
+  char *arg2 = (char *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SipStack **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return 0;
+  }
+  result = (bool)(arg1)->setMCPTTClientID((char const *)arg2);
   jresult = (jboolean)result; 
   if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
   return jresult;
@@ -13803,6 +14823,28 @@ SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipStack_1set
     if (!arg2) return 0;
   }
   result = (bool)(arg1)->setMCPTTAffiliationGroupsDefualt((char const *)arg2);
+  jresult = (jboolean)result; 
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SipStack_1setMCPTTPSIAuthentication(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+  jboolean jresult = 0 ;
+  SipStack *arg1 = (SipStack *) 0 ;
+  char *arg2 = (char *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(SipStack **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return 0;
+  }
+  result = (bool)(arg1)->setMCPTTPSIAuthentication((char const *)arg2);
   jresult = (jboolean)result; 
   if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
   return jresult;
@@ -16509,6 +17551,14 @@ SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_PublicationAffil
     return baseptr;
 }
 
+SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_PublicationAuthenticationEvent_1SWIGUpcast(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+    jlong baseptr = 0;
+    (void)jenv;
+    (void)jcls;
+    *(SipEvent **)&baseptr = *(PublicationAuthenticationEvent **)&jarg1;
+    return baseptr;
+}
+
 SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_RegistrationAuthenticationEvent_1SWIGUpcast(JNIEnv *jenv, jclass jcls, jlong jarg1) {
     jlong baseptr = 0;
     (void)jenv;
@@ -16538,6 +17588,22 @@ SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionAffi
     (void)jenv;
     (void)jcls;
     *(SipEvent **)&baseptr = *(SubscriptionAffiliationEvent **)&jarg1;
+    return baseptr;
+}
+
+SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionCMSEvent_1SWIGUpcast(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+    jlong baseptr = 0;
+    (void)jenv;
+    (void)jcls;
+    *(SipEvent **)&baseptr = *(SubscriptionCMSEvent **)&jarg1;
+    return baseptr;
+}
+
+SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionGMSEvent_1SWIGUpcast(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+    jlong baseptr = 0;
+    (void)jenv;
+    (void)jcls;
+    *(SipEvent **)&baseptr = *(SubscriptionGMSEvent **)&jarg1;
     return baseptr;
 }
 
@@ -16637,6 +17703,14 @@ SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_PublicationAffil
     return baseptr;
 }
 
+SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_PublicationAuthenticationSession_1SWIGUpcast(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+    jlong baseptr = 0;
+    (void)jenv;
+    (void)jcls;
+    *(SipSession **)&baseptr = *(PublicationAuthenticationSession **)&jarg1;
+    return baseptr;
+}
+
 SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_RegistrationSession_1SWIGUpcast(JNIEnv *jenv, jclass jcls, jlong jarg1) {
     jlong baseptr = 0;
     (void)jenv;
@@ -16658,6 +17732,22 @@ SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionAffi
     (void)jenv;
     (void)jcls;
     *(SipSession **)&baseptr = *(SubscriptionAffiliationSession **)&jarg1;
+    return baseptr;
+}
+
+SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionCMSSession_1SWIGUpcast(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+    jlong baseptr = 0;
+    (void)jenv;
+    (void)jcls;
+    *(SipSession **)&baseptr = *(SubscriptionCMSSession **)&jarg1;
+    return baseptr;
+}
+
+SWIGEXPORT jlong JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_SubscriptionGMSSession_1SWIGUpcast(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+    jlong baseptr = 0;
+    (void)jenv;
+    (void)jcls;
+    *(SipSession **)&baseptr = *(SubscriptionGMSSession **)&jarg1;
     return baseptr;
 }
 
@@ -16707,7 +17797,10 @@ SWIGEXPORT void JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_swig_1module_1ini
   static struct {
     const char *method;
     const char *signature;
-  } methods[46] = {
+  } methods[50] = {
+    {
+      "SwigDirector_DDebugCallback_OnDebugTest", "(Lorg/doubango/tinyWRAP/DDebugCallback;Ljava/lang/String;)I" 
+    },
     {
       "SwigDirector_DDebugCallback_OnDebugInfo", "(Lorg/doubango/tinyWRAP/DDebugCallback;Ljava/lang/String;)I" 
     },
@@ -16823,6 +17916,9 @@ SWIGEXPORT void JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_swig_1module_1ini
       "SwigDirector_SipCallback_OnPublicationAffiliationEvent", "(Lorg/doubango/tinyWRAP/SipCallback;J)I" 
     },
     {
+      "SwigDirector_SipCallback_OnPublicationAuthenticationEvent", "(Lorg/doubango/tinyWRAP/SipCallback;J)I" 
+    },
+    {
       "SwigDirector_SipCallback_OnRegistrationAuthenticationEvent", "(Lorg/doubango/tinyWRAP/SipCallback;J)I" 
     },
     {
@@ -16833,6 +17929,12 @@ SWIGEXPORT void JNICALL Java_org_doubango_tinyWRAP_tinyWRAPJNI_swig_1module_1ini
     },
     {
       "SwigDirector_SipCallback_OnSubscriptionAffiliationEvent", "(Lorg/doubango/tinyWRAP/SipCallback;J)I" 
+    },
+    {
+      "SwigDirector_SipCallback_OnSubscriptionCMSEvent", "(Lorg/doubango/tinyWRAP/SipCallback;J)I" 
+    },
+    {
+      "SwigDirector_SipCallback_OnSubscriptionGMSEvent", "(Lorg/doubango/tinyWRAP/SipCallback;J)I" 
     },
     {
       "SwigDirector_XcapCallback_onEvent", "(Lorg/doubango/tinyWRAP/XcapCallback;J)I" 

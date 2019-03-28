@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -43,6 +42,7 @@
 #include "tsk_debug.h"
 
 #include <string.h> /* memcpy() */
+
 
 /** Create new RTP packet */
 trtp_rtp_packet_t* trtp_rtp_packet_create_null()
@@ -149,6 +149,7 @@ trtp_rtp_packet_t* trtp_rtp_packet_deserialize(const void *data, tsk_size_t size
 	trtp_rtp_header_t *header;
 	tsk_size_t payload_size;
 	const uint8_t* pdata = data;
+	int bytes_nseq=0;
 
 	if(!data){
 		TSK_DEBUG_ERROR("Invalid parameter");
@@ -214,10 +215,11 @@ trtp_rtp_packet_t* trtp_rtp_packet_deserialize(const void *data, tsk_size_t size
 		if(payload_size && (packet->payload.data = calloc(packet->payload.size, sizeof(uint8_t)))){
 		
 	#else
-		if(payload_size && (packet->payload.data = tsk_calloc(packet->payload.size, sizeof(uint8_t)))){
+		if(payload_size && (packet->payload.data = tsk_calloc(packet->payload.size+bytes_nseq, sizeof(uint8_t)))){
 		
 	#endif //HAVE_CRT
 			memcpy(packet->payload.data, (pdata + packet->extension.size), packet->payload.size);
+
 		}
 		else{
 			TSK_DEBUG_ERROR("Failed to allocate new buffer");

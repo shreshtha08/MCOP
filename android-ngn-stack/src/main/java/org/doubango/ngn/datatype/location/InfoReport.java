@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -24,9 +24,37 @@ package org.doubango.ngn.datatype.location;
 
 
 public enum InfoReport {
-    SERVICEECGI,
-    NEIGHBOURINGECGI,
-    MBMSSAID,
-    MBSFNAREA,
-    GEOGRAPHICALCORDINATE
-}
+    SERVICEECGI ("SERVICEECGI"),
+    NEIGHBOURINGECGI ("NEIGHBOURINGECGI"),
+    MBMSSAID ("MBMSSAID"),
+    MBSFNAREA ("MBSFNAREA"),
+    GEOGRAPHICALCORDINATE ("GEOGRAPHICALCORDINATE");
+
+
+    private final String text;
+
+    /**
+     * @param text
+     */
+    InfoReport(final String text) {
+        this.text = text;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Enum#toString()
+     */
+    @Override
+    public String toString() {
+        return text;
+    }
+
+    public static InfoReport fromString(String text) {
+        for (InfoReport value : InfoReport.values()) {
+            if (value.text.equalsIgnoreCase(text)) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    }

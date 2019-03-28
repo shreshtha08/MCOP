@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -85,6 +84,15 @@ class MyMbmsExtensionService
     protected MbmsData getMbmsDataOfTmgi(long tmgi){
         return getActiveMcpttMbmsUsageInfoTypeforTMGI().get(tmgi);
     }
+
+    protected MbmsData getMbmsDataOfTmgi(String groupID){
+        for(MbmsData mbmsData:getActiveMcpttMbmsUsageInfoTypeforTMGI().values())
+            if(mbmsData.getGroupID().trim().compareTo(groupID.trim())==0)return mbmsData;
+        return null;
+    }
+
+
+
     protected ArrayList<MbmsData> getMbmsDataOfServiceArea(int serviceArea){
         return getActiveMcpttMbmsUsageInfoType().get(serviceArea);
     }
@@ -152,6 +160,7 @@ class MyMbmsExtensionService
                 !mbmsData.getIpMulticastMedia().isEmpty() &&
                 mbmsData.getPortMulticastMedia()>0 &&
                 mbmsData.getPortControlMulticastMedia()>0 &&
+                mbmsData.getGroupID()!=null &&
                 sessionIdCurrent!=null &&
                 !sessionIdCurrent.isEmpty()
                 ){
@@ -336,8 +345,27 @@ class MyMbmsExtensionService
         }
     }
 
+
+    protected void stopMbmsManager(long tmgi){
+        Log.i(TAG, "MCR do not use tmgi(" + tmgi + ") to close Multicast socket.");
+
+        //TODO: API Problem int target_ni_idx = serviceStreamingOpenedEvent.getNetworkInterface().getIndex();
+        int target_ni_idx = -1;
+
+        //TODO We should store the target_ni!!!
+
+        MbmsData mbmsData = null ;
+        if((mbmsData = getMbmsDataOfTmgi(tmgi))!=null){
+            if(myMbmsExtenxionServiceListener!=null)myMbmsExtenxionServiceListener.stopMbmsManagerListening(mbmsData);
+        }else{
+            Log.d(TAG,"the device don´t has datas for tmgi "+tmgi);
+        }
+    }
+
+
     protected interface MyMbmsExtenxionServiceListener{
         void startMbmsManagerListening(MbmsData mbmsData);
+        void stopMbmsManagerListening(MbmsData mbmsData);
         void startedClient(boolean status);
         void startedServer(boolean status);
         boolean mbmsListeningServiceAreaCurrent(long TMGI,  int[] sai,  int[] frequencies);

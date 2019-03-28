@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -49,17 +48,38 @@ public class EngineIapi {
         if(BuildConfig.DEBUG)Log.d(TAG,"Start IAPI Engine");
     }
 
-    public synchronized boolean start(Context context) {
+    public synchronized boolean start(Context context
+            ,String connectivityPluginPackageService
+            ,String connectivityPluginPackageMain
+            ,String simPluginPackageService
+            ,String simPluginPackageMain
+            ,String configurationPluginPackageService
+            ,String configurationPluginPackageMain
+            ,String mbmsPluginPackageService
+            ,String mbmsPluginPackageMain
+    ){
         if(mStarted){
             if(BuildConfig.DEBUG)Log.e(TAG,"Started");
             return true;
         }
         boolean success = true;
         //TODO: Error to the start the service ConfigurationService
-        success &= getConfigurationService().start(context);
-        success &= getConnectivityService().start(context);
-        success &= getSimService().start(context);
-        success &= getMBMSGroupCom().start(context);
+        success &= getConfigurationService().start(context
+                ,configurationPluginPackageService
+                ,configurationPluginPackageMain
+        );
+        success &= getConnectivityService().start(context
+                ,connectivityPluginPackageService
+                ,connectivityPluginPackageMain
+        );
+        success &= getSimService().start(context
+                ,simPluginPackageService
+                ,simPluginPackageMain
+        );
+        success &= getMBMSGroupCom().start(context
+                ,mbmsPluginPackageService
+                ,mbmsPluginPackageMain
+        );
         mStarted = true;
         return success;
     }

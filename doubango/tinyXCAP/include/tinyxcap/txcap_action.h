@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -212,7 +211,7 @@ int ret = txcap_action_create_element(stack,
 #define TXCAP_ACTION_UNSET_HEADER(NAME_STR)					TXCAP_ACTION_SET_HEADER(NAME_STR, (const char*)-1)
 #define TXCAP_ACTION_SET_PAYLOAD(PAY_PTR, PAY_SIZE)			txcap_apt_payload, (const void*)PAY_PTR, (size_t)PAY_SIZE
 #define TXCAP_ACTION_SET_SELECTOR(AUID_STR, ...)			txcap_apt_selector, (const char*)AUID_STR, ##__VA_ARGS__
-#define TXCAP_ACTION_SET_SELECTOR_NOAUID(AUID_STR, ...)		txcap_apt_selector_no_auid, (const char*)AUID_STR, ##__VA_ARGS__ //Added by Mikel
+#define TXCAP_ACTION_SET_SELECTOR_NOAUID(AUID_STR, ...)		txcap_apt_selector_no_auid, (const char*)AUID_STR, ##__VA_ARGS__
 #define TXCAP_ACTION_SET_REQUEST_URI(URI_STR)				txcap_apt_urlstring, (const char*)URI_STR
 #define TXCAP_ACTION_SET_NULL()								txcap_apt_null
 

@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -34,7 +34,7 @@ import java.util.List;
 public class TCurrentLocationType {
 
     @Element(required=false,name = "CurrentServingEcgi")
-    protected Object currentServingEcgi;
+    protected LocationType currentServingEcgi;
     @ElementList(inline=true,entry="NeighbouringEcgi",required=false)
     protected List<LocationType> neighbouringEcgi;
     @Element(required=false,name = "MbmsSaId")
@@ -49,7 +49,7 @@ public class TCurrentLocationType {
         return currentServingEcgi;
     }
 
-    public void setCurrentServingEcgi(Object currentServingEcgi) {
+    public void setCurrentServingEcgi(LocationType currentServingEcgi) {
         this.currentServingEcgi = currentServingEcgi;
     }
 

@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -54,6 +53,7 @@ typedef struct tsip_dialog_invite
 	tsk_bool_t refersub;
 	tsk_bool_t use_rtcp;
 	tsk_bool_t use_rtcpmux;
+    tsk_bool_t answer_mode_auto;
     tsk_bool_t is_initial_iack_pending; // we're waiting for the initial incoming ACK (for the 200 OK) to ensure the session
     tsk_bool_t is_cancelling; // whether we're cancelling the outgoing INVITE
 	uint32_t rseq;

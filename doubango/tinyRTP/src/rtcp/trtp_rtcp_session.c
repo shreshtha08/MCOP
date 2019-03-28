@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -314,7 +313,7 @@ trtp_rtcp_session_t* trtp_rtcp_session_create(uint32_t ssrc, const char* cname)
 	session->members = 1;
 	session->rtcp_bw = RTCP_BW;//FIXME: as parameter from the code, Also added possiblities to update this value
 	session->cname = tsk_strdup(cname);
-	session->is_MCPTT_session=tsk_false;//MCPTT by Eduardo
+	session->is_MCPTT_session=tsk_false;//MCPTT
 	
 	
 bail:
@@ -672,7 +671,7 @@ int trtp_rtcp_session_signal_jb_error(struct trtp_rtcp_session_s* self, uint32_t
 	return trtp_rtcp_session_signal_frame_corrupted(self, ssrc_media);
 }
 
-//Added by Mikel
+
 int trtp_rtcp_session_disable_automated_reporting(trtp_rtcp_session_t* self)
 {
 	tsk_safeobj_lock(self);
@@ -1127,7 +1126,10 @@ static void SendBYEPacket(trtp_rtcp_session_t* session, event_ e)
 static tsk_size_t SendRTCPReport(trtp_rtcp_session_t* session, event_ e)
 {
 	tsk_size_t ret = 0;
-
+	if(!session || session==tsk_null){
+		TSK_DEBUG_INFO("The session is not started now");
+		return -1;
+	}
 	tsk_safeobj_lock(session);
 
 	if(session->initial){
@@ -1229,7 +1231,7 @@ static tsk_size_t SendRTCPReport(trtp_rtcp_session_t* session, event_ e)
 	return ret;
 }
 
-//MCPTT by Eduardo
+//MCPTT
 
 static void Schedule(trtp_rtcp_session_t* session, double tn, event_ e)
 {
@@ -1377,7 +1379,7 @@ static void OnExpire(trtp_rtcp_session_t* session, event_ e)
 		}
 
 	} else if (TypeOfEvent(e) == EVENT_REPORT 
-		) {//MCPTT by Eduardo
+		) {//MCPTT
 		t = rtcp_interval(session->members,
 			session->senders,
 			session->rtcp_bw,

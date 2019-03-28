@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -28,6 +27,7 @@ package org.doubango.ngn.services.impl;
 
 import android.util.Log;
 
+import org.doubango.ngn.BuildConfig;
 import org.doubango.ngn.services.INgnHttpClientService;
 import org.doubango.utils.Utils;
 
@@ -74,7 +74,7 @@ public class NgnHttpClientService extends NgnBaseService implements INgnHttpClie
 			((DefaultHttpClient)mClient).setParams(params);
 			return true;
 		}*/
-		Log.e(TAG, "Already started.");
+		if(BuildConfig.DEBUG)Log.w(TAG, "Already started.");
 		return true;
 
 	}

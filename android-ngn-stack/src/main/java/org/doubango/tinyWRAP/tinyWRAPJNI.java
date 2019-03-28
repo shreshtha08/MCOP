@@ -11,6 +11,8 @@ package org.doubango.tinyWRAP;
 public class tinyWRAPJNI {
   public final static native long new_DDebugCallback();
   public final static native void delete_DDebugCallback(long jarg1);
+  public final static native int DDebugCallback_OnDebugTest(long jarg1, DDebugCallback jarg1_, String jarg2);
+  public final static native int DDebugCallback_OnDebugTestSwigExplicitDDebugCallback(long jarg1, DDebugCallback jarg1_, String jarg2);
   public final static native int DDebugCallback_OnDebugInfo(long jarg1, DDebugCallback jarg1_, String jarg2);
   public final static native int DDebugCallback_OnDebugInfoSwigExplicitDDebugCallback(long jarg1, DDebugCallback jarg1_, String jarg2);
   public final static native int DDebugCallback_OnDebugWarn(long jarg1, DDebugCallback jarg1_, String jarg2);
@@ -62,6 +64,7 @@ public class tinyWRAPJNI {
   public final static native long MediaSessionMgr_findProxyPluginConsumer(long jarg1, MediaSessionMgr jarg1_, int jarg2);
   public final static native long MediaSessionMgr_findProxyPluginProducer(long jarg1, MediaSessionMgr jarg1_, int jarg2);
   public final static native long MediaSessionMgr_registerAudioPluginFromFile(String jarg1);
+  public final static native long MediaSessionMgr_registerAudioPluginOpenSLES();
   public final static native java.math.BigInteger MediaSessionMgr_getSessionId(long jarg1, MediaSessionMgr jarg1_, int jarg2);
   public final static native boolean MediaSessionMgr_defaultsSetProfile(int jarg1);
   public final static native int MediaSessionMgr_defaultsGetProfile();
@@ -227,6 +230,10 @@ public class tinyWRAPJNI {
   public final static native int PublicationAffiliationEvent_getType(long jarg1, PublicationAffiliationEvent jarg1_);
   public final static native long PublicationAffiliationEvent_getSession(long jarg1, PublicationAffiliationEvent jarg1_);
   public final static native long PublicationAffiliationEvent_takeSessionOwnership(long jarg1, PublicationAffiliationEvent jarg1_);
+  public final static native void delete_PublicationAuthenticationEvent(long jarg1);
+  public final static native int PublicationAuthenticationEvent_getType(long jarg1, PublicationAuthenticationEvent jarg1_);
+  public final static native long PublicationAuthenticationEvent_getSession(long jarg1, PublicationAuthenticationEvent jarg1_);
+  public final static native long PublicationAuthenticationEvent_takeSessionOwnership(long jarg1, PublicationAuthenticationEvent jarg1_);
   public final static native void delete_RegistrationAuthenticationEvent(long jarg1);
   public final static native int RegistrationAuthenticationEvent_getType(long jarg1, RegistrationAuthenticationEvent jarg1_);
   public final static native void delete_RegistrationEvent(long jarg1);
@@ -241,6 +248,14 @@ public class tinyWRAPJNI {
   public final static native int SubscriptionAffiliationEvent_getType(long jarg1, SubscriptionAffiliationEvent jarg1_);
   public final static native long SubscriptionAffiliationEvent_getSession(long jarg1, SubscriptionAffiliationEvent jarg1_);
   public final static native long SubscriptionAffiliationEvent_takeSessionOwnership(long jarg1, SubscriptionAffiliationEvent jarg1_);
+  public final static native void delete_SubscriptionCMSEvent(long jarg1);
+  public final static native int SubscriptionCMSEvent_getType(long jarg1, SubscriptionCMSEvent jarg1_);
+  public final static native long SubscriptionCMSEvent_getSession(long jarg1, SubscriptionCMSEvent jarg1_);
+  public final static native long SubscriptionCMSEvent_takeSessionOwnership(long jarg1, SubscriptionCMSEvent jarg1_);
+  public final static native void delete_SubscriptionGMSEvent(long jarg1);
+  public final static native int SubscriptionGMSEvent_getType(long jarg1, SubscriptionGMSEvent jarg1_);
+  public final static native long SubscriptionGMSEvent_getSession(long jarg1, SubscriptionGMSEvent jarg1_);
+  public final static native long SubscriptionGMSEvent_takeSessionOwnership(long jarg1, SubscriptionGMSEvent jarg1_);
   public final static native void delete_T140CallbackData(long jarg1);
   public final static native int T140CallbackData_getType(long jarg1, T140CallbackData jarg1_);
   public final static native long T140CallbackData_getSize(long jarg1, T140CallbackData jarg1_);
@@ -294,10 +309,14 @@ public class tinyWRAPJNI {
   public final static native boolean CallSession_callVideo__SWIG_1(long jarg1, CallSession jarg1_, String jarg2);
   public final static native boolean CallSession_callVideo__SWIG_2(long jarg1, CallSession jarg1_, long jarg2, SipUri jarg2_, long jarg3, ActionConfig jarg3_);
   public final static native boolean CallSession_callVideo__SWIG_3(long jarg1, CallSession jarg1_, long jarg2, SipUri jarg2_);
-  public final static native boolean CallSession_call__SWIG_0(long jarg1, CallSession jarg1_, String jarg2, int jarg3, long jarg4, ActionConfig jarg4_);
-  public final static native boolean CallSession_call__SWIG_1(long jarg1, CallSession jarg1_, String jarg2, int jarg3);
-  public final static native boolean CallSession_call__SWIG_2(long jarg1, CallSession jarg1_, long jarg2, SipUri jarg2_, int jarg3, long jarg4, ActionConfig jarg4_);
-  public final static native boolean CallSession_call__SWIG_3(long jarg1, CallSession jarg1_, long jarg2, SipUri jarg2_, int jarg3);
+  public final static native boolean CallSession_call__SWIG_0(long jarg1, CallSession jarg1_, String jarg2, int jarg3, boolean jarg4, long jarg5, ActionConfig jarg5_);
+  public final static native boolean CallSession_call__SWIG_1(long jarg1, CallSession jarg1_, String jarg2, int jarg3, boolean jarg4);
+  public final static native boolean CallSession_call__SWIG_2(long jarg1, CallSession jarg1_, long jarg2, SipUri jarg2_, int jarg3, boolean jarg4, long jarg5, ActionConfig jarg5_);
+  public final static native boolean CallSession_call__SWIG_3(long jarg1, CallSession jarg1_, long jarg2, SipUri jarg2_, int jarg3, boolean jarg4);
+  public final static native boolean CallSession_callEmergency__SWIG_0(long jarg1, CallSession jarg1_, String jarg2, int jarg3, boolean jarg4, String jarg5, int jarg6, long jarg7, ActionConfig jarg7_);
+  public final static native boolean CallSession_callEmergency__SWIG_1(long jarg1, CallSession jarg1_, String jarg2, int jarg3, boolean jarg4, String jarg5, int jarg6);
+  public final static native boolean CallSession_callEmergency__SWIG_2(long jarg1, CallSession jarg1_, long jarg2, SipUri jarg2_, int jarg3, boolean jarg4, String jarg5, int jarg6, long jarg7, ActionConfig jarg7_);
+  public final static native boolean CallSession_callEmergency__SWIG_3(long jarg1, CallSession jarg1_, long jarg2, SipUri jarg2_, int jarg3, boolean jarg4, String jarg5, int jarg6);
   public final static native boolean CallSession_callGroup(long jarg1, CallSession jarg1_, long jarg2, int jarg3, int jarg4, long jarg5, ActionConfig jarg5_);
   public final static native boolean CallSession_setSessionTimer(long jarg1, CallSession jarg1_, long jarg2, String jarg3);
   public final static native boolean CallSession_set100rel(long jarg1, CallSession jarg1_, boolean jarg2);
@@ -344,6 +363,8 @@ public class tinyWRAPJNI {
   public final static native String CallSession_getPTTMcpttGroupIdentity(long jarg1, CallSession jarg1_);
   public final static native int CallSession_getPTTMcpttGroupMembers(long jarg1, CallSession jarg1_);
   public final static native String CallSession_getPTTMcpttGroupMemberAtPosition(long jarg1, CallSession jarg1_, int jarg2);
+  public final static native String CallSession_getPttMcpttEmergencyResourcePriorityString(long jarg1, CallSession jarg1_);
+  public final static native int CallSession_getPttMcpttEmergencyResourcePriority(long jarg1, CallSession jarg1_);
   public final static native String CallSession_getSipPartyUri(long jarg1, CallSession jarg1_);
   public final static native long new_MsrpSession(long jarg1, SipStack jarg1_, long jarg2, MsrpCallback jarg2_);
   public final static native void delete_MsrpSession(long jarg1);
@@ -421,6 +442,12 @@ public class tinyWRAPJNI {
   public final static native boolean PublicationAffiliationSession_publish__SWIG_1(long jarg1, PublicationAffiliationSession jarg1_, java.nio.ByteBuffer jarg2, long jarg3);
   public final static native boolean PublicationAffiliationSession_unPublish__SWIG_0(long jarg1, PublicationAffiliationSession jarg1_, java.nio.ByteBuffer jarg2, long jarg3, long jarg4, ActionConfig jarg4_);
   public final static native boolean PublicationAffiliationSession_unPublish__SWIG_1(long jarg1, PublicationAffiliationSession jarg1_, java.nio.ByteBuffer jarg2, long jarg3);
+  public final static native long new_PublicationAuthenticationSession(long jarg1, SipStack jarg1_);
+  public final static native void delete_PublicationAuthenticationSession(long jarg1);
+  public final static native boolean PublicationAuthenticationSession_publish__SWIG_0(long jarg1, PublicationAuthenticationSession jarg1_, String jarg2, String jarg3, java.nio.ByteBuffer jarg4, long jarg5, long jarg6, ActionConfig jarg6_);
+  public final static native boolean PublicationAuthenticationSession_publish__SWIG_1(long jarg1, PublicationAuthenticationSession jarg1_, String jarg2, String jarg3, java.nio.ByteBuffer jarg4, long jarg5);
+  public final static native boolean PublicationAuthenticationSession_unPublish__SWIG_0(long jarg1, PublicationAuthenticationSession jarg1_, java.nio.ByteBuffer jarg2, long jarg3, long jarg4, ActionConfig jarg4_);
+  public final static native boolean PublicationAuthenticationSession_unPublish__SWIG_1(long jarg1, PublicationAuthenticationSession jarg1_, java.nio.ByteBuffer jarg2, long jarg3);
   public final static native long new_RegistrationSession(long jarg1, SipStack jarg1_);
   public final static native void delete_RegistrationSession(long jarg1);
   public final static native boolean RegistrationSession_register___SWIG_0(long jarg1, RegistrationSession jarg1_, long jarg2, ActionConfig jarg2_);
@@ -441,6 +468,16 @@ public class tinyWRAPJNI {
   public final static native void delete_SubscriptionAffiliationSession(long jarg1);
   public final static native boolean SubscriptionAffiliationSession_subscribeAffiliation(long jarg1, SubscriptionAffiliationSession jarg1_);
   public final static native boolean SubscriptionAffiliationSession_unSubscribeAffiliation(long jarg1, SubscriptionAffiliationSession jarg1_);
+  public final static native long new_SubscriptionCMSSession(long jarg1, SipStack jarg1_);
+  public final static native void delete_SubscriptionCMSSession(long jarg1);
+  public final static native boolean SubscriptionCMSSession_subscribeCMS__SWIG_0(long jarg1, SubscriptionCMSSession jarg1_, java.nio.ByteBuffer jarg2, long jarg3, java.nio.ByteBuffer jarg4, long jarg5, long jarg6, ActionConfig jarg6_);
+  public final static native boolean SubscriptionCMSSession_subscribeCMS__SWIG_1(long jarg1, SubscriptionCMSSession jarg1_, java.nio.ByteBuffer jarg2, long jarg3, java.nio.ByteBuffer jarg4, long jarg5);
+  public final static native boolean SubscriptionCMSSession_unSubscribeCMS(long jarg1, SubscriptionCMSSession jarg1_);
+  public final static native long new_SubscriptionGMSSession(long jarg1, SipStack jarg1_);
+  public final static native void delete_SubscriptionGMSSession(long jarg1);
+  public final static native boolean SubscriptionGMSSession_subscribeGMS__SWIG_0(long jarg1, SubscriptionGMSSession jarg1_, java.nio.ByteBuffer jarg2, long jarg3, java.nio.ByteBuffer jarg4, long jarg5, long jarg6, ActionConfig jarg6_);
+  public final static native boolean SubscriptionGMSSession_subscribeGMS__SWIG_1(long jarg1, SubscriptionGMSSession jarg1_, java.nio.ByteBuffer jarg2, long jarg3, java.nio.ByteBuffer jarg4, long jarg5);
+  public final static native boolean SubscriptionGMSSession_unSubscribeGMS(long jarg1, SubscriptionGMSSession jarg1_);
   public final static native void delete_ProxyPluginMgr(long jarg1);
   public final static native long ProxyPluginMgr_createInstance(long jarg1, ProxyPluginMgrCallback jarg1_);
   public final static native long ProxyPluginMgr_getInstance();
@@ -595,6 +632,8 @@ public class tinyWRAPJNI {
   public final static native int SipCallback_OnPublicationEventSwigExplicitSipCallback(long jarg1, SipCallback jarg1_, long jarg2, PublicationEvent jarg2_);
   public final static native int SipCallback_OnPublicationAffiliationEvent(long jarg1, SipCallback jarg1_, long jarg2, PublicationAffiliationEvent jarg2_);
   public final static native int SipCallback_OnPublicationAffiliationEventSwigExplicitSipCallback(long jarg1, SipCallback jarg1_, long jarg2, PublicationAffiliationEvent jarg2_);
+  public final static native int SipCallback_OnPublicationAuthenticationEvent(long jarg1, SipCallback jarg1_, long jarg2, PublicationAuthenticationEvent jarg2_);
+  public final static native int SipCallback_OnPublicationAuthenticationEventSwigExplicitSipCallback(long jarg1, SipCallback jarg1_, long jarg2, PublicationAuthenticationEvent jarg2_);
   public final static native int SipCallback_OnRegistrationAuthenticationEvent(long jarg1, SipCallback jarg1_, long jarg2, RegistrationAuthenticationEvent jarg2_);
   public final static native int SipCallback_OnRegistrationAuthenticationEventSwigExplicitSipCallback(long jarg1, SipCallback jarg1_, long jarg2, RegistrationAuthenticationEvent jarg2_);
   public final static native int SipCallback_OnRegistrationEvent(long jarg1, SipCallback jarg1_, long jarg2, RegistrationEvent jarg2_);
@@ -603,6 +642,10 @@ public class tinyWRAPJNI {
   public final static native int SipCallback_OnSubscriptionEventSwigExplicitSipCallback(long jarg1, SipCallback jarg1_, long jarg2, SubscriptionEvent jarg2_);
   public final static native int SipCallback_OnSubscriptionAffiliationEvent(long jarg1, SipCallback jarg1_, long jarg2, SubscriptionAffiliationEvent jarg2_);
   public final static native int SipCallback_OnSubscriptionAffiliationEventSwigExplicitSipCallback(long jarg1, SipCallback jarg1_, long jarg2, SubscriptionAffiliationEvent jarg2_);
+  public final static native int SipCallback_OnSubscriptionCMSEvent(long jarg1, SipCallback jarg1_, long jarg2, SubscriptionCMSEvent jarg2_);
+  public final static native int SipCallback_OnSubscriptionCMSEventSwigExplicitSipCallback(long jarg1, SipCallback jarg1_, long jarg2, SubscriptionCMSEvent jarg2_);
+  public final static native int SipCallback_OnSubscriptionGMSEvent(long jarg1, SipCallback jarg1_, long jarg2, SubscriptionGMSEvent jarg2_);
+  public final static native int SipCallback_OnSubscriptionGMSEventSwigExplicitSipCallback(long jarg1, SipCallback jarg1_, long jarg2, SubscriptionGMSEvent jarg2_);
   public final static native void SipCallback_director_connect(SipCallback obj, long cptr, boolean mem_own, boolean weak_global);
   public final static native void SipCallback_change_ownership(SipCallback obj, long cptr, boolean take_or_release);
   public final static native long new_SafeObject();
@@ -650,7 +693,10 @@ public class tinyWRAPJNI {
   public final static native boolean SipStack_setMCPTTPSIPrivate(long jarg1, SipStack jarg1_, String jarg2);
   public final static native boolean SipStack_setMCPTTPSIGroup(long jarg1, SipStack jarg1_, String jarg2);
   public final static native boolean SipStack_setMCPTTPSIPreestablished(long jarg1, SipStack jarg1_, String jarg2);
+  public final static native boolean SipStack_setMCPTTPSICMS(long jarg1, SipStack jarg1_, String jarg2);
+  public final static native boolean SipStack_setMCPTTPSIGMS(long jarg1, SipStack jarg1_, String jarg2);
   public final static native boolean SipStack_setMCPTTID(long jarg1, SipStack jarg1_, String jarg2);
+  public final static native boolean SipStack_setMCPTTClientID(long jarg1, SipStack jarg1_, String jarg2);
   public final static native boolean SipStack_setMCPTTPriority(long jarg1, SipStack jarg1_, int jarg2);
   public final static native boolean SipStack_setMCPTTImplicit(long jarg1, SipStack jarg1_, boolean jarg2);
   public final static native boolean SipStack_setMCPTTGranted(long jarg1, SipStack jarg1_, boolean jarg2);
@@ -671,6 +717,7 @@ public class tinyWRAPJNI {
   public final static native boolean SipStack_setMCPTTPSIAffiliation(long jarg1, SipStack jarg1_, String jarg2);
   public final static native boolean SipStack_setMCPTTAffiliationIsEnable(long jarg1, SipStack jarg1_, boolean jarg2);
   public final static native boolean SipStack_setMCPTTAffiliationGroupsDefualt(long jarg1, SipStack jarg1_, String jarg2);
+  public final static native boolean SipStack_setMCPTTPSIAuthentication(long jarg1, SipStack jarg1_, String jarg2);
   public final static native String SipStack_dnsENUM(long jarg1, SipStack jarg1_, String jarg2, String jarg3, String jarg4);
   public final static native String SipStack_dnsNaptrSrv(long jarg1, SipStack jarg1_, String jarg2, String jarg3, int[] jarg4);
   public final static native String SipStack_dnsSrv(long jarg1, SipStack jarg1_, String jarg2, int[] jarg3);
@@ -826,10 +873,13 @@ public class tinyWRAPJNI {
   public final static native long OptionsEvent_SWIGUpcast(long jarg1);
   public final static native long PublicationEvent_SWIGUpcast(long jarg1);
   public final static native long PublicationAffiliationEvent_SWIGUpcast(long jarg1);
+  public final static native long PublicationAuthenticationEvent_SWIGUpcast(long jarg1);
   public final static native long RegistrationAuthenticationEvent_SWIGUpcast(long jarg1);
   public final static native long RegistrationEvent_SWIGUpcast(long jarg1);
   public final static native long SubscriptionEvent_SWIGUpcast(long jarg1);
   public final static native long SubscriptionAffiliationEvent_SWIGUpcast(long jarg1);
+  public final static native long SubscriptionCMSEvent_SWIGUpcast(long jarg1);
+  public final static native long SubscriptionGMSEvent_SWIGUpcast(long jarg1);
   public final static native long InviteSession_SWIGUpcast(long jarg1);
   public final static native long CallSession_SWIGUpcast(long jarg1);
   public final static native long MsrpSession_SWIGUpcast(long jarg1);
@@ -842,15 +892,21 @@ public class tinyWRAPJNI {
   public final static native long OptionsSession_SWIGUpcast(long jarg1);
   public final static native long PublicationSession_SWIGUpcast(long jarg1);
   public final static native long PublicationAffiliationSession_SWIGUpcast(long jarg1);
+  public final static native long PublicationAuthenticationSession_SWIGUpcast(long jarg1);
   public final static native long RegistrationSession_SWIGUpcast(long jarg1);
   public final static native long SubscriptionSession_SWIGUpcast(long jarg1);
   public final static native long SubscriptionAffiliationSession_SWIGUpcast(long jarg1);
+  public final static native long SubscriptionCMSSession_SWIGUpcast(long jarg1);
+  public final static native long SubscriptionGMSSession_SWIGUpcast(long jarg1);
   public final static native long ProxyAudioConsumer_SWIGUpcast(long jarg1);
   public final static native long ProxyVideoConsumer_SWIGUpcast(long jarg1);
   public final static native long ProxyAudioProducer_SWIGUpcast(long jarg1);
   public final static native long ProxyVideoProducer_SWIGUpcast(long jarg1);
   public final static native long SipStack_SWIGUpcast(long jarg1);
 
+  public static int SwigDirector_DDebugCallback_OnDebugTest(DDebugCallback self, String message) {
+    return self.OnDebugTest(message);
+  }
   public static int SwigDirector_DDebugCallback_OnDebugInfo(DDebugCallback self, String message) {
     return self.OnDebugInfo(message);
   }
@@ -965,6 +1021,9 @@ public class tinyWRAPJNI {
   public static int SwigDirector_SipCallback_OnPublicationAffiliationEvent(SipCallback self, long e) {
     return self.OnPublicationAffiliationEvent((e == 0) ? null : new PublicationAffiliationEvent(e, false));
   }
+  public static int SwigDirector_SipCallback_OnPublicationAuthenticationEvent(SipCallback self, long e) {
+    return self.OnPublicationAuthenticationEvent((e == 0) ? null : new PublicationAuthenticationEvent(e, false));
+  }
   public static int SwigDirector_SipCallback_OnRegistrationAuthenticationEvent(SipCallback self, long e) {
     return self.OnRegistrationAuthenticationEvent((e == 0) ? null : new RegistrationAuthenticationEvent(e, false));
   }
@@ -976,6 +1035,12 @@ public class tinyWRAPJNI {
   }
   public static int SwigDirector_SipCallback_OnSubscriptionAffiliationEvent(SipCallback self, long e) {
     return self.OnSubscriptionAffiliationEvent((e == 0) ? null : new SubscriptionAffiliationEvent(e, false));
+  }
+  public static int SwigDirector_SipCallback_OnSubscriptionCMSEvent(SipCallback self, long e) {
+    return self.OnSubscriptionCMSEvent((e == 0) ? null : new SubscriptionCMSEvent(e, false));
+  }
+  public static int SwigDirector_SipCallback_OnSubscriptionGMSEvent(SipCallback self, long e) {
+    return self.OnSubscriptionGMSEvent((e == 0) ? null : new SubscriptionGMSEvent(e, false));
   }
   public static int SwigDirector_XcapCallback_onEvent(XcapCallback self, long e) {
     return self.onEvent((e == 0) ? null : new XcapEvent(e, false));

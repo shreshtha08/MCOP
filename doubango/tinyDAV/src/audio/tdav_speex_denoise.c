@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -205,7 +204,7 @@ static int tdav_speex_denoise_process_record(tmedia_denoise_t* self, void* audio
 		TSK_DEBUG_ERROR("Size mismatch: %u<>%u", denoiser->record_frame_size_bytes, audio_frame_size_bytes);
 		return -1;
 	}
-
+	
 	if(denoiser->preprocess_state_record){
 		if(denoiser->echo_state && denoiser->echo_output_frame){
 			speex_echo_capture(denoiser->echo_state, audio_frame, denoiser->echo_output_frame);
@@ -216,7 +215,6 @@ static int tdav_speex_denoise_process_record(tmedia_denoise_t* self, void* audio
 			*silence_or_noise = tsk_true;
 		}
 	}
-
 	return 0;
 }
 

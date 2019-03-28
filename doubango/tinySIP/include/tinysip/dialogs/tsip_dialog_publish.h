@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -50,6 +49,9 @@ typedef struct tsip_dialog_publish
 
 	tsk_bool_t unpublishingAffiliationAndAuthentication;
 	tsk_bool_t unpublishing;
+	//Authentication mcptt
+	char* mcptt_info_authentication;
+	char* poc_settings_authentication;
 	char* etag;
 }
 tsip_dialog_publish_t;

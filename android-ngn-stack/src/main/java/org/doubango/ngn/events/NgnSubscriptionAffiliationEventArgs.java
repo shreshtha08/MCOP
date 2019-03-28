@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -34,7 +33,7 @@ import org.doubango.utils.Utils;
 public class NgnSubscriptionAffiliationEventArgs extends NgnEventArgs{
 	private final static String TAG = Utils.getTAG(NgnSubscriptionAffiliationEventArgs.class.getCanonicalName());
 
-	public static final String ACTION_SUBSCRIBTION_AFFILIATION_EVENT = TAG + ".ACTION_SUBSCRIBTION_EVENT";
+	public static final String ACTION_SUBSCRIBTION_AFFILIATION_EVENT = TAG + ".ACTION_SUBSCRIBTION_AFFILIATION_EVENT";
 
 	private long mSessionId;
 	private NgnSubscriptionAffiliationEventTypes mType;

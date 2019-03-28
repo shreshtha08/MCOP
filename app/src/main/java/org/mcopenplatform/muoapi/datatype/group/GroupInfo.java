@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -37,10 +36,16 @@ public class GroupInfo {
     private Integer maxDataSizeForSDS;
     private Integer maxDataSizeForFD;
     private Integer maxDataSizeAutoRecv;
-    private List<String[]> participantsList;
+    private List<String[]> participantsListArray;
+    private List<String> participantsList;
+    private List<String> participantsListDisplay;
+    private List<String> participantsListType;
+
+
 
     public GroupInfo() {
     }
+
 
     public GroupInfo(String groupID,
                      String displayName,
@@ -49,7 +54,28 @@ public class GroupInfo {
                      Integer maxDataSizeForSDS,
                      Integer maxDataSizeForFD,
                      Integer maxDataSizeAutoRecv,
-                     List<String[]> participantsList) {
+                     List<String[]> participantsListArray) {
+        this.groupID = groupID;
+        DisplayName = displayName;
+        this.allowList = allowList;
+        this.actionRealTimeVideo = actionRealTimeVideo;
+        this.maxDataSizeForSDS = maxDataSizeForSDS;
+        this.maxDataSizeForFD = maxDataSizeForFD;
+        this.maxDataSizeAutoRecv = maxDataSizeAutoRecv;
+        this.participantsListArray = participantsListArray;
+    }
+
+
+    public GroupInfo(String groupID,
+                     String displayName,
+                     List<ConstantsMCOP.GroupInfoEventExtras.AllowTypeEnum> allowList,
+                     ConstantsMCOP.GroupInfoEventExtras.ActionRealTimeVideoType actionRealTimeVideo,
+                     Integer maxDataSizeForSDS,
+                     Integer maxDataSizeForFD,
+                     Integer maxDataSizeAutoRecv,
+                     List<String> participantsList,
+                     List<String> participantsListDisplay,
+                     List<String> participantsListType) {
         this.groupID = groupID;
         DisplayName = displayName;
         this.allowList = allowList;
@@ -58,6 +84,8 @@ public class GroupInfo {
         this.maxDataSizeForFD = maxDataSizeForFD;
         this.maxDataSizeAutoRecv = maxDataSizeAutoRecv;
         this.participantsList = participantsList;
+        this.participantsListDisplay = participantsListDisplay;
+        this.participantsListType= participantsListType;
     }
 
     public GroupInfo(String groupID,
@@ -67,7 +95,9 @@ public class GroupInfo {
                      Integer maxDataSizeForSDS,
                      Integer maxDataSizeForFD,
                      Integer maxDataSizeAutoRecv,
-                     List<String[]> participantsList) {
+                     List<String> participantsList,
+                     List<String> participantsListDisplay,
+                     List<String> participantsListType) {
         this.groupID = groupID;
         DisplayName = displayName;
         this.allowList = new ArrayList<>(allowSet);
@@ -76,6 +106,28 @@ public class GroupInfo {
         this.maxDataSizeForFD = maxDataSizeForFD;
         this.maxDataSizeAutoRecv = maxDataSizeAutoRecv;
         this.participantsList = participantsList;
+        this.participantsListDisplay = participantsListDisplay;
+        this.participantsListType= participantsListType;
+    }
+
+    public GroupInfo(String groupID,
+                     String displayName,
+                     Set<ConstantsMCOP.GroupInfoEventExtras.AllowTypeEnum> allowSet,
+                     ConstantsMCOP.GroupInfoEventExtras.ActionRealTimeVideoType actionRealTimeVideo,
+                     Integer maxDataSizeForSDS,
+                     Integer maxDataSizeForFD,
+                     Integer maxDataSizeAutoRecv,
+                     List<String[]> participantsListArray
+                     ) {
+        this.groupID = groupID;
+        DisplayName = displayName;
+        this.allowList = new ArrayList<>(allowSet);
+        this.actionRealTimeVideo = actionRealTimeVideo;
+        this.maxDataSizeForSDS = maxDataSizeForSDS;
+        this.maxDataSizeForFD = maxDataSizeForFD;
+        this.maxDataSizeAutoRecv = maxDataSizeAutoRecv;
+        this.participantsListArray = participantsListArray;
+
     }
 
     public String getGroupID() {
@@ -134,11 +186,40 @@ public class GroupInfo {
         this.maxDataSizeAutoRecv = maxDataSizeAutoRecv;
     }
 
-    public List<String[]> getParticipantsList() {
+    public List<String> getParticipantsList() {
+        if(participantsList==null)new ArrayList<>();
         return participantsList;
     }
 
-    public void setParticipantsList(List<String[]> participantsList) {
+    public void setParticipantsList(List<String> participantsList) {
+
         this.participantsList = participantsList;
+    }
+
+    public List<String> getParticipantsListDisplay() {
+        if(participantsListDisplay==null)new ArrayList<>();
+        return participantsListDisplay;
+    }
+
+    public void setParticipantsListDisplay(List<String> participantsListDisplay) {
+        this.participantsListDisplay = participantsListDisplay;
+    }
+
+    public List<String> getParticipantsListType() {
+        if(participantsListType==null)new ArrayList<>();
+        return participantsListType;
+    }
+
+    public void setParticipantsListType(List<String> participantsListType) {
+        this.participantsListType = participantsListType;
+    }
+
+    public List<String[]> getParticipantsListArray() {
+        if(participantsListArray==null)return participantsListArray;
+        return participantsListArray;
+    }
+
+    public void setParticipantsListArray(List<String[]> participantsListArray) {
+        this.participantsListArray = participantsListArray;
     }
 }

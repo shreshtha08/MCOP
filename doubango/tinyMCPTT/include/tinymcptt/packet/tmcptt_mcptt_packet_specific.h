@@ -1,5 +1,5 @@
 /* 
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui, Mikel Ramos
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -29,7 +29,7 @@
 
 #include "tsk_object.h"
 #include "tsk_memory.h"
-
+#define TMCPTT_MCPTT_PACKET_SPECIFIC_BINARY_32_MIN_SIZE			8
 #define TMCPTT_MCPTT_PACKET_SPECIFIC_BINARY_16_MIN_SIZE			4
 #define TMCPTT_MCPTT_PACKET_SPECIFIC_BINARY_MIN_SIZE			4
 #define TMCPTT_MCPTT_PACKET_SPECIFIC_BINARY_8_TXT_MIN_SIZE		3
@@ -57,6 +57,10 @@ typedef struct tmcptt_mcptt_packet_specific_binary_16_s {
 	uint8_t f_length;
 	uint16_t f_value;
 } tmcptt_mcptt_packet_specific_binary_16_t;
+
+
+
+
 
 typedef struct tmcptt_mcptt_packet_specific_txt_s {
 	TSK_DECLARE_OBJECT;
@@ -113,6 +117,8 @@ TINYMCPTT_API tmcptt_mcptt_packet_specific_binary_16_t* tmcptt_mcptt_packet_spec
 TINYMCPTT_API tmcptt_mcptt_packet_specific_binary_16_t* tmcptt_mcptt_packet_specific_binary_16_deserialize(const uint8_t fid, const void* data, tsk_size_t size);
 TINYMCPTT_API int tmcptt_mcptt_packet_specific_binary_16_serialize_to(const tmcptt_mcptt_packet_specific_binary_16_t* self, void* data, tsk_size_t size);
 TINYMCPTT_API tsk_size_t tmcptt_mcptt_packet_specific_binary_16_get_size(const tmcptt_mcptt_packet_specific_binary_16_t* self);
+TINYMCPTT_API tsk_size_t tmcptt_mcptt_packet_specific_binary_32_get_size(const tmcptt_mcptt_packet_specific_ssrc_t* self);
+
 
 TINYMCPTT_API tmcptt_mcptt_packet_specific_txt_t* tmcptt_mcptt_packet_specific_txt_create_null();
 TINYMCPTT_API tmcptt_mcptt_packet_specific_txt_t* tmcptt_mcptt_packet_specific_txt_deserialize(const uint8_t fid, const void* data, tsk_size_t size);

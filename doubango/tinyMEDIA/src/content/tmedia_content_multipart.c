@@ -4,7 +4,7 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui, Mikel Ramos
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -165,6 +165,7 @@ char* tmedia_content_multipart_tostring(tmedia_content_multipart_t* self)
 	return string;
 }
 
+
 int tmedia_content_multipart_init(tmedia_content_multipart_t* self)
 {
 	if (!self){
@@ -280,6 +281,7 @@ tmedia_multipart_body_t* tmedia_content_multipart_body_parse(const void* data, t
 	final_index = tsk_strLastIndexOf(body_buffer, sizeconst, delimited_final_boundary);
 	if(final_index <= 0)
 	{
+		TSK_DEBUG_ERROR("Error trying to get the end of the message");
 		TSK_FREE(delimited_boundary);
 		TSK_FREE(delimited_final_boundary);
 		return tsk_null;
@@ -348,6 +350,7 @@ char* tmedia_content_multipart_body_tostring(tmedia_multipart_body_t* self)
 	return string;
 }
 
+
 int tmedia_content_multipart_body_init(tmedia_multipart_body_t* self)
 {
 	if (!self){
@@ -396,8 +399,8 @@ tmedia_content_multipart_t* tmedia_content_multipart_body_get_content(tmedia_mul
 
 	tsk_list_foreach(item, self->contents)
 	{
-		content = (tmedia_content_multipart_t*)item->data;
-		if(tsk_stricmp(content->content_type, content_type) == 0)
+        content = (tmedia_content_multipart_t*)item->data;
+        if(memcmp(content->content_type, content_type, strlen(content->content_type)) == 0)
 		{
 			ret = content;
 			break;

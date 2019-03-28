@@ -4,7 +4,7 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /* 
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui, Mikel Ramos
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -45,6 +45,7 @@ static tsk_object_t* tmcptt_mcptt_packet_taken_ctor(tsk_object_t * self, va_list
 		taken_pkt->message_seq_num = tsk_null;
 		taken_pkt->track_info = tsk_null;
 		taken_pkt->floor_indicator = tsk_null;
+		taken_pkt->ssrc_taken_participant = tsk_null;
 	}
 	return self;
 }
@@ -107,8 +108,22 @@ tmcptt_mcptt_packet_taken_t* tmcptt_mcptt_packet_taken_deserialize(const void* d
 			}
 			field_size = tmcptt_mcptt_packet_specific_txt_get_size(taken_pkt->granted_party_id);
 			break;
+
+        case FID_SSRC:
+			//TODO New change, Now the SSRC use the code 014.
+			if (size < TMCPTT_MCPTT_PACKET_SPECIFIC_BINARY_32_MIN_SIZE) {
+				TSK_DEBUG_ERROR("Incorrect buffer size");
+				return tsk_null;
+			}
+				taken_pkt->ssrc_taken_participant = tmcptt_mcptt_packet_specific_ssrc_deserialize(pdata[0], pdata, size);
+				if (taken_pkt->ssrc_taken_participant == tsk_null) {
+					TSK_DEBUG_ERROR("Error deserializing field");
+					return tsk_null;
+				}
+				field_size = tmcptt_mcptt_packet_specific_binary_32_get_size(taken_pkt->permission);
+				break;
 		case FID_FLOOR_REQ_PERMISSION_OLD:
-			TSK_DEBUG_WARN("Use version 13.0 of Floor control specific fields");
+				TSK_DEBUG_WARN("Use version 13.0 of Floor control specific fields");
 		case FID_FLOOR_REQ_PERMISSION:
 			if (size < TMCPTT_MCPTT_PACKET_SPECIFIC_BINARY_16_MIN_SIZE) {
 				TSK_DEBUG_ERROR("Incorrect buffer size");
@@ -242,6 +257,15 @@ int tmcptt_mcptt_packet_taken_serialize_to(const tmcptt_mcptt_packet_taken_t* se
 		size -= field_size;
 	}
 
+	if (self->ssrc_taken_participant) {
+		tmcptt_mcptt_packet_specific_binary_16_serialize_to(self->ssrc_taken_participant, pdata, size);
+		field_size = tmcptt_mcptt_packet_specific_binary_16_get_size(self->ssrc_taken_participant);
+		pdata += field_size;
+		size -= field_size;
+	}
+
+
+
 	return ret;
 }
 
@@ -271,6 +295,10 @@ tsk_size_t tmcptt_mcptt_packet_taken_get_size(const tmcptt_mcptt_packet_taken_t*
 
 	if (self->floor_indicator)
 		size += tmcptt_mcptt_packet_specific_binary_16_get_size(self->floor_indicator);
+
+	if (self->ssrc_taken_participant)
+		size += tmcptt_mcptt_packet_specific_binary_16_get_size(self->ssrc_taken_participant);
+
 
 	return size;
 }

@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -141,6 +140,7 @@ typedef struct tsip_message_s
 	tsip_header_Content_Type_t *Content_Type;
 	tsip_header_Content_Length_t *Content_Length;
 	tsk_buffer_t *Content;
+
 
 	/*== OTHER HEADERS*/
 	tsip_headers_L_t *headers;

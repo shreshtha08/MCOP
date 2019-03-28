@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -51,23 +50,47 @@ public class Engine {
         Log.d(TAG,"Start engine SDK MCOP");
     }
 
-    public IBinder newClient(Intent intent,Context context){
+    protected IBinder newClient(Intent intent,Context context,boolean isRebind){
         IBinder result=null;
-        if(mClients.size()<NUM_MAX_CLIENT){
+        ManagerClient managerClient=null;
+        if(mClients.size()==NUM_MAX_CLIENT){
+            managerClient=mClients.get(0);
+        }if(mClients.size()<NUM_MAX_CLIENT){
             Log.d(TAG,"Create new client");
-            ManagerClient managerClient=new ManagerClient(context);
-            //Test
-            //Only in demo
-            String userSelect=null;
-            if((userSelect=intent.getStringExtra("PROFILE_SELECT"))!=null && !userSelect.trim().isEmpty()){
-                Log.d(TAG,"Select profile:"+userSelect);
-                managerClient.selectProfileMCOP2(userSelect);
-            }
+
+            String connectivityPluginPackageMain  = intent.getStringExtra(ConstantsMCOP.CONNECTIVITY_PLUGIN_PACKAGE_ID);
+            String connectivityPluginPackageService = intent.getStringExtra(ConstantsMCOP.CONNECTIVITY_PLUGIN_SERVICE_ID);
+            String simPluginPackageMain  = intent.getStringExtra(ConstantsMCOP.SIM_PLUGIN_PACKAGE_ID);
+            String simPluginPackageService = intent.getStringExtra(ConstantsMCOP.SIM_PLUGIN_SERVICE_ID);
+            String configurationPluginPackageMain  = intent.getStringExtra(ConstantsMCOP.CONFIGURATION_PLUGIN_PACKAGE_ID);
+            String configurationPluginPackageService = intent.getStringExtra(ConstantsMCOP.CONFIGURATION_PLUGIN_SERVICE_ID);
+            String mbmsPluginPackageMain = intent.getStringExtra(ConstantsMCOP.MBMS_PLUGIN_PACKAGE_ID);
+            String mbmsPluginPackageService = intent.getStringExtra(ConstantsMCOP.MBMS_PLUGIN_SERVICE_ID);
+            managerClient=new ManagerClient(context
+            ,connectivityPluginPackageService
+            ,connectivityPluginPackageMain
+            ,simPluginPackageService
+            ,simPluginPackageMain
+            ,configurationPluginPackageService
+            ,configurationPluginPackageMain
+            ,mbmsPluginPackageService
+            ,mbmsPluginPackageMain
+            );
             mClients.add(managerClient);
-            result=managerClient.startManagerClient();
+
         }else{
             Log.e(TAG,"The number of users of the server to exceeded the allowed maximum number");
         }
+
+        //Test
+        //Only in demo
+        String userSelect=null;
+        if(managerClient!=null && (userSelect=intent.getStringExtra("PROFILE_SELECT"))!=null && !userSelect.trim().isEmpty()){
+            Log.d(TAG,"Select profile:"+userSelect);
+            managerClient.selectProfileMCOP2(userSelect);
+        }
+        if(managerClient!=null)
+        result=managerClient.startManagerClient(isRebind);
         return result;
     }
 
@@ -77,7 +100,7 @@ public class Engine {
             success=true;
             for(ManagerClient managerClient:mClients){
                 success &=managerClient.stopManagerClient();
-                mClients.remove(managerClient);
+                //mClients.remove(managerClient);
             }
         }
         return success;
@@ -89,7 +112,7 @@ public class Engine {
             success=true;
             for(ManagerClient managerClient:mClients){
                 success &=managerClient.onDestroyClient();
-                mClients.remove(managerClient);
+                //mClients.remove(managerClient);
             }
         }
         return success;

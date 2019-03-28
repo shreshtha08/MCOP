@@ -1,5 +1,5 @@
 /* 
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui, Mikel Ramos
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -34,6 +34,7 @@
 */
 
 enum cb_type{
+	cb_test,
 	cb_info,
 	cb_warn,
 	cb_error,
@@ -54,6 +55,16 @@ int debug_xxx_cb(const void* arg, const char* fmt, enum cb_type type, va_list *a
 		tsk_sprintf_2(&message, fmt, app);
 		
 		switch(type){
+			case cb_test:
+				if(message && message!=tsk_null)
+                ret=
+#if ANDROID
+
+                    __android_log_write(ANDROID_LOG_ERROR, ANDROID_DEBUG_TAG, message);
+#else
+                (stack->getDebugCallback()) ? stack->getDebugCallback()->OnDebugTest(message) : -1;
+#endif
+				break;
 			case cb_info:
 				if(message && message!=tsk_null)
 				ret=
@@ -92,6 +103,18 @@ int debug_xxx_cb(const void* arg, const char* fmt, enum cb_type type, va_list *a
 		
 		TSK_FREE(message);
 	}
+
+	return ret;
+}
+
+int DDebugCallback::debug_test_cb(const void* arg, const char* fmt, ...)
+{
+	va_list ap;
+	int ret;
+
+	va_start(ap, fmt);
+	ret = debug_xxx_cb(arg, fmt, cb_test, &ap);
+	va_end(ap);
 
 	return ret;
 }

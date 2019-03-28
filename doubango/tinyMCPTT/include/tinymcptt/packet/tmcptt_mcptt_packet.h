@@ -1,5 +1,5 @@
 /* 
-*  Copyright (C) 2017 Mikel Ramos
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -49,6 +49,7 @@ typedef enum {
 	MCPTT_QUEUE_POS_INFO		= 9,  //0b01001,
 	MCPTT_QUEUE_POS_INFO_ACK	= 25, //0b11001,
 	MCPTT_ACK					= 10, //0b01010
+	MCPTT_ACK_ACK				= 26, //0b11010
 } tmcptt_mcptt_packet_type_t;
 
 /* MCPTT specific field ids */

@@ -87,20 +87,36 @@ public class CallSession extends InviteSession {
     return tinyWRAPJNI.CallSession_callVideo__SWIG_3(swigCPtr, this, SipUri.getCPtr(remoteUri), remoteUri);
   }
 
-  public boolean call(String remoteUriString, twrap_media_type_t media, ActionConfig config) {
-    return tinyWRAPJNI.CallSession_call__SWIG_0(swigCPtr, this, remoteUriString, media.swigValue(), ActionConfig.getCPtr(config), config);
+  public boolean call(String remoteUriString, twrap_media_type_t media, boolean answer_mode_auto, ActionConfig config) {
+    return tinyWRAPJNI.CallSession_call__SWIG_0(swigCPtr, this, remoteUriString, media.swigValue(), answer_mode_auto, ActionConfig.getCPtr(config), config);
   }
 
-  public boolean call(String remoteUriString, twrap_media_type_t media) {
-    return tinyWRAPJNI.CallSession_call__SWIG_1(swigCPtr, this, remoteUriString, media.swigValue());
+  public boolean call(String remoteUriString, twrap_media_type_t media, boolean answer_mode_auto) {
+    return tinyWRAPJNI.CallSession_call__SWIG_1(swigCPtr, this, remoteUriString, media.swigValue(), answer_mode_auto);
   }
 
-  public boolean call(SipUri remoteUri, twrap_media_type_t media, ActionConfig config) {
-    return tinyWRAPJNI.CallSession_call__SWIG_2(swigCPtr, this, SipUri.getCPtr(remoteUri), remoteUri, media.swigValue(), ActionConfig.getCPtr(config), config);
+  public boolean call(SipUri remoteUri, twrap_media_type_t media, boolean answer_mode_auto, ActionConfig config) {
+    return tinyWRAPJNI.CallSession_call__SWIG_2(swigCPtr, this, SipUri.getCPtr(remoteUri), remoteUri, media.swigValue(), answer_mode_auto, ActionConfig.getCPtr(config), config);
   }
 
-  public boolean call(SipUri remoteUri, twrap_media_type_t media) {
-    return tinyWRAPJNI.CallSession_call__SWIG_3(swigCPtr, this, SipUri.getCPtr(remoteUri), remoteUri, media.swigValue());
+  public boolean call(SipUri remoteUri, twrap_media_type_t media, boolean answer_mode_auto) {
+    return tinyWRAPJNI.CallSession_call__SWIG_3(swigCPtr, this, SipUri.getCPtr(remoteUri), remoteUri, media.swigValue(), answer_mode_auto);
+  }
+
+  public boolean callEmergency(String remoteUriString, twrap_media_type_t media, boolean answerMode, String emergencyType, int levelEmergency, ActionConfig config) {
+    return tinyWRAPJNI.CallSession_callEmergency__SWIG_0(swigCPtr, this, remoteUriString, media.swigValue(), answerMode, emergencyType, levelEmergency, ActionConfig.getCPtr(config), config);
+  }
+
+  public boolean callEmergency(String remoteUriString, twrap_media_type_t media, boolean answerMode, String emergencyType, int levelEmergency) {
+    return tinyWRAPJNI.CallSession_callEmergency__SWIG_1(swigCPtr, this, remoteUriString, media.swigValue(), answerMode, emergencyType, levelEmergency);
+  }
+
+  public boolean callEmergency(SipUri remoteUri, twrap_media_type_t media, boolean answerMode, String emergencyType, int levelEmergency, ActionConfig config) {
+    return tinyWRAPJNI.CallSession_callEmergency__SWIG_2(swigCPtr, this, SipUri.getCPtr(remoteUri), remoteUri, media.swigValue(), answerMode, emergencyType, levelEmergency, ActionConfig.getCPtr(config), config);
+  }
+
+  public boolean callEmergency(SipUri remoteUri, twrap_media_type_t media, boolean answerMode, String emergencyType, int levelEmergency) {
+    return tinyWRAPJNI.CallSession_callEmergency__SWIG_3(swigCPtr, this, SipUri.getCPtr(remoteUri), remoteUri, media.swigValue(), answerMode, emergencyType, levelEmergency);
   }
 
   public boolean callGroup(SWIGTYPE_p_p_char user_list, int user_count, twrap_media_type_t media, ActionConfig config) {
@@ -285,6 +301,14 @@ public class CallSession extends InviteSession {
 
   public String getPTTMcpttGroupMemberAtPosition(int pos) {
     return tinyWRAPJNI.CallSession_getPTTMcpttGroupMemberAtPosition(swigCPtr, this, pos);
+  }
+
+  public String getPttMcpttEmergencyResourcePriorityString() {
+    return tinyWRAPJNI.CallSession_getPttMcpttEmergencyResourcePriorityString(swigCPtr, this);
+  }
+
+  public int getPttMcpttEmergencyResourcePriority() {
+    return tinyWRAPJNI.CallSession_getPttMcpttEmergencyResourcePriority(swigCPtr, this);
   }
 
   public String getSipPartyUri() {

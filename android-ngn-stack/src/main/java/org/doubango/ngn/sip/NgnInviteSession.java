@@ -21,6 +21,9 @@
 */
 package org.doubango.ngn.sip;
 
+import android.util.Log;
+
+import org.doubango.ngn.BuildConfig;
 import org.doubango.ngn.NgnEngine;
 import org.doubango.ngn.media.NgnMediaType;
 import org.doubango.ngn.model.NgnDeviceInfo;
@@ -29,6 +32,7 @@ import org.doubango.ngn.model.NgnHistoryEvent.StatusType;
 import org.doubango.tinyWRAP.ActionConfig;
 import org.doubango.tinyWRAP.InviteSession;
 import org.doubango.tinyWRAP.MediaSessionMgr;
+import org.doubango.utils.Utils;
 
 import java.nio.ByteBuffer;
 import java.util.Date;
@@ -40,6 +44,8 @@ import java.util.Date;
  * you own session.
  */
 public abstract class NgnInviteSession extends NgnSipSession{
+	private static final String TAG = Utils.getTAG(NgnInviteSession.class.getCanonicalName());
+
 	protected NgnMediaType mMediaType;
     protected MediaSessionMgr mMediaSessionMgr = null;
     protected InviteState mState;
@@ -80,6 +86,17 @@ public abstract class NgnInviteSession extends NgnSipSession{
 	 public NgnMediaType getMediaType(){
          return mMediaType;
      }
+
+
+	/**
+	 * Set the media type
+	 * @return the media type
+	 */
+	protected void setMediaType(NgnMediaType mMediaType){
+		if(BuildConfig.DEBUG)Log.d(TAG,"setMediaType: "+mMediaType.name());
+
+		this.mMediaType=mMediaType;
+	}
 
 	 /**
 	  * Gets the session state
@@ -191,6 +208,7 @@ public abstract class NgnInviteSession extends NgnSipSession{
       * @return the media session manager
       */
      public MediaSessionMgr getMediaSessionMgr(){
+     	if(BuildConfig.DEBUG)Log.d(TAG,"getMediaSessionMgr");
     	 if (mMediaSessionMgr == null){
     		 mMediaSessionMgr = ((InviteSession)getSession()).getMediaMgr();
          }

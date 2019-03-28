@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -76,6 +75,7 @@ bool SipStack::setDebugCallback(DDebugCallback* pCallback)
 	if(this && pCallback){
 		m_pDebugCallback = pCallback;
 		tsk_debug_set_arg_data(this);
+		tsk_debug_set_test_cb(DDebugCallback::debug_test_cb);
 		tsk_debug_set_info_cb(DDebugCallback::debug_info_cb);
 		tsk_debug_set_warn_cb(DDebugCallback::debug_warn_cb);
 		tsk_debug_set_error_cb(DDebugCallback::debug_error_cb);
@@ -84,6 +84,7 @@ bool SipStack::setDebugCallback(DDebugCallback* pCallback)
 	else if(this){
 		m_pDebugCallback = tsk_null;
 		tsk_debug_set_arg_data(tsk_null);
+		tsk_debug_set_test_cb(tsk_null);
 		tsk_debug_set_info_cb(tsk_null);
 		tsk_debug_set_warn_cb(tsk_null);
 		tsk_debug_set_error_cb(tsk_null);
@@ -93,7 +94,7 @@ bool SipStack::setDebugCallback(DDebugCallback* pCallback)
 	return true;
 }
 
-//By Eduardo
+//
 bool SipStack::setRegisterCallback(DRegisterCallback* pCallback,void* dataResponseRegisterCallback,int size)
 {
 	if(this && pCallback){
@@ -531,11 +532,32 @@ bool SipStack::setMCPTTPSIPreestablished(const char* mcptt_psi_preestablished){
 			TSIP_STACK_SET_NULL()) == 0);
 }
 
+
+bool SipStack::setMCPTTPSICMS(const char* mcptt_psi_cms){
+	return (tsip_stack_set(m_pHandle,
+						   TSIP_STACK_SET_MCPTT_PSI_CMS(mcptt_psi_cms),
+						   TSIP_STACK_SET_NULL()) == 0);
+}
+
+bool SipStack::setMCPTTPSIGMS(const char* mcptt_psi_gms){
+	return (tsip_stack_set(m_pHandle,
+						   TSIP_STACK_SET_MCPTT_PSI_GMS(mcptt_psi_gms),
+						   TSIP_STACK_SET_NULL()) == 0);
+}
+
 bool SipStack::setMCPTTID(const char* mcptt_id){
 	return (tsip_stack_set(m_pHandle,
-			TSIP_STACK_SET_MCPTT_ID(mcptt_id),
-			TSIP_STACK_SET_NULL()) == 0);
+						   TSIP_STACK_SET_MCPTT_ID(mcptt_id),
+						   TSIP_STACK_SET_NULL()) == 0);
 }
+
+bool SipStack::setMCPTTClientID(const char* mcptt_client_id){
+	return (tsip_stack_set(m_pHandle,
+						   TSIP_STACK_SET_MCPTT_CLIENT_ID(mcptt_client_id),
+						   TSIP_STACK_SET_NULL()) == 0);
+}
+
+
 
 bool SipStack::setMCPTTPriority(const int mcptt_priority){
 	return (tsip_stack_set(m_pHandle,
@@ -635,7 +657,8 @@ bool SipStack::setMCPTTInsertXFramedIP(const bool mcptt_insert_x_framed_ip){
 
 
 
-//Timers recived from CMS by Eduardo
+
+//Timers recived from CMS
 bool SipStack::setMCPTTTimerT100(const int mcptt_timer_t100){
 	return (tsip_stack_set(m_pHandle,
 			TSIP_STACK_SET_MCPTT_TIMER_T100(mcptt_timer_t100),
@@ -703,6 +726,9 @@ bool SipStack::setMbmsIsRTCPMux(const bool isRTCPMux)
 		TSIP_STACK_SET_MBMS_IS_RTCP_MUX(isRTCPMux),
 		TSIP_SSESSION_SET_NULL()) == 0);
 }
+
+
+
 //MCPTT AFFILIATION
 bool SipStack::setMCPTTPSIAffiliation(const char* mcptt_psi_affiliation){
 	return (tsip_stack_set(m_pHandle,
@@ -783,6 +809,12 @@ bool SipStack::setMCPTTAffiliationGroupsDefualt(const char* mcptt_affiliation_gr
 
 	return (tsip_stack_set(m_pHandle,
 			TSIP_STACK_SET_MCPTT_AFFILIATION_GROUPS_DEFAULT(result),
+			TSIP_STACK_SET_NULL()) == 0);
+}
+//MCPTT AUTHENTICATION
+bool SipStack::setMCPTTPSIAuthentication(const char* mcptt_psi_authentication){
+	return (tsip_stack_set(m_pHandle,
+			TSIP_STACK_SET_MCPTT_PSI_AUTHENTICATION(mcptt_psi_authentication),
 			TSIP_STACK_SET_NULL()) == 0);
 }
 
@@ -928,6 +960,23 @@ static int stack_callback(const tsip_event_t *sipevent)
 				}
 				break;
 			}
+		case tsip_event_subscribe_cms:
+		{	/* SUBSCRIBE CMS */
+			if(sipStack->getCallback()){
+				e = new SubscriptionCMSEvent(sipevent);
+				sipStack->getCallback()->OnSubscriptionCMSEvent((const SubscriptionCMSEvent*)e);
+			}
+			break;
+		}
+
+		case tsip_event_subscribe_gms:
+		{	/* SUBSCRIBE GMS */
+			if(sipStack->getCallback()){
+				e = new SubscriptionGMSEvent(sipevent);
+				sipStack->getCallback()->OnSubscriptionGMSEvent((const SubscriptionGMSEvent*)e);
+			}
+			break;
+		}
 
 		case tsip_event_dialog:
 			{	/* Common to all dialogs */

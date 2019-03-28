@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -154,7 +153,10 @@ tmedia_type_t tmedia_type_from_sdp(const tsdp_message_t* sdp)
 		TSK_DEBUG_ERROR("Invalid parameter");
 		return tmedia_none;
 	}
-
+	/*
+	 * At this point it is decided what type of session this call is, since for each line M that contains the received SDP, a type of session is introduced.
+	 * This is valid, except in extraordinary cases.
+	 */
 	while ((M = (const tsdp_header_M_t*)tsdp_message_get_headerAt(sdp, tsdp_htype_M, index++))) {
 		type |= tmedia_type_from_sdp_headerM(M);
 	}

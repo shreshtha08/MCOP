@@ -6,7 +6,6 @@
 
 /* #line 1 "tsip_parser_header_Authorization.rl" */
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -99,7 +98,7 @@ int tsip_header_Authorization_serialize(const tsip_header_t* header, tsk_buffer_
 				Authorization->nc ? ",nc=" : "",
 				Authorization->nc ? Authorization->nc : "",
 
-				//By Eduardo
+				//
 				//This is for SQN with SIM
 				Authorization->auts ? ",auts=\"" : "",
 				Authorization->auts ? Authorization->auts : "",
@@ -131,7 +130,7 @@ tsip_header_Authorization_t *tsip_header_Authorization_parse(const char *data, t
 		hdr_sip->uri =  tsk_strdup(hdr_http->uri);
 		hdr_sip->response =  tsk_strdup(hdr_http->response);
 		hdr_sip->algorithm =  tsk_strdup(hdr_http->algorithm);
-		//By Eduardo
+		//
 		//This is for SQN with SIM
 		//hdr_sip->auts =  tsk_strdup(hdr_http->auts);
 		//hdr_sip->auts_param =  tsk_strdup(hdr_http->auts_param);
@@ -186,7 +185,7 @@ static tsk_object_t* tsip_header_Authorization_dtor(tsk_object_t *self)
 		TSK_FREE(Authorization->uri);
 		TSK_FREE(Authorization->response);
 		TSK_FREE(Authorization->algorithm);
-		//By Eduardo
+		//
 		//This is for SQN with SIM
 		TSK_FREE(Authorization->auts);
 		TSK_FREE(Authorization->auts_param);

@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -88,7 +87,7 @@ int tsip_api_common_reject(const tsip_ssession_handle_t *ss, ...)
 {
 	int ret = -1;
 	va_list ap;
-
+	TSK_DEBUG_INFO("tsip_api_common_reject call.");
 	va_start(ap, ss);
 	if((ret = _tsip_api_common_any(ss, tsip_atype_reject, &ap))){
 		TSK_DEBUG_ERROR("Reject() failed.");

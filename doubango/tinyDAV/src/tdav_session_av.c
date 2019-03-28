@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -535,7 +534,7 @@ int tdav_session_av_prepare(tdav_session_av_t* self)
 							self->rtp_manager->is_multicast = tsk_true;
 							tsk_sprintf(&(self->rtp_manager->multicast.multicast_ip), "%s", self->remote_ip);
 							self->rtp_manager->multicast.multicast_port = self->remote_port;
-							// Mikel. We still do not support encryption for MCPTT
+							//  We still do not support encryption for MCPTT
 							//self->srtp_mode = tmedia_srtp_mode_optional; //Multicast flows are encrypted
 							//self->srtp_type = tmedia_srtp_type_key_mgmt_mikey;
 							//self->rtp_manager->srtp_mode = tmedia_srtp_mode_optional; //Multicast flows are encrypted
@@ -553,7 +552,7 @@ int tdav_session_av_prepare(tdav_session_av_t* self)
 							self->rtp_manager->is_multicast = tsk_true;
 							tsk_sprintf(&(self->rtp_manager->multicast.multicast_ip), "%s", self->remote_ip);
 							self->rtp_manager->multicast.multicast_port = self->remote_port;
-							// Mikel. We still do not support encryption for MCPTT
+							//  We still do not support encryption for MCPTT
 							//self->srtp_mode = tmedia_srtp_mode_optional; //Multicast flows are encrypted
 							//self->srtp_type = tmedia_srtp_type_key_mgmt_mikey;
 							//self->rtp_manager->srtp_mode = tmedia_srtp_mode_optional; //Multicast flows are encrypted
@@ -637,7 +636,6 @@ int tdav_session_av_start(tdav_session_av_t* self, const tmedia_codec_t* best_co
 #if HAVE_SRTP
 		ret = trtp_manager_set_dtls_callback(self->rtp_manager, self, _tdav_session_av_srtp_dtls_cb);
 #endif /* HAVE_SRTP */
-
 		// network information will be updated when the RTP manager starts if ICE is enabled
 		ret = trtp_manager_set_rtp_remote(self->rtp_manager, self->remote_ip, self->remote_port);
 		self->rtp_manager->use_rtcpmux = self->use_rtcpmux;
@@ -707,7 +705,7 @@ int tdav_session_av_start(tdav_session_av_t* self, const tmedia_codec_t* best_co
 		}
 
 		// Start RTP manager
-		self->rtp_manager->is_MCPTT_session=tsk_false;//MCPTT By Eduardo
+		self->rtp_manager->is_MCPTT_session=tsk_false;//MCPTT
 		ret = trtp_manager_start(self->rtp_manager);
 		
 #if HAVE_SRTP
@@ -841,7 +839,7 @@ const tsdp_header_M_t* tdav_session_av_get_lo(tdav_session_av_t* self, tsk_bool_
 							self->rtp_manager->is_multicast = tsk_true;
 							tsk_sprintf(&(self->rtp_manager->multicast.multicast_ip), "%s", self->remote_ip);
 							self->rtp_manager->multicast.multicast_port = self->remote_port;
-							//Mikel. We still do not support encryption for MCPTT
+							// We still do not support encryption for MCPTT
 							//self->srtp_mode = tmedia_srtp_mode_optional; //Multicast flows are encrypted
 							//self->srtp_type = tmedia_srtp_type_key_mgmt_mikey;
 							//self->rtp_manager->srtp_mode = tmedia_srtp_mode_optional; //Multicast flows are encrypted
@@ -859,7 +857,7 @@ const tsdp_header_M_t* tdav_session_av_get_lo(tdav_session_av_t* self, tsk_bool_
 							self->rtp_manager->is_multicast = tsk_true;
 							tsk_sprintf(&(self->rtp_manager->multicast.multicast_ip), "%s", self->remote_ip);
 							self->rtp_manager->multicast.multicast_port = self->remote_port;
-							//Mikel. We still do not support encryption for MCPTT
+							// We still do not support encryption for MCPTT
 							//self->srtp_mode = tmedia_srtp_mode_optional; //Multicast flows are encrypted
 							//self->srtp_type = tmedia_srtp_type_key_mgmt_mikey;
 							//self->rtp_manager->srtp_mode = tmedia_srtp_mode_optional; //Multicast flows are encrypted
@@ -879,7 +877,7 @@ const tsdp_header_M_t* tdav_session_av_get_lo(tdav_session_av_t* self, tsk_bool_
 			return tsk_null;
 		}
 	}
-	else if(self->remote_ip != tsk_null) //Multicast in remote offer (Added by Mikel)
+	else if(self->remote_ip != tsk_null) //Multicast in remote offer (Added )
 	{
 		if(!self->use_ipv6) //Check IPv6
 		{
@@ -895,7 +893,7 @@ const tsdp_header_M_t* tdav_session_av_get_lo(tdav_session_av_t* self, tsk_bool_
 					self->rtp_manager->is_multicast = tsk_true;
 					tsk_sprintf(&(self->rtp_manager->multicast.multicast_ip), "%s", self->remote_ip);
 					self->rtp_manager->multicast.multicast_port = self->remote_port;
-					//Mikel. We still do not support encryption for MCPTT
+					// We still do not support encryption for MCPTT
 					//self->srtp_mode = tmedia_srtp_mode_optional; //Multicast flows are encrypted
 					//self->srtp_type = tmedia_srtp_type_key_mgmt_mikey;
 					//self->rtp_manager->srtp_mode = tmedia_srtp_mode_optional; //Multicast flows are encrypted
@@ -978,7 +976,7 @@ const tsdp_header_M_t* tdav_session_av_get_lo(tdav_session_av_t* self, tsk_bool_
 					TSDP_HEADER_C_VA_ARGS("IN", self->use_ipv6 ? "IP6" : "IP4", self->rtp_manager->rtp.public_ip),
 					tsk_null);
 			}
-			else if(self->rtp_manager->is_multicast) //Added by Mikel
+			else if(self->rtp_manager->is_multicast)
 			{
 				tsdp_header_M_add_headers(base->M.lo,
 					TSDP_HEADER_C_VA_ARGS("IN", self->use_ipv6 ? "IP6" : "IP4", self->rtp_manager->multicast.multicast_ip),
@@ -1429,7 +1427,7 @@ const tsdp_header_M_t* tdav_session_av_get_lo(tdav_session_av_t* self, tsk_bool_
 			}
 		}
 		else{
-			if(base->M.lo->C && !self->rtp_manager->is_multicast){ //Added by Mikel
+			if(base->M.lo->C && !self->rtp_manager->is_multicast){
 				tsk_strupdate(&base->M.lo->C->addr, self->rtp_manager->rtp.public_ip);
 				tsk_strupdate(&base->M.lo->C->addrtype, (self->use_ipv6 ? "IP6" : "IP4"));
 			}
@@ -1501,7 +1499,7 @@ int tdav_session_av_set_ro(tdav_session_av_t* self, const struct tsdp_header_M_s
 		return -2;
 	}
 	if((is_srtp_sdes_remote_mandatory = (profile_remote & RTP_PROFILE_SECURE_SDES) == RTP_PROFILE_SECURE_SDES) && !(self->srtp_type & tmedia_srtp_type_sdes)){
-		if((is_srtp_mikey_remote_mandatory = (profile_remote & RTP_PROFILE_SECURE_MIKEY) == RTP_PROFILE_SECURE) && (self->srtp_type & tmedia_srtp_type_key_mgmt_mikey)) //Added by Mikel
+		if((is_srtp_mikey_remote_mandatory = (profile_remote & RTP_PROFILE_SECURE_MIKEY) == RTP_PROFILE_SECURE) && (self->srtp_type & tmedia_srtp_type_key_mgmt_mikey))
 		{
 			TSK_DEBUG_INFO("Remote party requesting SRTP-MIKEY (%s)", m->proto);
 		}
@@ -1812,7 +1810,7 @@ int tdav_session_av_set_ro(tdav_session_av_t* self, const struct tsdp_header_M_s
 
 		}// end-of-dtls
 
-		if(!srtp_sdes_neg_ok && !srtp_dtls_neg_ok && is_srtp_mikey_local_enabled){ //Added by Mikel
+		if(!srtp_sdes_neg_ok && !srtp_dtls_neg_ok && is_srtp_mikey_local_enabled){
 			const tsdp_header_A_t* A;
 			char* space;
 			char* mikey_message_b64;
@@ -1892,7 +1890,6 @@ const tmedia_codec_t* tdav_session_av_get_best_neg_codec(const tdav_session_av_t
 		TSK_DEBUG_ERROR("Invalid parameter");
 		return tsk_null;
 	}
-	
 	tsk_list_foreach(item, TMEDIA_SESSION(self)->neg_codecs){
 		// exclude DTMF, RED and ULPFEC
 		if(!TDAV_IS_DTMF_CODEC(item->data) && !TDAV_IS_ULPFEC_CODEC(item->data) && !TDAV_IS_RED_CODEC(item->data) 
@@ -1900,6 +1897,9 @@ const tmedia_codec_t* tdav_session_av_get_best_neg_codec(const tdav_session_av_t
 			return TMEDIA_CODEC(item->data);
 		}
 	}
+	/*#if DEBUG
+    item.p_mcpptt_kpi3=(tsk_bool_t *)malloc(sizeof);
+    *(item.p_mcppp)=false;*/
 	return tsk_null;
 }
 

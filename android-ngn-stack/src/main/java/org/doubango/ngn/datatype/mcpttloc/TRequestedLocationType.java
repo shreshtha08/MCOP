@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -44,7 +44,7 @@ public class TRequestedLocationType {
     protected TEmptyType mbmsSaId;
     @Element(required=false,name = "MbsfnArea")
     protected TEmptyType mbsfnArea;
-    @Element(required=false,name = "GeographicalCordinate")
+    @Element(required=false,name = "GeographicalCoordinate")
     protected TEmptyType geographicalCordinate;
     @Element(required = false,name = "minimumIntervalLength")
     protected long minimumIntervalLength;

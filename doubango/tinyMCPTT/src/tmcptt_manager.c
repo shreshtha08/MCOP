@@ -4,7 +4,7 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /* 
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui, Mikel Ramos
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -465,7 +465,7 @@ int tmcptt_manager_start(tmcptt_manager_t* self)
 //bail:
 //
 //	tsk_safeobj_unlock(self);
-	self->rtp_manager->is_MCPTT_session=tsk_true;//MCPTT By Eduardo
+	self->rtp_manager->is_MCPTT_session=tsk_true;//MCPTT
 	ret = trtp_manager_start(self->rtp_manager);
 	trtp_manager_disable_automated_rtcp_reporting(self->rtp_manager);
 
@@ -476,7 +476,7 @@ int tmcptt_mbms_manager_start(tmcptt_manager_t* self)
 {
 	int ret = 0;
 
-	self->rtp_manager_mbms->is_MCPTT_session=tsk_true;//MCPTT By Eduardo
+	self->rtp_manager_mbms->is_MCPTT_session=tsk_true;//MCPTT
 	ret = trtp_manager_start(self->rtp_manager_mbms);
 	trtp_manager_disable_automated_rtcp_reporting(self->rtp_manager_mbms);
 
@@ -507,7 +507,7 @@ int tmcptt_mbms_floor_manager_start(tmcptt_manager_t* self)
 {
 	int ret = 0;
 
-	self->rtp_manager_mbms_floor->is_MCPTT_session=tsk_true;//MCPTT By Eduardo
+	self->rtp_manager_mbms_floor->is_MCPTT_session=tsk_true;//MCPTT
 	ret = trtp_manager_start(self->rtp_manager_mbms_floor);
 	trtp_manager_disable_automated_rtcp_reporting(self->rtp_manager_mbms_floor);
 

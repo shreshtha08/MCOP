@@ -1,5 +1,5 @@
 /* 
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui, Mikel Ramos
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -40,6 +40,7 @@ typedef struct tmcptt_mcptt_packet_taken_s
 	tmcptt_mcptt_packet_specific_binary_16_t*      message_seq_num;
 	tmcptt_mcptt_packet_specific_binary_txt_ref_t* track_info;                //Only when non-controlling is included
 	tmcptt_mcptt_packet_specific_binary_16_t*      floor_indicator;
+	tmcptt_mcptt_packet_specific_ssrc_t*		   ssrc_taken_participant;  //Only in off-network
 } tmcptt_mcptt_packet_taken_t;
 
 TINYMCPTT_API tmcptt_mcptt_packet_taken_t* tmcptt_mcptt_packet_taken_create_null();

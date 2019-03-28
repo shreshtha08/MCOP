@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -56,6 +55,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <tsip.h>
 
 static void* TSK_STDCALL run(void* self);
 
@@ -507,12 +507,48 @@ static int __tsip_stack_set(tsip_stack_t *self, va_list* app)
 						TSK_DEBUG_ERROR("'%s' is an invalid PSI for CALL PREESTABLISHED MCPTT", PSI_PREESTABLISHED);
 					break;
 				}
+
+			case tsip_pname_mcptt_psi_cms:
+			{
+				const char* PSI_CMS = va_arg(*app, const char*);
+				tsip_uri_t *uri;
+				if(!tsk_strnullORempty(PSI_CMS) && (uri = tsip_uri_parse(PSI_CMS, tsk_strlen(PSI_CMS)))){
+					if(uri->type == uri_unknown){ /* scheme is missing or unsupported? */
+						tsk_strupdate(&uri->scheme, "sip");
+						uri->type = uri_sip;
+					}
+					TSK_OBJECT_SAFE_FREE(self->pttMCPTT.psi_cms); /* delete old */
+					self->pttMCPTT.psi_cms = uri;
+				}
+				else
+				TSK_DEBUG_ERROR("'%s' is an invalid PSI for CMS MCPTT", PSI_CMS);
+				break;
+			}
+
+
+			case tsip_pname_mcptt_psi_gms:
+			{
+				const char* PSI_GMS = va_arg(*app, const char*);
+				tsip_uri_t *uri;
+				if(!tsk_strnullORempty(PSI_GMS) && (uri = tsip_uri_parse(PSI_GMS, tsk_strlen(PSI_GMS)))){
+					if(uri->type == uri_unknown){ /* scheme is missing or unsupported? */
+						tsk_strupdate(&uri->scheme, "sip");
+						uri->type = uri_sip;
+					}
+					TSK_OBJECT_SAFE_FREE(self->pttMCPTT.psi_gms); /* delete old */
+					self->pttMCPTT.psi_gms = uri;
+				}
+				else
+				TSK_DEBUG_ERROR("'%s' is an invalid PSI for CMS MCPTT", PSI_GMS);
+				break;
+			}
+
 			case tsip_pname_mcptt_id:
 				{
 					const char* MCPTT_ID = va_arg(*app, const char*);
 					tsip_uri_t *uri;
 					if(!tsk_strnullORempty(MCPTT_ID) && (uri = tsip_uri_parse(MCPTT_ID, tsk_strlen(MCPTT_ID)))){
-						//MCPTT ID isn´t URI_SIP
+						//MCPTT ID isnï¿½t URI_SIP
 						TSK_OBJECT_SAFE_FREE(self->pttMCPTT.mcptt_id); /* delete old */
 						self->pttMCPTT.mcptt_id = uri;
 					}
@@ -520,6 +556,51 @@ static int __tsip_stack_set(tsip_stack_t *self, va_list* app)
 						TSK_DEBUG_ERROR("'%s' is an invalid MCPTT ID", MCPTT_ID);
 					break;
 				}
+
+			/*case tsip_pname_mcptt_client_id:
+			{
+				const char* MCPTT_CLIENT_ID = va_arg(*app, const char*);
+				tsk_buffer_t* mcptt_client_id = tsk_buffer_create_null();
+				if(!tsk_strnullORempty(MCPTT_CLIENT_ID) && (mcptt_client_id = tsk_buffer_create(MCPTT_CLIENT_ID,tsk_strlen(MCPTT_CLIENT_ID)))){
+					//MCPTT ID isnï¿½t URI_SIP
+					TSK_OBJECT_SAFE_FREE(self->pttMCPTT.mcptt_client_id); // delete old 
+					self->pttMCPTT.mcptt_client_id = mcptt_client_id;
+				}
+				else
+				TSK_DEBUG_ERROR("it is an invalid MCPTT CLIENT ID");
+				break;
+			}*/
+
+			case tsip_pname_mcptt_client_id:
+			{
+				const char* MCPTT_CLIENT_ID = va_arg(*app, const char*);
+				tsip_uri_t *uri;
+				if(!tsk_strnullORempty(MCPTT_CLIENT_ID) && (uri = tsip_uri_parse(MCPTT_CLIENT_ID, tsk_strlen(MCPTT_CLIENT_ID)))){
+					//MCPTT ID isnï¿½t URI_SIP
+					TSK_OBJECT_SAFE_FREE(self->pttMCPTT.client_id); /* delete old */
+					self->pttMCPTT.client_id = uri;
+				}
+				else
+				TSK_DEBUG_ERROR("'%s' is an invalid MCPTT CLient ID", MCPTT_CLIENT_ID);
+				break;
+			}
+
+			case tsip_pname_client_id:
+			{
+				const char* CLIENT_ID = va_arg(*app, const char*);
+				tsip_uri_t *uri;
+				if(!tsk_strnullORempty(CLIENT_ID) && (uri = tsip_uri_parse(CLIENT_ID, tsk_strlen(CLIENT_ID)))){
+					//MCPTT ID isnï¿½t URI_SIP
+					TSK_OBJECT_SAFE_FREE(self->pttMCPTT.client_id); /* delete old */
+					self->pttMCPTT.client_id = uri;
+				}
+				else
+				TSK_DEBUG_ERROR("'%s' is an invalid CLIENT ID", CLIENT_ID);
+				break;
+			}
+
+
+
 			case tsip_pname_mcptt_priority:
 				{
 					const int MCPTT_PRIORITY = va_arg(*app, const int);
@@ -634,6 +715,8 @@ static int __tsip_stack_set(tsip_stack_t *self, va_list* app)
 					self->pttMCPTTMbms.is_rtcp_mux = MCPTT_MBMS_RTCP_MUX;
 					break;
 				}
+
+
 			//MCPTT AFFILIATION
 			case tsip_pname_mcptt_psi_affiliation:
 				{
@@ -687,6 +770,23 @@ static int __tsip_stack_set(tsip_stack_t *self, va_list* app)
 					
 					break;
 				}
+			//MCPTT AUTHENTICATION
+			case tsip_pname_mcptt_psi_authentcation:
+				{
+					const char* PSI_AUTHENTICATION = va_arg(*app, const char*);
+					tsip_uri_t *uri;
+					if(!tsk_strnullORempty(PSI_AUTHENTICATION) && (uri = tsip_uri_parse(PSI_AUTHENTICATION, tsk_strlen(PSI_AUTHENTICATION)))){
+						if(uri->type == uri_unknown){ /* scheme is missing or unsupported? */
+							tsk_strupdate(&uri->scheme, "sip");
+							uri->type = uri_sip;
+						}
+						TSK_OBJECT_SAFE_FREE(self->pttMCPTTAuthentication.psi_authentication); /* delete old */
+						self->pttMCPTTAuthentication.psi_authentication = uri;
+					}
+					else
+						TSK_DEBUG_ERROR("'%s' is an invalid PSI for MCPTT AUTHENTICATION", PSI_AUTHENTICATION);
+					break;
+				}
 			default:
 			{	/* va_list will be unsafe ==> must exit */
 				TSK_DEBUG_WARN("Found unknown pname.");
@@ -708,7 +808,7 @@ bail:
 * @param impi_uri The IMPI is a unique identifier assigned to a user (or UE) by the home network. 
 * It could be either a SIP URI (e.g. sip:bob@open-ims.test), a tel URI (e.g. tel:+33100000) or any alphanumeric string (e.g. bob@open-ims.test or bob). 
 * It is used to authenticate the UE (username field in SIP Authorization/Proxy-Authorization header).
-* @param impu_uri As its name says, it’s you public visible identifier where you are willing to receive calls or any demands. 
+* @param impu_uri As its name says, itï¿½s you public visible identifier where you are willing to receive calls or any demands. 
 * An IMPU could be either a SIP or tel URI (e.g. tel:+33100000 or sip:bob@open-ims.test). In IMS world, a user can have multiple IMPUs associated to its unique IMPI.
 * @param ... Any TSIP_STACK_SET_*() macros.
 * @retval A valid handle if succeed and Null-handle otherwise. As a stack is a well-defined object, you should use @a TSK_OBJECT_SAFE_FREE() to safely destroy the handle.
@@ -1396,6 +1496,10 @@ static tsk_object_t* tsip_stack_ctor(tsk_object_t * self, va_list * app)
 		stack->pttMCPTTMbms.addr_multicast=tsk_null;
 		stack->pttMCPTTMbms.is_rtcp_mux=tsk_false;
 		stack->pttMCPTTMbms.sdp_ro=tsk_null;
+
+
+		//MCPTT AUTHENTICATION
+		stack->pttMCPTTAuthentication.psi_authentication=tsk_null;
 		//MCPTT AFFILIATION
 		stack->pttMCPTTAffiliation.psi_affiliation=tsk_null;
 		stack->pttMCPTTAffiliation.mcptt_affiliation_groups_default=tsk_null;
@@ -1405,6 +1509,9 @@ static tsk_object_t* tsip_stack_ctor(tsk_object_t * self, va_list * app)
 		stack->pttMCPTT.timer_s.timer_t103=0;
 		stack->pttMCPTT.timer_s.timer_t104=0;
 		stack->pttMCPTT.timer_s.timer_t132=0;
+
+        stack->pttMCPTT.client_id=tsk_null;
+
 
 
 	}
@@ -1493,19 +1600,27 @@ static tsk_object_t* tsip_stack_dtor(tsk_object_t * self)
 		TSK_OBJECT_SAFE_FREE(stack->pttMCPTT.psi_private);
 		TSK_OBJECT_SAFE_FREE(stack->pttMCPTT.psi_group);
 		TSK_OBJECT_SAFE_FREE(stack->pttMCPTT.psi_preestablished);
+
+		TSK_OBJECT_SAFE_FREE(stack->pttMCPTT.psi_cms);
+
+		TSK_OBJECT_SAFE_FREE(stack->pttMCPTT.psi_gms);
+
 		/*MBMS*/
 		TSK_OBJECT_SAFE_FREE(stack->pttMCPTTMbms.p_asserted_identity_mbms);
 		stack->pttMCPTTMbms.port_manager=-1;
 		TSK_OBJECT_SAFE_FREE(stack->pttMCPTTMbms.addr_multicast);
 		stack->pttMCPTTMbms.is_rtcp_mux=tsk_false;
 		TSK_OBJECT_SAFE_FREE(stack->pttMCPTTMbms.sdp_ro);
-		//SessionLocation by Eduardo
+
+		//SessionLocation
 		TSK_OBJECT_SAFE_FREE(stack->sessionLocation.p_asserted_identity_location);
 		//MCPTT AFFILIATION
 		TSK_OBJECT_SAFE_FREE(stack->pttMCPTTAffiliation.psi_affiliation);
 		TSK_OBJECT_SAFE_FREE(stack->pttMCPTTAffiliation.mcptt_affiliation_groups_default);
 		//MCPTT MBMS
 		TSK_OBJECT_SAFE_FREE(stack->pttMCPTTMbms.p_asserted_identity_mbms);
+		//MCPTT AUTHENTICATION
+		TSK_OBJECT_SAFE_FREE(stack->pttMCPTTAuthentication.psi_authentication);
 
 		//MCPTT TIMERS
 		stack->pttMCPTT.timer_s.timer_t100=0;
@@ -1513,7 +1628,8 @@ static tsk_object_t* tsip_stack_dtor(tsk_object_t * self)
 		stack->pttMCPTT.timer_s.timer_t103=0;
 		stack->pttMCPTT.timer_s.timer_t104=0;
 		stack->pttMCPTT.timer_s.timer_t132=0;
-		
+
+        TSK_OBJECT_SAFE_FREE(stack->pttMCPTT.client_id);
 
 		tsk_safeobj_deinit(stack);
 

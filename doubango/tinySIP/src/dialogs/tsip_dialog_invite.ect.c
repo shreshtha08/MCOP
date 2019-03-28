@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -399,7 +398,7 @@ static int send_NOTIFY(tsip_dialog_invite_t *self, short code, const char* phras
 	tsip_request_t *notify = tsk_null;
 	int ret = -1;
 
-	//MCPTT by Eduardo
+	//MCPTT
 	if(((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_mcptt) == tmedia_mcptt)){
 		//The request_uri is PSI in New Invite to MCPTT
 		tsip_dialog_request_configure_mcptt(TSIP_DIALOG(self));

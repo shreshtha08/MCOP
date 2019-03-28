@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -309,7 +308,7 @@ void tsk_list_push_item(tsk_list_t* list, tsk_list_item_t** item, tsk_bool_t bac
 	tsk_bool_t first = !list->head;
 	
 	if(back && list->tail){
-		//TODO: By Eduardo. This instruction crash in Android aplication
+		//TODO: . This instruction crash in Android aplication
 		list->tail->next = *item, list->tail = *item, (*item)->next = tsk_null;
 	}
 	else {

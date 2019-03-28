@@ -45,6 +45,17 @@
     <string name="MCPTT_PSI_CALL_PREESTABLISHED">MCPTT_PSI_CALL</string>
     <string name="MCPTT_PSI_AFFILIATION">MCPTT_PSI_AFFILIATION</string>
     <string name="MCPTT_PSI_AUTHENTICATION">MCPTT_PSI_AUTHENTICATION</string>
+    <string name="MCPTT_PSI_CMS">MCPTT_PSI_CMS</string>
+    <string name="MCPTT_ENABLE_SUBSCRIPTION_CMS">MCPTT_ENABLE_SUBSCRIPTION_CMS</string>
+    <string name="CMS_XCAP_ROOT_URI">CMS_XCAP_ROOT_URI</string>
+
+
+
+    <string name="MCPTT_PSI_GMS">MCPTT_PSI_GMS</string>
+    <string name="MCPTT_ENABLE_SUBSCRIPTION_GMS">MCPTT_ENABLE_SUBSCRIPTION_GMS</string>
+    <string name="GMS_XCAP_ROOT_URI">GMS_XCAP_ROOT_URI</string>
+
+
 
     <string name="MCPTT_ID">MCPTT_ID</string>
     <string name="MCPTT_CLIENT_ID">MCPTT_CLIENT_ID</string>
@@ -69,11 +80,27 @@
     <!--GUI-->
     <string name="MCPTT_PLAY_SOUND_MCPTT_CALL">MCPTT_PLAY_SOUND_MCPTT_CALL</string>;
 
+    <!--SELF CONFIGURE-->
+    <string name="SELF_CONFIGURE">SELF_CONFIGURE</string>;
+    <string name="SELF_CONFIGURE_CLIENT_ID">SELF_CONFIGURE_CLIENT_ID</string>;
+    <string name="SELF_CONFIGURE_ISSUER_URI">SELF_CONFIGURE_ISSUER_URI</string>;
+    <string name="SELF_CONFIGURE_REDIRECT_URI">SELF_CONFIGURE_REDIRECT_URI</string>;
+    <string name="MCPTT_USE_ISSUER_URI_IDMS">MCPTT_USE_ISSUER_URI_IDMS</string>;
+    <string name="MCPTT_UE_ID">MCPTT_UE_ID</string>;
+    <string name="IDMS_TOKEN_END_POINT">IDMS_TOKEN_END_POINT</string>;
+    <string name="IDMS_AUTH_END_POINT">IDMS_AUTH_END_POINT</string>;
 
 
 
     <string name="RTCP_MUX">RTCP_MUX</string>
 
+
+    <!--CMS-->
+    <string name="ENABLE_CMS">ENABLE_CMS</string>
+
+
+    <string name="SELF_CONFIGURE_SEND_TOKEN_REGISTER">SELF_CONFIGURE_SEND_TOKEN_REGISTER</string>;
+    <string name="SELF_CONFIGURE_SEND_TOKEN_FAIL">SELF_CONFIGURE_SEND_TOKEN_FAIL</string>;
 
 
     <string name="MCPTT_INSERT_X_FRAMER_IP">MCPTT_INSERT_X_FRAMER_IP</string>;
@@ -204,8 +231,19 @@
     <string name="DEFAULT_MCPTT_PSI_CALL_PREESTABLISHED">sip:mcptt-server-orig-part.organization.org</string>
     <string name="DEFAULT_MCPTT_PSI_AFFILIATION">sip:mcptt-server-orig-part.organization.org</string>
     <string name="DEFAULT_MCPTT_PSI_AUTHENTICATION">sip:mcptt-server-orig-part.organization.org</string>
-    <string name="DEFAULT_MCPTT_ID">sip:mcptt_id_clientA@organization.org</string>
-    <string name="DEFAULT_MCPTT_CLIENT_ID">sip:mcptt_id_clientA@organization.org</string>
+    <string name="DEFAULT_MCPTT_PSI_CMS">sip:mcptt-server-orig-part.organization.org</string>
+    <bool name="DEFAULT_MCPTT_ENABLE_SUBSCRIPTION_CMS">false</bool>
+    <string name="DEFAULT_CMS_XCAP_ROOT_URI">cms-xcap-root-uri</string>
+
+
+
+    <string name="DEFAULT_MCPTT_PSI_GMS">sip:mcptt-server-orig-part.organization.org</string>
+    <bool name="DEFAULT_MCPTT_ENABLE_SUBSCRIPTION_GMS">false</bool>
+    <string name="DEFAULT_GMS_XCAP_ROOT_URI">gms-xcap-root-uri</string>
+
+
+    <string name="DEFAULT_MCPTT_ID">sip:mcptt_id_testA@organization.org</string>
+    <string name="DEFAULT_MCPTT_CLIENT_ID">sip:mcptt_id_testA@organization.org</string>
     <integer name="DEFAULT_MCPTT_PRIORITY">7</integer>
     <bool name="DEFAULT_MCPTT_IMPLICIT">true</bool>
     <bool name="DEFAULT_MCPTT_GRANTED">true</bool>
@@ -230,6 +268,24 @@
 
 
 
+    <!--SELF CONFIGURE-->
+    <bool name="DEFAULT_SELF_CONFIGURE">true</bool>
+    <bool name="DEFAULT_SELF_CONFIGURE_SEND_TOKEN_REGISTER">false</bool>
+    <bool name="DEFAULT_SELF_CONFIGURE_SEND_TOKEN_FAIL">false</bool>
+    <string name="DEFAULT_SELF_CONFIGURE_CLIENT_ID">mcptt_client</string>
+    <string name="DEFAULT_SELF_CONFIGURE_ISSUER_URI">http://idms.organization.com/openid-connect-server-webapp/.well-known/openid-configuration</string>
+    <string name="DEFAULT_SELF_CONFIGURE_REDIRECT_URI">mcptt://organization_mcptt/cb</string><!--//"http://httpbin.org/get-->
+    <bool name="DEFAULT_MCPTT_USE_ISSUER_URI_IDMS">false</bool>
+    <string name="DEFAULT_IDMS_TOKEN_END_POINT"></string>
+    <string name="DEFAULT_MCPTT_UE_ID">mcptt_UE_id</string>
+
+    <string name="DEFAULT_IDMS_AUTH_END_POINT"></string>
+
+
+
+    <!--CMS-->
+    <string name="DEFAULT_CMS_URI">http://cms.organization.com:8100/xcap-root</string>
+    <bool name="DEFAULT_ENABLE_CMS">true</bool>
 
 
 

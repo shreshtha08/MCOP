@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -51,6 +50,12 @@
 #include "tsk_list.h"
 #include "tsk_string.h"
 #include "tsk_fsm.h"
+#if HAVE_LIBXML2
+#include <libxml/tree.h>
+#include <libxml/parser.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
+#endif
 
 TSIP_BEGIN_DECLS
 
@@ -179,6 +184,7 @@ typedef tsk_list_t tsip_dialogs_L_t;
 /*
 ================================*/
 
+//char* xml_to_string(xmlDocPtr doc);
 tsip_request_t *tsip_dialog_request_new(const tsip_dialog_t *self, const char* method);
 int tsip_dialog_request_configure_mcptt(tsip_dialog_t *self);
 int tsip_dialog_request_send(const tsip_dialog_t *self, tsip_request_t* request);

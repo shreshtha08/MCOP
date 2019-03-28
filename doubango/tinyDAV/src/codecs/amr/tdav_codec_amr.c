@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -332,7 +331,7 @@ static const tmedia_codec_plugin_def_t tdav_codec_amrnb_be_plugin_def_s =
 const tmedia_codec_plugin_def_t *tdav_codec_amrnb_be_plugin_def_t = &tdav_codec_amrnb_be_plugin_def_s;
 
 
-/* Added by MCPTT client Mikel */
+/* Added by MCPTT client */
 /* ============ AMR-WB Plugin interface ================= 
 	
 */
@@ -399,7 +398,6 @@ tsk_size_t tdav_codec_amrwb_encode(tmedia_codec_t* self, const void* in_data, ts
 tsk_size_t tdav_codec_amrwb_decode(tmedia_codec_t* self, const void* in_data, tsk_size_t in_size, void** out_data, tsk_size_t* out_max_size, const tsk_object_t* proto_hdr)
 {
 	tdav_codec_amr_t* amr = (tdav_codec_amr_t*)self;
-
 	switch(amr->mode){
 		case tdav_codec_amr_mode_be:
 			return tdav_codec_amr_be_decode(amr, in_data, in_size, out_data, out_max_size, proto_hdr);
@@ -900,7 +898,6 @@ tsk_size_t tdav_codec_amr_be_decode(tdav_codec_amr_t* amr, const void* in_data, 
 			 
 			}
 			out_size += pcm_frame_size, pdata+= size;
-
 			TSK_FREE(speech_data);
 		}
 	}

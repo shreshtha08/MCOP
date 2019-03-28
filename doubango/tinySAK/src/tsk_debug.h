@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -102,15 +101,27 @@ TSK_BEGIN_DECLS
 * @param FMT C string that contains the text to be written to <b>stderr</b>. The string accept same specifiers as <a target=_blank href="http://www.cplusplus.com/reference/cstdio/printf/">printf</a>.
 * @sa @ref TSK_DEBUG_INFO @ref TSK_DEBUG_WARN @ref TSK_DEBUG_ERROR <br />
 */
+#define DEBUG_LEVEL_TEST		5
 #define DEBUG_LEVEL_INFO		4
 #define DEBUG_LEVEL_WARN		3
 #define DEBUG_LEVEL_ERROR		2
 #define DEBUG_LEVEL_FATAL		1
+#define __FILENAME3__ (strrchr(__FILE__, '\\') ? (strrchr(__FILE__, '\\') + 1) : (strrchr(__FILE__, '//')? strrchr(__FILE__, '//') + 1:__FILE__))
+//#define __FILENAME3__ __FILE__
 
 #if TSK_HAVE_DEBUG_H
 #	include <my_debug.h>
 #else
 	typedef int (*tsk_debug_f)(const void* arg, const char* fmt, ...);
+
+	/* TEST */
+#define TSK_DEBUG_TEST(FMT, ...)		\
+	if(tsk_debug_get_level() >= DEBUG_LEVEL_ERROR){ \
+		if(tsk_debug_get_test_cb()) \
+			tsk_debug_get_test_cb()(tsk_debug_get_arg_data(), "***TEST: function: \"%s()\" \nfile: \"%s\" \nline: \"%u\" \nMSG: " FMT "\n", __FUNCTION__,  __FILENAME3__, __LINE__, ##__VA_ARGS__); \
+		else \
+			fprintf(stderr, "***TEST: function: \"%s()\" \nfile: \"%s\" \nline: \"%u\" \nMSG: " FMT "\n", __FUNCTION__,  __FILENAME3__, __LINE__, ##__VA_ARGS__); \
+	}
 
 	/* INFO */
 #define TSK_DEBUG_INFO(FMT, ...)		\
@@ -126,18 +137,18 @@ TSK_BEGIN_DECLS
 #define TSK_DEBUG_WARN(FMT, ...)		\
 	if(tsk_debug_get_level() >= DEBUG_LEVEL_WARN){ \
 		if(tsk_debug_get_warn_cb()) \
-			tsk_debug_get_warn_cb()(tsk_debug_get_arg_data(), "**WARN: function: \"%s()\" \nfile: \"%s\" \nline: \"%u\" \nMSG: " FMT "\n", __FUNCTION__,  __FILE__, __LINE__, ##__VA_ARGS__); \
+			tsk_debug_get_warn_cb()(tsk_debug_get_arg_data(), "**WARN: function: \"%s()\" \nfile: \"%s\" \nline: \"%u\" \nMSG: " FMT "\n", __FUNCTION__,  __FILENAME3__, __LINE__, ##__VA_ARGS__); \
 		else \
-			fprintf(stderr, "**WARN: function: \"%s()\" \nfile: \"%s\" \nline: \"%u\" \nMSG: " FMT "\n", __FUNCTION__,  __FILE__, __LINE__, ##__VA_ARGS__); \
+			fprintf(stderr, "**WARN: function: \"%s()\" \nfile: \"%s\" \nline: \"%u\" \nMSG: " FMT "\n", __FUNCTION__,  __FILENAME3__, __LINE__, ##__VA_ARGS__); \
 	}
 
 	/* ERROR */
 #define TSK_DEBUG_ERROR(FMT, ...) 		\
 	if(tsk_debug_get_level() >= DEBUG_LEVEL_ERROR){ \
 		if(tsk_debug_get_error_cb()) \
-			tsk_debug_get_error_cb()(tsk_debug_get_arg_data(), "***ERROR: function: \"%s()\" \nfile: \"%s\" \nline: \"%u\" \nMSG: " FMT "\n", __FUNCTION__,  __FILE__, __LINE__, ##__VA_ARGS__); \
+			tsk_debug_get_error_cb()(tsk_debug_get_arg_data(), "***ERROR: function: \"%s()\" \nfile: \"%s\" \nline: \"%u\" \nMSG: " FMT "\n", __FUNCTION__,  __FILENAME3__, __LINE__, ##__VA_ARGS__); \
 		else \
-			fprintf(stderr, "***ERROR: function: \"%s()\" \nfile: \"%s\" \nline: \"%u\" \nMSG: " FMT "\n", __FUNCTION__,  __FILE__, __LINE__, ##__VA_ARGS__); \
+			fprintf(stderr, "***ERROR: function: \"%s()\" \nfile: \"%s\" \nline: \"%u\" \nMSG: " FMT "\n", __FUNCTION__,  __FILENAME3__, __LINE__, ##__VA_ARGS__); \
 	}
 
 
@@ -145,14 +156,16 @@ TSK_BEGIN_DECLS
 #define TSK_DEBUG_FATAL(FMT, ...) 		\
 	if(tsk_debug_get_level() >= DEBUG_LEVEL_FATAL){ \
 		if(tsk_debug_get_fatal_cb()) \
-			tsk_debug_get_fatal_cb()(tsk_debug_get_arg_data(), "****FATAL: function: \"%s()\" \nfile: \"%s\" \nline: \"%u\" \nMSG: " FMT "\n", __FUNCTION__,  __FILE__, __LINE__, ##__VA_ARGS__); \
+			tsk_debug_get_fatal_cb()(tsk_debug_get_arg_data(), "****FATAL: function: \"%s()\" \nfile: \"%s\" \nline: \"%u\" \nMSG: " FMT "\n", __FUNCTION__,  __FILENAME3__, __LINE__, ##__VA_ARGS__); \
 		else \
-			fprintf(stderr, "****FATAL: function: \"%s()\" \nfile: \"%s\" \nline: \"%u\" \nMSG: " FMT "\n", __FUNCTION__,  __FILE__, __LINE__, ##__VA_ARGS__); \
+			fprintf(stderr, "****FATAL: function: \"%s()\" \nfile: \"%s\" \nline: \"%u\" \nMSG: " FMT "\n", __FUNCTION__,  __FILENAME3__, __LINE__, ##__VA_ARGS__); \
 	}
 
 
 TINYSAK_API void tsk_debug_set_arg_data(const void*);
 TINYSAK_API const void* tsk_debug_get_arg_data();
+TINYSAK_API void tsk_debug_set_test_cb(tsk_debug_f );
+TINYSAK_API tsk_debug_f tsk_debug_get_test_cb();
 TINYSAK_API void tsk_debug_set_info_cb(tsk_debug_f );
 TINYSAK_API tsk_debug_f tsk_debug_get_info_cb();
 TINYSAK_API void tsk_debug_set_warn_cb(tsk_debug_f );

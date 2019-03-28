@@ -4,7 +4,7 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /* 
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui, Mikel Ramos
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -33,6 +33,7 @@
 
 #if !defined(HAVE_TINYMCPTT) || HAVE_TINYMCPTT
 
+#include <math.h>
 #include "tinydav/mcptt/tdav_session_mcptt.h"
 #include "tinydav/audio/tdav_session_audio.h"
 #include "tinydav/tdav_session_av.h"
@@ -164,10 +165,15 @@ static int tdav_session_mcptt_timer_t100_expired_handler(const void* arg, tsk_ti
 			}
 			else
 			{
+				TSK_DEBUG_INFO("Alert user IDLE 4");
 				tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_idle_channel, tsk_null);
 				mcptt->mcptt_status = mcptt_status_no_permission;
 			}
 			break;
+		}
+	default:
+		{
+			TSK_DEBUG_WARN("State illogical in t100 expired ");
 		}
 	}
 
@@ -202,10 +208,15 @@ static int tdav_session_mcptt_timer_t101_expired_handler(const void* arg, tsk_ti
 			}
 			else
 			{
+				TSK_DEBUG_INFO("Alert user DENIED 5");
 				tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_token_denied, tsk_null);
 				mcptt->mcptt_status = mcptt_status_no_permission;
 			}
 			break;
+		}
+	default:
+		{
+			TSK_DEBUG_WARN("State illogical in tinit expired");
 		}
 	}
 
@@ -243,8 +254,8 @@ static int tdav_session_mcptt_timer_tinit_expired_handler(const void* arg, tsk_t
 		}
 	default:
 		{
-
-			}
+			TSK_DEBUG_WARN("State illogical in t103 expired");
+		}
 	}
 
 	return 0;
@@ -269,8 +280,13 @@ static int tdav_session_mcptt_timer_t103_expired_handler(const void* arg, tsk_ti
 	{
 	case mcptt_status_no_permission:
 		{
+			TSK_DEBUG_INFO("Alert user IDLE 5");
 			tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_idle_channel, tsk_null);
 			break;
+		}
+	default:
+		{
+			TSK_DEBUG_WARN("State illogical in t104 expired");
 		}
 	}
 
@@ -305,6 +321,7 @@ static int tdav_session_mcptt_timer_t104_expired_handler(const void* arg, tsk_ti
 			}
 			else
 			{
+				TSK_DEBUG_INFO("Alert user QUEUED TIMEOUT 1");
 				tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_queued_timeout, tsk_null);
 
 				tdav_session_mcptt_send_release(TMEDIA_SESSION_MCPTT(mcptt));
@@ -312,6 +329,10 @@ static int tdav_session_mcptt_timer_t104_expired_handler(const void* arg, tsk_ti
 				mcptt->mcptt_status = mcptt_status_pending_release;
 			}
 			break;
+		}
+	default:
+		{
+			TSK_DEBUG_WARN("State illogical in t104 expired");
 		}
 	}
 
@@ -341,6 +362,10 @@ static int tdav_session_mcptt_timer_t132_expired_handler(const void* arg, tsk_ti
 
 			mcptt->mcptt_status = mcptt_status_no_permission;
 			break;
+		}
+	default:
+		{
+			TSK_DEBUG_WARN("State illogical in t104 expired");
 		}
 	}
 
@@ -381,7 +406,7 @@ static int tdav_session_mcptt_cb(const void* callback_data, const trtp_rtcp_pack
 	rtcp_app = (const trtp_rtcp_report_app_t*)packet;
 
 	if(tsk_strnicmp(rtcp_app->name, MCPTT_PROTO_NAME, 4) != 0){
-		TSK_DEBUG_ERROR("Incorrect application");
+		TSK_DEBUG_ERROR("Incorrect application" );
 		return -1;
 	} 
 
@@ -391,7 +416,7 @@ static int tdav_session_mcptt_cb(const void* callback_data, const trtp_rtcp_pack
 	{
 	  case MCPTT_TAKEN_ACK:
 		  {
-			tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_TAKEN);
+			tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_TAKEN_ACK);
 		  }
 	  case MCPTT_TAKEN:
 		  {
@@ -409,7 +434,7 @@ static int tdav_session_mcptt_cb(const void* callback_data, const trtp_rtcp_pack
 		  }
 	  case MCPTT_IDLE_ACK:
 		  {
-			tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_IDLE);
+			tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_IDLE_ACK);
 		  }
 	  case MCPTT_IDLE:
 		  {
@@ -427,7 +452,7 @@ static int tdav_session_mcptt_cb(const void* callback_data, const trtp_rtcp_pack
 		  }
 	  case MCPTT_GRANTED_ACK:
 		  {
-			tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_GRANTED);
+			tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_GRANTED_ACK);
 		  }
 	  case MCPTT_GRANTED:
 		  {
@@ -446,7 +471,7 @@ static int tdav_session_mcptt_cb(const void* callback_data, const trtp_rtcp_pack
 		  }
 	  case MCPTT_DENY_ACK:
 		  {
-			tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_DENY);
+			tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_DENY_ACK);
 		  }
 	  case MCPTT_DENY:
 		  {
@@ -463,7 +488,7 @@ static int tdav_session_mcptt_cb(const void* callback_data, const trtp_rtcp_pack
 		  }
 	  case MCPTT_QUEUE_POS_INFO_ACK:
 		  {
-			tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_QUEUE_POS_INFO);
+			tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_QUEUE_POS_INFO_ACK);
 		  }
 	  case MCPTT_QUEUE_POS_INFO:
 		  {
@@ -495,7 +520,7 @@ static int tdav_session_mcptt_cb(const void* callback_data, const trtp_rtcp_pack
 	
 	return 0;
 }
-//TODO: define logic for message RTCP MBMS by Eduardo
+//TODO: define logic for message RTCP MBMS
 static int tdav_session_mcptt_mbms_cb(const void* callback_data, const trtp_rtcp_packet_t* packet, ...)
 {
 	
@@ -533,7 +558,7 @@ static int tdav_session_mcptt_mbms_cb(const void* callback_data, const trtp_rtcp
 		{
 		  case MCPTT_TAKEN_ACK:
 			  {
-				tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_TAKEN);
+				tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_TAKEN_ACK);
 			  }
 		  case MCPTT_TAKEN:
 			  {
@@ -551,7 +576,7 @@ static int tdav_session_mcptt_mbms_cb(const void* callback_data, const trtp_rtcp
 			  }
 		  case MCPTT_IDLE_ACK:
 			  {
-				tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_IDLE);
+				tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_IDLE_ACK);
 			  }
 		  case MCPTT_IDLE:
 			  {
@@ -569,7 +594,7 @@ static int tdav_session_mcptt_mbms_cb(const void* callback_data, const trtp_rtcp
 			  }
 		  case MCPTT_GRANTED_ACK:
 			  {
-				tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_GRANTED);
+				tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_GRANTED_ACK);
 			  }
 		  case MCPTT_GRANTED:
 			  {
@@ -588,7 +613,7 @@ static int tdav_session_mcptt_mbms_cb(const void* callback_data, const trtp_rtcp
 			  }
 		  case MCPTT_DENY_ACK:
 			  {
-				tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_DENY);
+				tdav_session_mcptt_send_ack(TMEDIA_SESSION_MCPTT(mcptt), MCPTT_DENY_ACK);
 			  }
 		  case MCPTT_DENY:
 			  {
@@ -680,7 +705,7 @@ int tdav_session_mcptt_set(tmedia_session_t* self, const tmedia_param_t* param)
 {
 	int ret = 0;
 	tdav_session_mcptt_t* mcptt;
-	int64_t timeout=-1;
+	int64_t timeoutseg=-1;
 
 	if(!self){
 		TSK_DEBUG_ERROR("Invalid parameter");
@@ -702,29 +727,32 @@ int tdav_session_mcptt_set(tmedia_session_t* self, const tmedia_param_t* param)
 		}else if (tsk_striequals(param->key, "granted")){
 			mcptt->granted_local=TSK_TO_UINT32(((uint8_t*)param->value));
 		}
+		else if (tsk_striequals(param->key, "with_floor_control")){
+			mcptt->with_floor_control=TSK_TO_UINT32(((uint8_t*)param->value));
+		}
 		else if (tsk_striequals(param->key, "type_session")){
 			mcptt->type_session=TSK_TO_UINT32(((uint8_t*)param->value));
 		}else if (tsk_striequals(param->key, "t100")){
-			timeout = TSK_TO_UINT32(((uint8_t*)param->value));
-			if(timeout>0 && timeout)mcptt->timer_t100.timeout = timeout;
+			timeoutseg = TSK_TO_UINT32(((uint8_t*)param->value));
+			if(timeoutseg>0 && timeoutseg)mcptt->timer_t100.timeout = timeoutseg*1000;
 		}else if (tsk_striequals(param->key, "tinit")){
 			mcptt->timer_tinit.timeout = TSK_TO_UINT32(((uint8_t*)param->value));
 		}else if (tsk_striequals(param->key, "t101")){
-			timeout = TSK_TO_UINT32(((uint8_t*)param->value));
-			if(timeout>0)mcptt->timer_t101.timeout = timeout;
+			timeoutseg = TSK_TO_UINT32(((uint8_t*)param->value));
+			if(timeoutseg>0)mcptt->timer_t101.timeout = timeoutseg*1000;
 		}else if (tsk_striequals(param->key, "t103")){
-			timeout = TSK_TO_UINT32(((uint8_t*)param->value));
-			if(timeout>MCPTT_TIMER_T132_MAX_VALUE){
+			timeoutseg = TSK_TO_UINT32(((uint8_t*)param->value));
+			if((timeoutseg*1000)>MCPTT_TIMER_T132_MAX_VALUE){
 				mcptt->timer_t103.timeout = MCPTT_TIMER_T132_MAX_VALUE;
-			}else if(timeout>0){
-				mcptt->timer_t103.timeout = timeout;
+			}else if(timeoutseg>0){
+				mcptt->timer_t103.timeout = timeoutseg*1000;
 			}
 		}else if (tsk_striequals(param->key, "t104")){
-			timeout = TSK_TO_UINT32(((uint8_t*)param->value));
-			if(timeout>0)mcptt->timer_t104.timeout = timeout;
+			timeoutseg = TSK_TO_UINT32(((uint8_t*)param->value));
+			if(timeoutseg>0)mcptt->timer_t104.timeout = timeoutseg*1000;
 		}else if (tsk_striequals(param->key, "t132")){
-			timeout = TSK_TO_UINT32(((uint8_t*)param->value));
-			if(timeout>0)mcptt->timer_t132.timeout = timeout;
+			timeoutseg = TSK_TO_UINT32(((uint8_t*)param->value));
+			if(timeoutseg>0)mcptt->timer_t132.timeout = timeoutseg*1000;
 		}else if (tsk_striequals(param->key, "c100")){
 			mcptt->counter_c100.max_value = TSK_TO_UINT32(((uint8_t*)param->value));
 		}else if (tsk_striequals(param->key, "c101")){
@@ -862,57 +890,60 @@ int tdav_session_mcptt_prepare(tmedia_session_t* self)
 
 
 
-int tdav_session_mcptt_start(tmedia_session_t* self)
-{
-	tdav_session_mcptt_t* mcptt;
-	tmcptt_message_t* msg;
+int tdav_session_mcptt_start(tmedia_session_t* self) {
+	tdav_session_mcptt_t *mcptt;
+	tmcptt_message_t *msg;
 
 	int ret = 0;
 
 	TSK_DEBUG_INFO("tdav_session_mcptt_start");
 
-	if(!self){
+	if (!self) {
 		TSK_DEBUG_ERROR("Invalid parameter");
 		return -1;
 	}
 
-	mcptt = (tdav_session_mcptt_t*)self;
+	mcptt = (tdav_session_mcptt_t *) self;
 
-	if((ret = tmcptt_manager_set_mcptt_remote(mcptt->mcptt_manager, mcptt->remote_ip, mcptt->remote_port))){
+	if ((ret = tmcptt_manager_set_mcptt_remote(mcptt->mcptt_manager, mcptt->remote_ip,
+											   mcptt->remote_port))) {
 		TSK_DEBUG_ERROR("Error setting remote MCPTT parameters");
 		return -1;
 	}
-	
-	//MCPTT by Eduardo
-	if((ret = tmcptt_manager_start(mcptt->mcptt_manager))){
+
+	//MCPTT
+	if ((ret = tmcptt_manager_start(mcptt->mcptt_manager))) {
 		TSK_DEBUG_ERROR("Error starting MCPTT manager");
 		return -1;
 	}
-	
 
-	//MCPTT by Eduardo
-	if(mcptt){
+
+	//MCPTT
+	if (mcptt) {
 		//On Init session MCPTT the device send floor incator in all MCPTT floor control packets, 
 		//But if the device receive MCPTT packet without floor indicator, the next MCPTT packet will be sent without floor indicator.
-		mcptt->has_floor_incator=tsk_true;
+		mcptt->has_floor_incator = tsk_true;
 	}
 
-	//MCPTT by Eduardo
-	if(mcptt){
+	//MCPTT
+	if (mcptt) {
 		//On Init session MCPTT the device send floor incator in all MCPTT floor control packets, 
 		//But if the device receive MCPTT packet without floor indicator, the next MCPTT packet will be sent without floor indicator.		mcptt->has_floor_incator=tsk_true;
 	}
 
-	if((ret = tsk_timer_manager_start(mcptt->h_timer)) != 0){
+	if ((ret = tsk_timer_manager_start(mcptt->h_timer)) != 0) {
 		TSK_DEBUG_ERROR("Failed to start the timer");
 		return ret;
 	}
-
-	if(mcptt->origin_competitor==tsk_true){//by Eduardo
+	if(mcptt->with_floor_control && mcptt->with_floor_control==tsk_false){
+		mcptt->mcptt_status = mcptt_status_permission; //for fullduplex call
+	}else
+	if(mcptt->origin_competitor==tsk_true){
 		if (mcptt->implicit_local && mcptt->implicit_remote)
 		{
 			if (mcptt->granted_local && mcptt->granted_remote) {
 				msg = tmcptt_message_create_null();
+				TSK_DEBUG_INFO("Alert user GRANTED 6");
 				tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_token_granted, msg);
 				mcptt->mcptt_status = mcptt_status_permission; //No need to send REQUEST nor GRANTED
 			}
@@ -938,13 +969,15 @@ int tdav_session_mcptt_start(tmedia_session_t* self)
 			*/
 			//Because we haven�t sent Request, the user will receive a idle token.
 			msg = tmcptt_message_create_null();
+			TSK_DEBUG_INFO("Alert user IDLE 6");
 			tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_idle_channel, msg);
 			mcptt->mcptt_status = mcptt_status_no_permission;
 		}
 	}else{
 		msg = tmcptt_message_create_null();
+		TSK_DEBUG_INFO("Alert user IDLE 7");
 			tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_idle_channel, msg);
-		mcptt->mcptt_status = mcptt_status_no_permission; //by Eduardo
+		mcptt->mcptt_status = mcptt_status_no_permission;
 	}
 	
 
@@ -1064,7 +1097,7 @@ int tdav_session_mcptt_mbms_start(tmedia_session_mcptt_t* self,const char* remot
 	
 	return ret;
 }
-//MBMS by Eduardo
+//MBMS
 int tdav_session_mcptt_mbms_stop(tmedia_session_mcptt_t* self)
 {
 	tdav_session_mcptt_t* mcptt;
@@ -1148,6 +1181,7 @@ const tsdp_header_M_t* tdav_session_mcptt_get_lo(tmedia_session_t* self)
 	char* fmtp_attr;
 	char* fmtp_attr_int;
 	size_t fmtp_attr_len = 0;
+	size_t priority_len = 0;
 	tsk_istr_t floorid_str;
 
 	TSK_DEBUG_INFO("tdav_session_mcptt_get_lo");
@@ -1159,7 +1193,9 @@ const tsdp_header_M_t* tdav_session_mcptt_get_lo(tmedia_session_t* self)
 	
 	mcptt = (tdav_session_mcptt_t*)self;
 	
-	if(!base->M.lo)
+	if(!base->M.lo
+	   && mcptt->with_floor_control && mcptt->with_floor_control==tsk_true
+			)
 	{
 		//Create INVITE SRC and recive INVITE
 		if((base->M.lo = tsdp_header_M_create(base->plugin->media, mcptt->local_port, proto_transport)))
@@ -1170,7 +1206,6 @@ const tsdp_header_M_t* tdav_session_mcptt_get_lo(tmedia_session_t* self)
 			tsdp_header_M_add_headers(base->M.lo,
 					TSDP_FMT_VA_ARGS(proto),
 					tsk_null);
-
 			proto_attr_len = tsk_strlen(proto) + 1;
 				if(mcptt->is_multimedia)
 					proto_attr_len += tsk_strlen(multi) + 2;
@@ -1243,22 +1278,21 @@ const tsdp_header_M_t* tdav_session_mcptt_get_lo(tmedia_session_t* self)
 				mcptt->granted_remote=tsk_false;
 				mcptt->implicit_remote=tsk_false;
 				
-				
 			}else{
 				//Send invite
-
 				mcptt->origin_competitor=tsk_true;
-
 				start_time_t101(mcptt);//init t101
 
-				fmtp_attr_len=tsk_strlen(proto)+tsk_strlen(priority)+3;
+				if (mcptt->priority_local != 0) { //priority_local could be up to 255
+					priority_len = (size_t)(floor(log10(abs(mcptt->priority_local))) + 1);
+				}
+				fmtp_attr_len=tsk_strlen(proto)+tsk_strlen(" ")+tsk_strlen(priority)
+						+tsk_strlen("=")+priority_len+1;
 				#if HAVE_CRT //Debug memory
 						fmtp_attr = (char*)calloc(fmtp_attr_len, sizeof(char));
-
-	#else
+	            #else
 						fmtp_attr = (char*)tsk_calloc(fmtp_attr_len, sizeof(char));
-
-	#endif //HAVE_CRT
+	            #endif //HAVE_CRT
 				if(mcptt->priority_local>0 && mcptt->priority_local<10){
 					tsk_sprintf(&fmtp_attr, "%s %s=%d", proto,priority,mcptt->priority_local);
 				}else{
@@ -1268,55 +1302,48 @@ const tsdp_header_M_t* tdav_session_mcptt_get_lo(tmedia_session_t* self)
 				if(mcptt->granted_local==tsk_true){
 					fmtp_attr_len+=1+tsk_strlen(granted);
 					#if HAVE_CRT //Debug memory
-							fmtp_attr_int=(char*)calloc(fmtp_attr_len, sizeof(char));
-
-	#else
-							fmtp_attr_int=(char*)tsk_calloc(fmtp_attr_len, sizeof(char));
-
-	#endif //HAVE_CRT
+						fmtp_attr_int=(char*)calloc(fmtp_attr_len, sizeof(char));
+	                #else
+						fmtp_attr_int=(char*)tsk_calloc(fmtp_attr_len, sizeof(char));
+	                #endif //HAVE_CRT
 					tsk_sprintf(&fmtp_attr_int, "%s;%s",fmtp_attr, granted);
+
 					#if HAVE_CRT //Debug memory
-		fmtp_attr=realloc(fmtp_attr, fmtp_attr_len*sizeof(char));
-	#else
-		fmtp_attr=tsk_realloc(fmtp_attr, fmtp_attr_len*sizeof(char));
-	#endif //HAVE_CRT
-					
+						fmtp_attr=realloc(fmtp_attr, fmtp_attr_len*sizeof(char));
+	                #else
+		            	fmtp_attr=tsk_realloc(fmtp_attr, fmtp_attr_len*sizeof(char));
+	                #endif //HAVE_CRT
 					strcpy(fmtp_attr, fmtp_attr_int);
 				}
 			
 				if(mcptt->implicit_local==tsk_true){
 					fmtp_attr_len+=1+tsk_strlen(implicit);
 					#if HAVE_CRT //Debug memory
-							fmtp_attr_int=(char*)calloc(fmtp_attr_len, sizeof(char));
-
-	#else
-							fmtp_attr_int=(char*)tsk_calloc(fmtp_attr_len, sizeof(char));
-
-	#endif //HAVE_CRT
+						fmtp_attr_int=(char*)calloc(fmtp_attr_len, sizeof(char));
+	                #else
+						fmtp_attr_int=(char*)tsk_calloc(fmtp_attr_len, sizeof(char));
+	                #endif //HAVE_CRT
 					tsk_sprintf(&fmtp_attr_int, "%s;%s", fmtp_attr, implicit);
-					fmtp_attr=tsk_realloc(fmtp_attr, fmtp_attr_len*sizeof(char));
+
+					#if HAVE_CRT //Debug memory
+						fmtp_attr=realloc(fmtp_attr, fmtp_attr_len*sizeof(char));
+	                #else
+		            	fmtp_attr=tsk_realloc(fmtp_attr, fmtp_attr_len*sizeof(char));
+	                #endif //HAVE_CRT
 					strcpy(fmtp_attr, fmtp_attr_int);
 				}
-			
 			}
-
 			//strcpy(array2, array1);
  
 			//mc_priority=(0-7)
 				tsdp_header_M_add_headers(base->M.lo,
 				    TSDP_HEADER_A_VA_ARGS("fmtp",fmtp_attr),
 					tsk_null);
-			
-			
-			
-			
-			
 					
 			tsk_free((void**)&fmtp_attr_int);
 			tsk_free((void**)&proto_attr);
 			fmtp_attr=tsk_realloc(fmtp_attr, fmtp_attr_len*sizeof(char));
 			tsk_free((void**)&fmtp_attr);
-
 		}
 	}else{//PROCESS INVITE DSC
 		
@@ -1333,50 +1360,53 @@ int tdav_session_mcptt_set_ro(tmedia_session_t* self, const tsdp_header_M_t* m)
 	const tsdp_header_A_t* A_fmtp;
 
 	//tsk_bool_t answer;
-	
+    if(!self || !m){
+        TSK_DEBUG_ERROR("Invalid parameter");
+        return -1;
+    }
 
 	TSK_DEBUG_INFO("tdav_session_mcptt_set_ro");
 
-	if(!self || !m){
-		TSK_DEBUG_ERROR("Invalid parameter");
-		return -1;
-	}
-	self->M.ro = tsk_object_ref((void*)m);
 
-	mcptt = (tdav_session_mcptt_t*)self;
-	mcptt->remote_port = m->port;
+    self->M.ro = tsk_object_ref((void*)m);
 
-
-	if((A_fmtp = tsdp_header_M_findA(m, "fmtp"))){
-		int index;
-		char num_char;
-		int num;
-		const char* priority = "mc_priority";
-		const char* implicit = "mc_implicit_request";
-		const char* granted = "mc_granted";
-
-		if((index=tsk_strindexOf(A_fmtp->value,tsk_strlen(A_fmtp->value),granted))>=0){
-			mcptt->granted_remote=tsk_true;
-		}
-
-		if((index=tsk_strindexOf(A_fmtp->value,tsk_strlen(A_fmtp->value),implicit))>=0){
-			mcptt->implicit_remote=tsk_true;
-		}
-
-		if((index=tsk_strindexOf(A_fmtp->value,tsk_strlen(A_fmtp->value),priority))>=0){
-			num_char=(A_fmtp->value)[1+index+tsk_strlen(priority)];
-			num=num_char-'0';
-			if(num>=0 && num<10){
-				mcptt->priority_remote=(uint32_t)num;
-			}else{
-				mcptt->priority_remote=(uint32_t)0;
-			}
-		}
-	}
+    mcptt = (tdav_session_mcptt_t*)self;
+    mcptt->remote_port = m->port;
+    /* get connection associated to this media line
+ If the connnection is global, then the manager will call tdav_session_mcptt_set_ro() */
+    if (m->C && m->C!=tsk_null && m->C->addr && m->C->addr!=tsk_null){
+        mcptt->remote_ip=tsk_strdup(m->C->addr);
+    }
 
 
+    if((A_fmtp = tsdp_header_M_findA(m, "fmtp"))){
+        int index;
+        char num_char;
+        int num;
+        const char* priority = "mc_priority";
+        const char* implicit = "mc_implicit_request";
+        const char* granted = "mc_granted";
 
-	
+        if((index=tsk_strindexOf(A_fmtp->value,tsk_strlen(A_fmtp->value),granted))>=0){
+            mcptt->granted_remote=tsk_true;
+        }
+
+        if((index=tsk_strindexOf(A_fmtp->value,tsk_strlen(A_fmtp->value),implicit))>=0){
+            mcptt->implicit_remote=tsk_true;
+        }
+
+        if((index=tsk_strindexOf(A_fmtp->value,tsk_strlen(A_fmtp->value),priority))>=0){
+            num_char=(A_fmtp->value)[1+index+tsk_strlen(priority)];
+            num=num_char-'0';
+            if(num>=0 && num<10){
+                mcptt->priority_remote=(uint32_t)num;
+            }else{
+                mcptt->priority_remote=(uint32_t)0;
+            }
+        }
+    }
+
+
 	
 
 	return 0;
@@ -1385,7 +1415,7 @@ int tdav_session_mcptt_set_ro(tmedia_session_t* self, const tsdp_header_M_t* m)
 
 
 /* ============ Public functions ================= */
-//MCPTT MBMS by Eduardo
+//MCPTT MBMS
 // Start MBMS session manager
 //TODO: generate logic to start mbms
 int tdav_session_mcptt_mbms_start_manager(tmedia_session_mcptt_t* self,const char* remote_ip,const int remote_port, const char* local_iface, const int local_iface_idx, va_list *app)
@@ -1409,7 +1439,7 @@ int tdav_session_mcptt_mbms_start_manager(tmedia_session_mcptt_t* self,const cha
 
 	return ret;
 }
-//MCPTT MBMS by Eduardo
+//MCPTT MBMS
 // Stop MBMS manager session 
 int tdav_session_mcptt_mbms_stop_manager(tmedia_session_mcptt_t* self, va_list *app)
 {
@@ -1457,7 +1487,6 @@ int tdav_session_mcptt_mbms_start_media(tmedia_session_mcptt_t* self, const char
 	if (mcptt->audio_session != tsk_null)
 		TDAV_SESSION_AV(mcptt->multicast_audio_session)->local_ip = tsk_strdup(TDAV_SESSION_AV(mcptt->audio_session)->local_ip);
 
-	//TODO: By Mikel. Creating a fake SDP is not the preferred method... Codecs??? Transport??
 
 	base = TMEDIA_SESSION(mcptt->multicast_audio_session);
 
@@ -1574,6 +1603,10 @@ int tdav_session_mcptt_request_token (tmedia_session_mcptt_t* self, va_list *app
 		TSK_DEBUG_ERROR("Invalid parameter");
 		return -1;
 	}
+	else if(mcptt->with_floor_control && mcptt->with_floor_control==tsk_false){
+        TSK_DEBUG_ERROR("In this type of call, you can not release or request token");
+        return -1;
+    }
 
 	if (mcptt->mcptt_status != mcptt_status_no_permission) {
 		TSK_DEBUG_ERROR("Incorrect status");
@@ -1590,7 +1623,7 @@ int tdav_session_mcptt_request_token (tmedia_session_mcptt_t* self, va_list *app
 	mcptt->counter_c101.curr_value = 1;
 
 	mcptt->mcptt_status = mcptt_status_pending_request;
-
+	TSK_DEBUG_INFO("Alert user REQUEST");
 	tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_request_sent, tsk_null);
 
 	return ret;
@@ -1607,6 +1640,10 @@ int tdav_session_mcptt_release_token (tmedia_session_mcptt_t* self, va_list *app
 		TSK_DEBUG_ERROR("Invalid parameter");
 		return -1;
 	}
+	else if(mcptt->with_floor_control && mcptt->with_floor_control==tsk_false){
+        TSK_DEBUG_ERROR("In this type of call, you can not release or request token");
+        return -1;
+    }
 
 	if(mcptt->audio_session) //Stop RTP
 		TMEDIA_SESSION(mcptt->audio_session)->lo_held = tsk_true;
@@ -1639,7 +1676,7 @@ int tdav_session_mcptt_release_token (tmedia_session_mcptt_t* self, va_list *app
 	}
 
 	mcptt->mcptt_status = mcptt_status_pending_release;
-
+	TSK_DEBUG_INFO("Alert user RELEASE");
 	tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_release_sent, tsk_null);
 
 	return ret;
@@ -1670,7 +1707,7 @@ int tdav_session_mcptt_request_queue_position (tmedia_session_mcptt_t* self, va_
 	mcptt->counter_c104.curr_value = 1;
 
 	mcptt->mcptt_status = mcptt_status_queued;
-
+	TSK_DEBUG_INFO("Alert user REQUEST 2");
 	tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_queue_pos_request_sent, tsk_null);
 
 	return ret;
@@ -1874,6 +1911,11 @@ uint16_t tdav_session_mcptt_get_floor_indicator(tmedia_session_mcptt_t* self)
 
 	if (mcptt->is_broadcast == tsk_true)
 		floor_indicator = FLR_IND_BROADCAST_GRP_CALL;
+	if (mcptt->is_emergency == tsk_true || ((mcptt->type_session | tmedia_emergency)==tmedia_emergency))
+		floor_indicator |= FLR_IND_EMERGENCY_CALL;
+	
+	if (mcptt->is_imminent_peril == tsk_true || ((mcptt->type_session | tmedia_imminentperil)==tmedia_imminentperil))
+		floor_indicator |= FLR_IND_IMMINENT_PERIL_CALL;
 	if (mcptt->queueing_enabled == tsk_true)
 		floor_indicator |= FLR_IND_QUEUEING_SUPPORTED;
 
@@ -1887,11 +1929,16 @@ int tdav_session_mcptt_process_taken(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_p
 {
 	tmcptt_message_t* msg = tmcptt_message_create_null();
 
+	TSK_DEBUG_INFO("MCPTT TAKEN TOKEN");
+
 	if (mcptt == tsk_null)
 		return -1;
 
 	if (taken_msg == tsk_null) 
 		return -1;
+
+	
+
 
 	if (taken_msg->granted_party_id)
 	{
@@ -1916,76 +1963,85 @@ int tdav_session_mcptt_process_taken(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_p
 	}
 
 	if (taken_msg->granted_party_id==tsk_null || mcptt->mcptt_id_local==tsk_null || (tsk_strcmp(taken_msg->granted_party_id->f_value,tsip_uri_tostring(mcptt->mcptt_id_local,tsk_false,tsk_false)) != 0) ) {
-		switch (mcptt->mcptt_status)
-		{
-			case mcptt_status_no_permission:
-			{
-				//if (msg->is_broadcast_call)//it is not valid
-				tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_token_taken, msg);
+        if (msg->user && msg->user != tsk_null && mcptt && mcptt->mcptt_id_local) {
+            if (strcmp(msg->user, tsip_uri_tostring(mcptt->mcptt_id_local, tsk_false, tsk_false)) ==
+                0) {
+                TSK_DEBUG_ERROR("A taken with local client data has been received %s = %s",
+                                msg->user,
+                                tsip_uri_tostring(mcptt->mcptt_id_local, tsk_false, tsk_false));
+                return 0;
+            } else {
+                TSK_DEBUG_INFO("Received correct Taken");
+            }
+        }
 
-				/* Cannot start timer T103 (End of RTP media).
+
+        switch (mcptt->mcptt_status) {
+            case mcptt_status_no_permission:
+            case mcptt_status_start_stop:
+            {
+                //if (msg->is_broadcast_call)//it is not valid
+                TSK_DEBUG_INFO("Alert user TAKEN 1");
+                tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_token_taken, msg);
+
+                /* Cannot start timer T103 (End of RTP media).
                    Cannot access RTP packet reception function */
-				// mcptt->timer_t103.id = tsk_timer_manager_schedule(mcptt->h_timer, mcptt->timer_t103.timeout, tdav_session_mcptt_timer_t103_expired_handler, mcptt);
-				break;
-			}
-			case mcptt_status_pending_request:
-			{
-				if (tsk_strcmp(taken_msg->granted_party_id->f_value, mcptt->local_mcptt_id) != 0) {
-					tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_token_taken, msg);
-					if(mcptt->audio_session) //Stop RTP transmission
-						TMEDIA_SESSION(mcptt->audio_session)->lo_held = tsk_true;
-					if(mcptt->multicast_audio_session) //Multicast channel ON
-					{
-						TMEDIA_SESSION(mcptt->multicast_audio_session)->ro_held = tsk_false;
-						TMEDIA_SESSION(mcptt->multicast_audio_session)->lo_held = tsk_true;
-					}
+                // mcptt->timer_t103.id = tsk_timer_manager_schedule(mcptt->h_timer, mcptt->timer_t103.timeout, tdav_session_mcptt_timer_t103_expired_handler, mcptt);
+                break;
+            }
+            case mcptt_status_pending_request: {
+                if (tsk_strcmp(taken_msg->granted_party_id->f_value, mcptt->local_mcptt_id) != 0) {
+                    TSK_DEBUG_INFO("Alert user TAKEN 2");
+                    tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_token_taken, msg);
+                    if (mcptt->audio_session) //Stop RTP transmission
+                        TMEDIA_SESSION(mcptt->audio_session)->lo_held = tsk_true;
+                    if (mcptt->multicast_audio_session) //Multicast channel ON
+                    {
+                        TMEDIA_SESSION(mcptt->multicast_audio_session)->ro_held = tsk_false;
+                        TMEDIA_SESSION(mcptt->multicast_audio_session)->lo_held = tsk_true;
+                    }
 
-					if (mcptt->queueing_enabled == tsk_false)
-					{
-						if (TSK_TIMER_ID_IS_VALID(mcptt->timer_t101.id)) {
-							tsk_timer_manager_cancel(mcptt->h_timer, mcptt->timer_t101.id);
-							mcptt->timer_t101.id = TSK_INVALID_TIMER_ID;
-						}
+                    if (mcptt->queueing_enabled == tsk_false) {
+                        if (TSK_TIMER_ID_IS_VALID(mcptt->timer_t101.id)) {
+                            tsk_timer_manager_cancel(mcptt->h_timer, mcptt->timer_t101.id);
+                            mcptt->timer_t101.id = TSK_INVALID_TIMER_ID;
+                        }
 
-						/* Cannot start timer T103 (End of RTP media) */
-						//mcptt->timer_t103.id = tsk_timer_manager_schedule(mcptt->h_timer, mcptt->timer_t103.timeout, tdav_session_mcptt_timer_t103_expired_handler, mcptt);
+                        /* Cannot start timer T103 (End of RTP media) */
+                        //mcptt->timer_t103.id = tsk_timer_manager_schedule(mcptt->h_timer, mcptt->timer_t103.timeout, tdav_session_mcptt_timer_t103_expired_handler, mcptt);
 
-						mcptt->mcptt_status = mcptt_status_no_permission;
-					}
-				}
+                        mcptt->mcptt_status = mcptt_status_no_permission;
+                    }
+                }
 
-				break;
-			}
-			case mcptt_status_pending_release:
-			{
-				tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_token_taken, msg);
+                break;
+            }
+            case mcptt_status_pending_release: {
+                TSK_DEBUG_INFO("Alert user TAKEN 3");
+                tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_token_taken, msg);
 
-				//Start timer T103??
+                //Start timer T103??
 
-				if (TSK_TIMER_ID_IS_VALID(mcptt->timer_t100.id))
-				{
-					tsk_timer_manager_cancel(mcptt->h_timer, mcptt->timer_t100.id);
-					mcptt->timer_t100.id = TSK_INVALID_TIMER_ID;
-				}
+                if (TSK_TIMER_ID_IS_VALID(mcptt->timer_t100.id)) {
+                    tsk_timer_manager_cancel(mcptt->h_timer, mcptt->timer_t100.id);
+                    mcptt->timer_t100.id = TSK_INVALID_TIMER_ID;
+                }
 
-				mcptt->mcptt_status = mcptt_status_no_permission;
+                mcptt->mcptt_status = mcptt_status_no_permission;
 
-				break;
-			}
-			case mcptt_status_queued:
-			{
-				tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_token_taken, msg);
-				break;
-			}
-			default:
-			{
-				TSK_DEBUG_WARN("This status is not logic for receiving TOKEN TAKEN");
-			}
-		}
-	}else{
-		TSK_DEBUG_INFO("MCPTT TAKEN not VALID in this status");
-
-	}
+                break;
+            }
+            case mcptt_status_queued: {
+                TSK_DEBUG_INFO("Alert user TAKEN 4");
+                tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_token_taken, msg);
+                break;
+            }
+            default: {
+                TSK_DEBUG_WARN("State illogical in process idle");
+                TSK_DEBUG_INFO("The current status is %d", mcptt->mcptt_status);
+            }
+        }
+    }
 
 
 	return 0;
@@ -1995,6 +2051,8 @@ int tdav_session_mcptt_process_taken(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_p
 int tdav_session_mcptt_process_idle(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_packet_idle_t* idle_msg)
 {
 	tmcptt_message_t* msg = tmcptt_message_create_null();
+
+	TSK_DEBUG_INFO("MCPTT IDLE TOKEN");
 
 	if (mcptt == tsk_null)
 		return -1;
@@ -2017,9 +2075,17 @@ int tdav_session_mcptt_process_idle(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_pa
 
 	switch (mcptt->mcptt_status) 
 	{
-	case mcptt_status_permission:
+
+		/*
+		This part of the code is reviewed because it came in conflict 
+		when is received in the data desorde of idle and granted, 
+		therefore always will await the REVOKE message to make case to the idle
+		*/
+	/*case mcptt_status_permission:
 		{
+			TSK_DEBUG_INFO("Alert user REVOKED 1");
 			tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_permission_revoked, msg);
+			TSK_DEBUG_INFO("Alert user IDLE 1");
 			tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_idle_channel, msg);
 
 			mcptt->mcptt_status = mcptt_status_no_permission;
@@ -2033,9 +2099,10 @@ int tdav_session_mcptt_process_idle(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_pa
 			}
 
 			break;
-		}
+		}*/
 	case mcptt_status_no_permission:
 		{
+			TSK_DEBUG_INFO("Alert user IDLE 2");
 			tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_idle_channel, msg);
 
 			if (TSK_TIMER_ID_IS_VALID(mcptt->timer_t103.id))
@@ -2047,6 +2114,7 @@ int tdav_session_mcptt_process_idle(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_pa
 		}
 	case mcptt_status_pending_release:
 		{
+			TSK_DEBUG_INFO("Alert user IDLE 3");
 			tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_idle_channel, msg);
 
 			if (TSK_TIMER_ID_IS_VALID(mcptt->timer_t100.id))
@@ -2070,6 +2138,10 @@ int tdav_session_mcptt_process_idle(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_pa
 			mcptt->mcptt_status = mcptt_status_no_permission;
 			break;
 		}
+	default:
+		{
+			TSK_DEBUG_WARN("State illogical in process Granted");
+		}
 	}
 	
 	return 0;
@@ -2078,6 +2150,8 @@ int tdav_session_mcptt_process_idle(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_pa
 int tdav_session_mcptt_process_granted(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_packet_granted_t* granted_msg)
 {
 	tmcptt_message_t* msg = tmcptt_message_create_null();
+
+	TSK_DEBUG_INFO("MCPTT GRANTED TOKEN");
 
 	if (mcptt == tsk_null)
 		return -1;
@@ -2112,6 +2186,7 @@ int tdav_session_mcptt_process_granted(tdav_session_mcptt_t* mcptt, tmcptt_mcptt
 	{
 	case mcptt_status_pending_request:
 		{
+			TSK_DEBUG_INFO("Alert user GRANTED 1");
 			tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_token_granted, msg);
 
 			if (TSK_TIMER_ID_IS_VALID(mcptt->timer_t103.id))
@@ -2140,6 +2215,7 @@ int tdav_session_mcptt_process_granted(tdav_session_mcptt_t* mcptt, tmcptt_mcptt
 		}
 	case mcptt_status_queued:
 		{
+			TSK_DEBUG_INFO("Alert user GRANTED 2");
 			tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_token_granted, msg);
 
 			if (TSK_TIMER_ID_IS_VALID(mcptt->timer_t104.id))
@@ -2162,6 +2238,10 @@ int tdav_session_mcptt_process_granted(tdav_session_mcptt_t* mcptt, tmcptt_mcptt
 
 			break;
 		}
+	default:
+		{
+			TSK_DEBUG_WARN("State illogical in process DENY status");
+		}
 	}
 	
 	return 0;
@@ -2171,6 +2251,8 @@ int tdav_session_mcptt_process_deny(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_pa
 {
 	tmcptt_message_t* msg = tmcptt_message_create_null();
 	tsk_size_t size = 0;
+
+	TSK_DEBUG_INFO("MCPTT DENY TOKEN");
 
 	if (mcptt == tsk_null)
 		return -1;
@@ -2199,6 +2281,7 @@ int tdav_session_mcptt_process_deny(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_pa
 	{
 	case mcptt_status_pending_request:
 		{
+			TSK_DEBUG_INFO("Alert user DENIED 1");
 			tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_token_denied, msg);
 
 			/* Stop timer T101 (Floor request) */
@@ -2222,6 +2305,7 @@ int tdav_session_mcptt_process_deny(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_pa
 		}
 	case mcptt_status_queued:
 		{
+			TSK_DEBUG_INFO("Alert user DENIED 2");
 			tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_token_denied, msg);
 
 			/* Stop timer T104 (Floor queue position request) */
@@ -2243,6 +2327,10 @@ int tdav_session_mcptt_process_deny(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_pa
 
 			break;
 		}
+	default:
+		{
+			TSK_DEBUG_WARN("State illogical in process Revoke");
+		}
 	}
 	
 	return 0;
@@ -2253,6 +2341,8 @@ int tdav_session_mcptt_process_revoke(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_
 {
 	tmcptt_message_t* msg = tmcptt_message_create_null();
 	tsk_size_t size = 0;
+
+	TSK_DEBUG_INFO("MCPTT REVOKE TOKEN");
 
 	if (mcptt == tsk_null)
 		return -1;
@@ -2281,6 +2371,7 @@ int tdav_session_mcptt_process_revoke(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_
 	{
 	case mcptt_status_permission:
 		{
+			TSK_DEBUG_INFO("Alert user REVOKE 3");
 			tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_permission_revoked, msg);
 
 			tdav_session_mcptt_send_release(TMEDIA_SESSION_MCPTT(mcptt));
@@ -2302,8 +2393,13 @@ int tdav_session_mcptt_process_revoke(tdav_session_mcptt_t* mcptt, tmcptt_mcptt_
 		}
 	case mcptt_status_pending_release:
 		{
+			TSK_DEBUG_INFO("Alert user REVOKE 5");
 			tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_permission_revoked, msg);
 			break;
+		}
+	default:
+		{
+			TSK_DEBUG_WARN("State illogical in process QUEUE position info");
 		}
 	}
 	
@@ -2331,6 +2427,7 @@ int tdav_session_mcptt_process_queue_position_info(tdav_session_mcptt_t* mcptt, 
 	{
 	case mcptt_status_pending_request:
 		{
+			TSK_DEBUG_INFO("Alert user QUEUED 1");
 			tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_queued, msg);
 
 			if (TSK_TIMER_ID_IS_VALID(mcptt->timer_t104.id))
@@ -2348,6 +2445,7 @@ int tdav_session_mcptt_process_queue_position_info(tdav_session_mcptt_t* mcptt, 
 			/* If queue position info == 65534, MCPTT client is not queued
 			 * If queue position info == 65535, MCPTT server unable to determine position */
 			if (!(msg->queue_position == 255 && msg->queue_priority == 254)) //If client is queued
+				TSK_DEBUG_INFO("Alert user QUEUED 2");
 				tdav_session_mcptt_alert_user(mcptt, tmcptt_event_type_queued, msg);
 			
 			if (TSK_TIMER_ID_IS_VALID(mcptt->timer_t104.id))
@@ -2357,6 +2455,10 @@ int tdav_session_mcptt_process_queue_position_info(tdav_session_mcptt_t* mcptt, 
 			}
 
 			break;
+		}
+	default:
+		{
+			TSK_DEBUG_WARN("State illogical in process MBMS map");
 		}
 	}
 	
@@ -2509,6 +2611,7 @@ static tsk_object_t* tdav_session_mcptt_ctor(tsk_object_t * self, va_list * app)
 
 		session->floorid = 0;
 		session->is_multimedia = tsk_true;
+		session->with_floor_control = tsk_true;
 		session->local_ip = tsk_null;
 		session->local_port = 0;
 		session->remote_ip = tsk_null;

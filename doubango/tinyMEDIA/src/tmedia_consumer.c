@@ -26,6 +26,7 @@
 /**@file tmedia_consumer.c
  * @brief Base consumer object.
  */
+#include <tinysip.h>
 #include "tinymedia/tmedia_consumer.h"
 #include "tinymedia/tmedia_defaults.h"
 
@@ -58,7 +59,6 @@ int tmedia_consumer_init(tmedia_consumer_t* self)
 	self->audio.bits_per_sample = TMEDIA_CONSUMER_BITS_PER_SAMPLE_DEFAULT;
 	self->audio.ptime = tmedia_defaults_get_audio_ptime();
 	self->audio.volume = tmedia_defaults_get_volume();
-
 	return 0;
 }
 
@@ -123,7 +123,7 @@ int tmedia_consumer_consume(tmedia_consumer_t* self, const void* buffer, tsk_siz
 		TSK_DEBUG_ERROR("Invalid parameter");
 		return -1;
 	}
-	return self->plugin->consume(self, buffer, size, proto_hdr);
+	return self->plugin->consume(self, buffer,size, proto_hdr);
 }
 
 /**@ingroup tmedia_consumer_group

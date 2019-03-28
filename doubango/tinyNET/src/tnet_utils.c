@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -327,14 +326,14 @@ tnet_interfaces_L_t* tnet_get_interfaces()
 		TSK_DEBUG_ERROR("ioctl(SIOCGIFCONF) failed and errno= [%d]", tnet_geterrno());
 		goto done;
 	}
-	//Mikel. Why is it checking ifr? (not initialized!!!)
+	// Why is it checking ifr? (not initialized!!!)
 	//if(!ifr || !ifc.ifc_req){
 	if (!ifc.ifc_req) {
 		TSK_DEBUG_ERROR("ifr or ifc.ifc_req is null");
 		goto done;
 	}
 
-	/* Mikel. This should be moved inside for loop!! 
+	/*  This should be moved inside for loop!!
 	if(!ifr->ifr_name){
 		TSK_DEBUG_ERROR("ifr->ifr_name is null");
 		goto done;
@@ -342,7 +341,7 @@ tnet_interfaces_L_t* tnet_get_interfaces()
 	*/
 
 	
-	//Mikel. This did not work for me.
+	// This did not work for me.
 	//for(ifr = ifc.ifc_req; ifr && !ifr->ifr_name && !tsk_strempty(ifr->ifr_name); ifr++){
 	//	sin = (struct sockaddr_in *)&(ifr->ifr_addr);
 	//	// TODO: IPAddress if needed

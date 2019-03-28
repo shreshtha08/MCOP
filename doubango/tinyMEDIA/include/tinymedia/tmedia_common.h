@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -64,21 +63,68 @@ typedef enum tmedia_type_e
 
 	tmedia_msrp = (tmedia_chat | tmedia_file),
 	tmedia_audiovideo = (tmedia_audio | tmedia_video),
+
+
+	tmedia_floor_control = (0x01 << 27),
 	//MCPTT
 	tmedia_mcptt = (0x01 << 13),
 	tmedia_mcptt_group = (0x01 << 14),
+
 	tmedia_audio_ptt_mcptt =  tmedia_mcptt | tmedia_audio,
+	tmedia_audio_ptt_mcptt_with_floor_control =  tmedia_mcptt | tmedia_audio | tmedia_floor_control,
 	tmedia_audio_ptt_group_mcptt = tmedia_audio_ptt_mcptt | tmedia_mcptt_group,
+	tmedia_audio_ptt_group_mcptt_with_floor_control = tmedia_audio_ptt_mcptt | tmedia_mcptt_group | tmedia_floor_control,
 	tmedia_location=(0x01 << 15),
 	tmedia_mcptt_location=tmedia_mcptt | tmedia_location,
 
-	//MCPTT affilation by eduardo
+	//MCPTT affilation
 	tmedia_affiliation=(0x01 << 16),
 	tmedia_mcptt_affiliation=tmedia_mcptt | tmedia_affiliation,
-	//MCPTT MBMS by EDUARDO
+	//MCPTT MBMS
 	tmedia_mbms=(0x01 << 17),
 	tmedia_mcptt_mbms=tmedia_mcptt | tmedia_mbms,
 	tmedia_mbms_audio = tmedia_audio | tmedia_mbms,
+	//MCPTT authentication
+	tmedia_authentication=(0x01 << 18),
+	tmedia_mcptt_authentication=tmedia_mcptt | tmedia_authentication,
+	//CALL EMERGENCY
+	tmedia_emergency= (0x01 << 19),
+	tmedia_alert= (0x01 << 20),
+	tmedia_imminentperil= (0x01 << 21),
+
+
+	
+	tmedia_mcptt_emergence= tmedia_emergency | tmedia_audio_ptt_mcptt,
+	tmedia_mcptt_emergence_with_floor_control= tmedia_emergency | tmedia_audio_ptt_mcptt | tmedia_floor_control,
+	tmedia_mcptt_group_emergence= tmedia_mcptt_emergence | tmedia_mcptt_group,
+	tmedia_mcptt_group_emergence_with_floor_control= tmedia_mcptt_emergence | tmedia_mcptt_group | tmedia_floor_control,
+	tmedia_mcptt_alert= tmedia_alert | tmedia_audio_ptt_mcptt,
+	tmedia_mcptt_alert_with_floor_control= tmedia_alert | tmedia_audio_ptt_mcptt | tmedia_floor_control,
+	tmedia_mcptt_group_alert= tmedia_mcptt_alert | tmedia_mcptt_group,
+	tmedia_mcptt_group_alert_with_floor_control= tmedia_mcptt_alert | tmedia_mcptt_group | tmedia_floor_control,
+	tmedia_mcptt_imminentperil= tmedia_imminentperil | tmedia_audio_ptt_mcptt,
+	tmedia_mcptt_imminentperil_with_floor_control= tmedia_imminentperil | tmedia_audio_ptt_mcptt | tmedia_floor_control,
+	tmedia_mcptt_group_imminentperil= tmedia_mcptt_imminentperil | tmedia_mcptt_group,
+	tmedia_mcptt_group_imminentperil_with_floor_control= tmedia_mcptt_imminentperil | tmedia_mcptt_group | tmedia_floor_control,
+
+
+
+	tmedia_cms= (0x01 << 22),
+	tmedia_mcptt_cms=tmedia_mcptt | tmedia_cms,
+	tmedia_gms= (0x01 << 23),
+	tmedia_mcptt_gms=tmedia_mcptt | tmedia_gms,
+
+
+	tmedia_mcptt_chat = (0x01 << 24),
+	tmedia_audio_ptt_chat_mcptt = tmedia_audio_ptt_mcptt | tmedia_mcptt_chat,
+	tmedia_audio_ptt_chat_group_mcptt = tmedia_audio_ptt_mcptt | tmedia_mcptt_chat | tmedia_mcptt_group,
+	tmedia_audio_ptt_chat_group_mcptt_with_floor_control = tmedia_audio_ptt_mcptt | tmedia_mcptt_chat | tmedia_mcptt_group | tmedia_floor_control,
+	
+
+
+
+
+
 
 	tmedia_all = 0xff
 }

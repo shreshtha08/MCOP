@@ -1,27 +1,17 @@
 /*
 Copyright 2018 Bittium Wireless Ltd.
-All rights reserved.
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-- Redistributions of source code must retain the above copyright
-  notice, this list of conditions and the following disclaimer.
-- Redistributions in binary form must reproduce the above copyright
-  notice, this list of conditions and the following disclaimer in the
-  documentation and/or other materials provided with the distribution.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
-IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 
 package org.mcopenplatform.iapi;
@@ -46,7 +36,7 @@ public class Constants {
             static public final int PERMISSION_DENIED = 10002;
 
             /** User authentication failed. Your app does not have carrier privileges
-                and/or you could not be authenticated against the internal whitelist. */
+             and/or you could not be authenticated against the internal whitelist. */
             static public final int AUTH_FAILED = 10003;
 
             /** Invalid parameter */
@@ -54,6 +44,22 @@ public class Constants {
 
             /** Internal error */
             static public final int INTERNAL_ERROR = 10005;
+        }
+
+        /** Constants for notifications common to all plugins / services */
+        public class Notification {
+            private Notification() { }
+
+            /**
+             * Notification for SIM state change.
+             *
+             * <p><b>Parameters:</b>
+             * <br>arg1 - sim slot
+             * <br>arg2 - sim state
+             * @see Constants.Sim.SimSlot
+             * @see Constants.Sim.SimState
+             */
+            static public final int SIM_UPDATED = 20001;
         }
     }
 
@@ -69,6 +75,11 @@ public class Constants {
 
             /** List of supported QCI classes */
             static public final int LIST_QCI_CLASSES = 1;
+
+            /** List of reserved MC APN names. Depending on platform
+             security settings, it may not be possible to create these
+             APNs the normal way, only via MCOP interfaces. */
+            static public final int LIST_MC_APN_NAMES = 2;
         }
 
         /** Constants for getErrorCode */
@@ -92,6 +103,20 @@ public class Constants {
 
             /** Block all non-MC calls */
             static public final int ALL = 3;
+        }
+
+        /** Constants for connectivity notifications */
+        public class Notification {
+            private Notification() { }
+
+            /**
+             * Notification for MC APN/network state change.
+             *
+             * <p><b>Parameters:</b>
+             * <br>obj  - (android.net.Network) Network object
+             * <br>arg1 - 0 = network lost, 1 = network available
+             */
+            static public final int NETWORK_STATE_CHANGED = 30001;
         }
     }
 
@@ -143,6 +168,20 @@ public class Constants {
             /** Authentication type for UICC challenge is EAP AKA. See RFC 4187 for details. */
             static public final int AKA = 1;
         }
+
+        /** Constants for SIM state types */
+        public class SimState {
+            private SimState() { }
+
+            /** SIM is absent */
+            static public final int ABSENT = 0;
+
+            /** SIM is ready */
+            static public final int READY = 1;
+
+            /** SIM is updated due to SIM refresh */
+            static public final int UPDATED = 2;
+        }
     }
 
     public class Configuration {
@@ -152,17 +191,20 @@ public class Constants {
         public class Capability {
             private Capability() { }
 
-            /** UE Configuration Data Management Object */
+            /** MCPTT UE Configuration Data Management Object */
             static public final int MO_UE_CONFIGURATION_DATA = 0;
 
-            /** User Configuration Data Management Object */
+            /** MCPTT User Profile Configuration Data Management Object */
             static public final int MO_USER_CONFIGURATION_DATA = 1;
 
-            /** Group Configuration Data Management Object */
+            /** MCS Group Configuration Data Management Object */
             static public final int MO_GROUP_CONFIGURATION_DATA = 2;
 
-            /** Service Configuration Data Management Object */
+            /** MCPTT Service Configuration Data Management Object */
             static public final int MO_SERVICE_CONFIGURATION_DATA = 3;
+
+            /** MCS UE Initial Configuration Data Management Object */
+            static public final int MO_UE_INITIAL_CONFIGURATION_DATA = 4;
         }
 
         /** Constants for getErrorCode */
@@ -170,7 +212,7 @@ public class Constants {
             private Error() { }
 
             /** The configuration data is invalid (either malformed or
-                too large for the storage target) */
+             too large for the storage target) */
             static public final int INVALID_DATA = 2;
 
             /** Failed to read/write the configuration data to storage */
@@ -210,7 +252,7 @@ public class Constants {
             static public final int ME = 3;
 
             /** Use a storage decided by the ConfigurationService.
-                This storage type can only be used for reads. */
+             This storage type can only be used for reads. */
             static public final int AUTO = 4;
         }
 
@@ -218,17 +260,26 @@ public class Constants {
         public class FileType {
             private FileType() { }
 
-            /** PTT UE Configuration Management Object file */
+            /** MCPTT UE Configuration Management Object file */
             static public final int PTT_MO_UE = 0;
 
-            /** PTT User Configuration Management Object file */
+            /** MCPTT User Profile Configuration Management Object file */
             static public final int PTT_MO_USER = 1;
 
-            /** PTT Group Configuration Management Object file */
+            /** MCS Group Configuration Management Object file */
             static public final int PTT_MO_GROUP = 2;
 
-            /** PTT Service Configuration Management Object file */
+            /** MCPTT Service Configuration Management Object file */
             static public final int PTT_MO_SERVICE = 3;
+
+            /** MCS UE Initial Configuration Management Object file */
+            static public final int PTT_MO_UE_INITIAL = 4;
+
+            /** Device management certificate list for MCOP access control */
+            static public final int MDM_CERTIFICATE_LIST = 10001;
+
+            /** Only for developing */
+            static public final int PTT_PROFILE_SERVICE = -1000;
         }
     }
 }

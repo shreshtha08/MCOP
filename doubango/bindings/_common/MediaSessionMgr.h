@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -92,6 +91,9 @@ public:
 	}
 
 	static unsigned int registerAudioPluginFromFile(const char* path);
+
+    static unsigned int registerAudioPluginOpenSLES();
+
 
 	uint64_t getSessionId(twrap_media_type_t media)const;
 

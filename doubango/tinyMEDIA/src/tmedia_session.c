@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -435,7 +434,7 @@ int _tmedia_session_set_ro(tmedia_session_t* self, const tsdp_header_M_t* m)
 	if (!(ret = self->plugin->set_remote_offer(self, m))){
 		self->ro_changed = tsk_true;
 		self->ro_held = tsdp_header_M_is_held(m, tsk_false); 
-		self->lo_held = tsdp_header_M_is_held(m, tsk_true);  //Added by Mikel
+		self->lo_held = tsdp_header_M_is_held(m, tsk_true);
 	}
 	return ret;
 }
@@ -628,7 +627,7 @@ int tmedia_session_set_mcptt_mbms_cbfn(tmedia_session_t* self, const void* usrda
 	return 0;
 }
 
-//MCPTT AFFILATION by eduardo
+//MCPTT AFFILATION
 int tmedia_session_set_mcptt_affiliation_cbfn(tmedia_session_t* self, const void* usrdata, tmedia_session_mcptt_affiliation_cb_f fun)
 {
 	tmedia_session_mcptt_affiliation_t* mcptt_affiliation;
@@ -1506,7 +1505,7 @@ int tmedia_session_mgr_set_ro(tmedia_session_mgr_t* self, const tsdp_message_t* 
 	while ((M = (const tsdp_header_M_t*)tsdp_message_get_headerAt(sdp, tsdp_htype_M, index++))) {
 		found = tsk_false;
 
-		if(index > 1) { //Added by Mikel (INFO message SDP)
+		if(index > 1) {  //(INFO message SDP)
 			tmedia_type_t M_current_media_type = tmedia_type_from_sdp_headerM(M);
 			if(M_current_media_type == M_last_media_type && _tmedia_session_mgr_find_session_at_index(list_tmp_sessions, (index - active_sessions_count)) == tsk_null) {
 				tmedia_session_t* session;
@@ -1548,7 +1547,7 @@ int tmedia_session_mgr_set_ro(tmedia_session_mgr_t* self, const tsdp_message_t* 
 		}
 #endif
 		if (ms && (tsk_striequals(tmedia_session_get_media(ms), M->media))) {
-			M_last_media_type = tmedia_type_from_sdp_headerM(M); //Added by Mikel
+			M_last_media_type = tmedia_type_from_sdp_headerM(M);
 			/* prepare the media session */
 			if (!self->started) {
 				if (!ms->prepared && M->port && (_tmedia_session_prepare(TMEDIA_SESSION(ms)))){
@@ -2307,7 +2306,7 @@ int tmedia_session_mgr_set_mcptt_mbms_cbfn(tmedia_session_mgr_t* self, const voi
 
 
 
-//MCPTT AFFILATION by eduardo
+//MCPTT AFFILATION
 int tmedia_session_mgr_set_mcptt_affiliation_cbfn(tmedia_session_mgr_t* self, const void* context, tmedia_session_mcptt_affiliation_cb_f fun)
 {
 	tmedia_session_t* session;

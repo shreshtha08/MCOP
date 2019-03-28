@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -304,6 +303,8 @@ public interface INgnSipService extends INgnBaseService {
      * @return
      */
     boolean isRegistered();
+
+
     /**
      * Gets the registration state
      * @return the registration state
@@ -338,6 +339,13 @@ public interface INgnSipService extends INgnBaseService {
 
     /**
      * Configure profile
+     * @param context,invalidProfile
+     * @return
+     */
+    boolean configureProfile(boolean invalidProfile,Context context);
+
+    /**
+     * Configure profile
      * @param context
      * @return
      */
@@ -349,6 +357,9 @@ public interface INgnSipService extends INgnBaseService {
      * @return true if succeed and false otherwise
      */
     boolean stopStack();
+
+
+
     /**
      * Sends a Sip REGISTER request to the Proxy-CSCF
      * @param context the context associated to this request. Could be null.
@@ -357,10 +368,21 @@ public interface INgnSipService extends INgnBaseService {
      */
     boolean register(Context context);
     /**
-     * Deregisters the user by sending a Sip REGISTER request with an expires value equal to zero
+     * Sends a Sip REGISTER request to the Proxy-CSCF
+     * @param context the context associated to this request. Could be null.
+     * @param   invalidProfile
      * @return true if succeed and false otherwise
-     * @sa register
+     * @sa @ref unRegister()
      */
+    boolean register(boolean invalidProfile,Context context);
+
+
+
+        /**
+         * Deregisters the user by sending a Sip REGISTER request with an expires value equal to zero
+         * @return true if succeed and false otherwise
+         * @sa register
+         */
     boolean unRegister();
 
     boolean PresencePublish();

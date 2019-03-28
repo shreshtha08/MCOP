@@ -1,23 +1,28 @@
-/* Copyright (C) 2010-2011, Mamadou Diop.
-*  Copyright (C) 2011, Doubango Telecom.
-*  Copyright (C) 2011, Philippe Verney <verney(dot)philippe(AT)gmail(dot)com>
-*
-* Contact: Mamadou Diop <diopmamadou(at)doubango(dot)org>
-*	
-* This file is part of Open Source Doubango Framework.
-*
-* This is free software: you can redistribute it and/or modify it under the terms of
-* the GNU General Public License as published by the Free Software Foundation, either version 3 
-* of the License, or (at your option) any later version.
-*	
-* This is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-* See the GNU General Public License for more details.
-*	
-* You should have received a copy of the GNU General Public License along 
-* with this program; if not, write to the Free Software Foundation, Inc., 
-* 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/
+/*
+  * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
+ *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
+ *
+ * The original file was part of Open Source IMSDROID
+ *  Copyright (C) 2010-2011, Mamadou Diop.
+ *  Copyright (C) 2011, Doubango Telecom.
+ *
+ *
+ * Contact: Mamadou Diop <diopmamadou(at)doubango(dot)org>
+ *
+ * This file is part of Open Source Doubango Framework.
+ *
+ * This is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
+ *
+ * This is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
 package org.doubango.ngn;
 
 import android.app.Activity;
@@ -26,7 +31,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Vibrator;
 import android.util.Log;
-
 
 import org.doubango.utils.AndroidUtils;
 import org.doubango.utils.Utils;
@@ -64,10 +68,13 @@ public class NgnEngine {
 	protected org.doubango.ngn.services.INgnSoundService mSoundService;
 
 	private org.doubango.ngn.services.impl.ms.MyGMSService mGMSService;
+	protected org.doubango.ngn.services.emergency.IMyEmergencyService mEmergencyService;
 	protected org.doubango.ngn.services.location.IMyLocalizationService mLocalizationServer;
 	protected org.doubango.ngn.services.affiliation.IMyAffiliationService mAffiliationServer;
 	protected org.doubango.ngn.services.mbms.IMyMbmsService mMbmsServer;
 
+	protected org.doubango.ngn.services.authentication.IMyAuthenticacionService mAuthenticationServer;
+	private org.doubango.ngn.services.impl.ms.MyCMSService mCMSService;
 	private org.doubango.ngn.services.profiles.IMyProfilesService mProfilesService;
 
 
@@ -164,29 +171,36 @@ public class NgnEngine {
 				// "armeabi", "mips", "x86"...
 				try {
 					System.loadLibrary("tinyWRAP");
-					Log.d(TAG,"Native code library load. libtinyWRAP\n");
+					if(BuildConfig.DEBUG)Log.d(TAG,"Native code library load. libtinyWRAP\n");
 				} catch (UnsatisfiedLinkError e) {
-					Log.e(TAG,"Native code library failed to load.\n" + e);
+					if(BuildConfig.DEBUG)Log.e(TAG,"Native code library failed to load.\n" + e);
 					try{
 						System.load(String.format("%s/%s", NgnEngine.LIBS_FOLDER, "libtinyWRAP.so"));
 					}catch (UnsatisfiedLinkError e2){
-						Log.e(TAG, "loadLibrary" + Log.getStackTraceString(e2));
-						e2.printStackTrace();
+						if(BuildConfig.DEBUG)Log.e(TAG, "loadLibrary" + Log.getStackTraceString(e2));
 					}
 				}
 			}
-				
 			// If OpenSL ES is supported and known to work on current device then use it
 			if(NgnApplication.isSLEs2KnownToWork()) {
-				final String pluginPath = String.format("%s/%s", NgnEngine.LIBS_FOLDER, "libplugin_audio_opensles.so");
+				if(new File(String.format("%s/%s", NgnEngine.LIBS_FOLDER, "libplugin_audio_opensles.so")).exists()){
+					final String pluginPath = String.format("%s/%s", NgnEngine.LIBS_FOLDER, "libplugin_audio_opensles.so");
 
-				// returned value is the number of registered add-ons (2 = 1 consumer + 1 producer)
-				if (org.doubango.tinyWRAP.MediaSessionMgr.registerAudioPluginFromFile(pluginPath) < 2) {
-					// die if cannot load add-ons
-					throw new RuntimeException("Failed to register audio plugin with path=" + pluginPath);
+					// returned value is the number of registered add-ons (2 = 1 consumer + 1 producer)
+					if (org.doubango.tinyWRAP.MediaSessionMgr.registerAudioPluginFromFile(pluginPath) < 2) {
+						// die if cannot load add-ons
+						throw new RuntimeException("Failed to register audio plugin with path=" + pluginPath);
+					}
+				}else{
+					// returned value is the number of registered add-ons (2 = 1 consumer + 1 producer)
+					if (org.doubango.tinyWRAP.MediaSessionMgr.registerAudioPluginOpenSLES() < 2) {
+						// die if cannot load add-ons
+						throw new RuntimeException("Failed to register audio plugin opensles");
+					}
 				}
 
-				Log.d(TAG, "Using OpenSL ES audio driver");
+				if(BuildConfig.DEBUG)Log.d(TAG, "Using OpenSL ES audio driver");
+
 			}
 			// otherwise, use AudioTrack/Record
 			else{
@@ -259,7 +273,7 @@ public class NgnEngine {
 		org.doubango.tinyWRAP.SipStack.setCodecPriority(org.doubango.tinyWRAP.tdav_codec_id_t.tdav_codec_id_ilbc, prio++);
         org.doubango.tinyWRAP.SipStack.setCodecPriority(org.doubango.tinyWRAP.tdav_codec_id_t.tdav_codec_id_gsm, prio++);
         org.doubango.tinyWRAP.SipStack.setCodecPriority(org.doubango.tinyWRAP.tdav_codec_id_t.tdav_codec_id_g729ab, prio++);
-
+		//org.doubango.tinyWRAP.SipStack.setCodecPriority(org.doubango.tinyWRAP.tdav_codec_id_t.tdav_codec_id_h264_hp, prio++);
         org.doubango.tinyWRAP.SipStack.setCodecPriority(org.doubango.tinyWRAP.tdav_codec_id_t.tdav_codec_id_h264_bp, prio++);
         org.doubango.tinyWRAP.SipStack.setCodecPriority(org.doubango.tinyWRAP.tdav_codec_id_t.tdav_codec_id_h264_mp, prio++);
         org.doubango.tinyWRAP.SipStack.setCodecPriority(org.doubango.tinyWRAP.tdav_codec_id_t.tdav_codec_id_vp8, prio++);
@@ -350,8 +364,6 @@ public class NgnEngine {
 		org.doubango.tinyWRAP.MediaSessionMgr.defaultsSetAvpfTail(30, 160);
 		org.doubango.tinyWRAP.MediaSessionMgr.defaultsSetVideoFps(15);
 
-
-
 	}
 	
 	/**
@@ -376,14 +388,21 @@ public class NgnEngine {
 		success &= getSoundService().start();
 		//new service for location
 		success &= getLocationService().start();
+
+		success &= getEmergencyService().start();
 		//New service for affiliation
 		success &= getAffiliationService().start();
+		//New Service for CMD
+		success &= getCMSService().start();
+		//New Service for OpenId
+		success &= getAuthenticationService().start();
 
 		//New Service for GMD
 		success &= getGMSService().start();
 
 		//New Service for Profiles
 		success &= getProfilesService().start();
+
 		//new service for MBMS
 		try{
 			success &= getMbmsService().start();
@@ -428,8 +447,13 @@ public class NgnEngine {
 		success &= getNetworkService().stop();
 		//New service for location
 		success &= getLocationService().stop();
+		success &= getEmergencyService().stop();
 		//New service for affiliation
 		success &= getAffiliationService().stop();
+		//New Service for CMS
+		success &= getCMSService().stop();
+		//New Service for OpenId
+		success &= getAuthenticationService().stop();
 
 		//New Service for GMD
 		success &= getGMSService().stop();
@@ -469,8 +493,13 @@ public class NgnEngine {
 		success &= getNetworkService().clearService();
 		//New service for location
 		success &= getLocationService().clearService();
+		success &= getEmergencyService().clearService();
 		//New service for affiliation
 		success &= getAffiliationService().clearService();
+		//New Service for CMS
+		success &= getCMSService().clearService();
+		//New Service for OpenId
+		success &= getAuthenticationService().clearService();
 
 		//New Service for Profiles
 		success &= getProfilesService().clearService();
@@ -528,7 +557,7 @@ public class NgnEngine {
 	 */
 	public org.doubango.ngn.services.INgnStorageService getStorageService(){
 		if(mStorageService == null){
-			mStorageService = new org.doubango.ngn.services.impl.NgnStorageService();
+			mStorageService = new org.doubango.ngn.services.impl.NgnStorageService(NgnApplication.getContext());
 		}
 		return mStorageService;
 	}
@@ -621,6 +650,17 @@ public class NgnEngine {
 	}
 
 
+	/**
+	 * Gets the Emergency service
+	 * @return the Emergency service
+	 */
+	public org.doubango.ngn.services.emergency.IMyEmergencyService getEmergencyService(){
+		if(mEmergencyService == null){
+			mEmergencyService = new org.doubango.ngn.services.impl.emergency.MyEmergencyService();
+		}
+		return mEmergencyService;
+	}
+
 
 	/**
 	 * Gets the MBMS service
@@ -641,6 +681,28 @@ public class NgnEngine {
 			mAffiliationServer = new org.doubango.ngn.services.impl.affiliation.MyAffiliationService();
 		}
 		return mAffiliationServer;
+	}
+
+	/**
+	 * Gets the CMS service
+	 * @return the CMS service
+	 */
+	public org.doubango.ngn.services.cms.IMyCMSService getCMSService(){
+		if(mCMSService == null){
+			mCMSService = new org.doubango.ngn.services.impl.ms.MyCMSService();
+		}
+		return mCMSService;
+	}
+
+	/**
+	 * Gets the OpenId service
+	 * @return the OpenId service
+	 */
+	public org.doubango.ngn.services.authentication.IMyAuthenticacionService getAuthenticationService(){
+		if(mAuthenticationServer == null){
+			mAuthenticationServer = new org.doubango.ngn.services.impl.ms.MyAuthenticacionService();
+		}
+		return mAuthenticationServer;
 	}
 
 
@@ -665,17 +727,5 @@ public class NgnEngine {
 		return NgnNativeService.class;
 	}
 
-	//Init Error Parameters
-	/**
-	 *
-	 * @param
-	 * @return
-	 */
-	public boolean checkErrorParameterServer(org.doubango.ngn.services.INgnConfigurationService ngnConfigurationService){
-		if(ngnConfigurationService==null){
-			return true;
-		}
-		return ngnConfigurationService.getBoolean(org.doubango.ngn.utils.NgnConfigurationEntry.ERROR_PARAMETERS,org.doubango.ngn.utils.NgnConfigurationEntry.DEFAULT_ERROR_PARAMETERS);
-	}
-	//Error Parameters
+
 }

@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -37,10 +36,8 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -52,18 +49,23 @@ import org.mcopenplatform.muoapi.ConstantsMCOP;
 import org.mcopenplatform.muoapi.IMCOPCallback;
 import org.mcopenplatform.muoapi.IMCOPsdk;
 import org.mcopenplatform.muoapi.R;
+import org.mcopenplatform.muoapi.mcopsdk.datatype.Session;
 import org.mcopenplatform.muoapi.mcopsdk.datatype.UserData;
 import org.mcopenplatform.muoapi.mcopsdk.preference.PreferencesManager;
 import org.mcopenplatform.muoapi.mcopsdk.preference.PreferencesManagerDefault;
+import org.mcopenplatform.muoapi.utils.Utils;
 
+import java.net.InterfaceAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class MainActivity extends AppCompatActivity {
     private final static String TAG = MainActivity.class.getCanonicalName();
@@ -82,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
     private PreferencesManager preferencesManager;
 
     private Button mainActivity_Button_Register;
-    private Button mainActivity_Button_unRegister;
+    private Button mainActivity_Button_deRegister;
     private TextView mainActivity_TextView_info;
     private TextView mainActivity_TextView_error;
     private TextView mainActivity_TextView_affiliation;
@@ -100,6 +102,11 @@ public class MainActivity extends AppCompatActivity {
     private boolean isSpeakerphoneOn;
     private Button mainActivity_Button_Speaker;
     private Intent serviceIntent;
+    private List<InterfaceAddress> interfaceAddresses;
+    private DialogMenu mDialogMenuIPs;
+    private Button mainActivity_Button_Advanced_Functions;
+    private DialogMenu mDialogShowAdvanceFunction;
+
 
     private Map<String,String[]> getProfilesParameters(List<String> parameters){
         Map<String,String[]> parametersMap=new HashMap<>();
@@ -156,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
         preferencesManager=new PreferencesManagerDefault();
         isSpeakerphoneOn=false;
 
-        clients = new HashMap<>();
+        clients = new TreeMap<>();
 
         if(clients==null || clients.isEmpty()){
             clients.put("TESTA", new String[]{"TESTA","TESTA","TESTA"});
@@ -166,22 +173,16 @@ public class MainActivity extends AppCompatActivity {
             clients.put("TESTE", new String[]{"TESTE","TESTE","TESTE"});
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            TelephonyManager mTelephonyManager = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
-            if(mTelephonyManager.hasCarrierPrivileges()){
-                Log.e(TAG, "hasCarrierPrivileges: true");
-            }else {
-                Log.e(TAG, "hasCarrierPrivileges: false");
-            }
-        }
-
         ArrayList<String> strings=getIntent().getStringArrayListExtra(PARAMETER_PROFILE);
         Map<String, String[]> parameterClients= getProfilesParameters(strings);
         if(parameterClients!=null && !parameterClients.isEmpty())
             clients=parameterClients;
 
+
+
         mainActivity_Button_Register=(Button)findViewById(R.id.mainActivity_Button_Register);
-        mainActivity_Button_unRegister=(Button)findViewById(R.id.mainActivity_Button_unRegister);
+
+        mainActivity_Button_deRegister=(Button)findViewById(R.id.mainActivity_Button_deRegister);
         mainActivity_TextView_info=(TextView)findViewById(R.id.mainActivity_TextView_info);
         mainActivity_TextView_error=(TextView)findViewById(R.id.mainActivity_TextView_error);
         mainActivity_TextView_affiliation=(TextView)findViewById(R.id.mainActivity_TextView_affiliation);
@@ -194,6 +195,7 @@ public class MainActivity extends AppCompatActivity {
         mainActivity_Button_Release_token=(Button)findViewById(R.id.mainActivity_Button_Release_token);
         mainActivity_Button_Request_token=(Button)findViewById(R.id.mainActivity_Button_Request_token);
         mainActivity_Button_Speaker=(Button)findViewById(R.id.mainActivity_Button_Speaker);
+        mainActivity_Button_Advanced_Functions=(Button)findViewById(R.id.mainActivity_Button_Advanced_Functions);
         if(userData==null);
         userData=new UserData();
 
@@ -203,6 +205,7 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        if(BuildConfig.DEBUG)Log.i(TAG,"Receive event");
                         for(Intent action:actionList){
                             int codeError=-1;
                             int eventTypeInt=-1;
@@ -229,6 +232,17 @@ public class MainActivity extends AppCompatActivity {
                                                         (redirect=action.getStringExtra(ConstantsMCOP.AuthorizationRequestExtras.REDIRECT_URI))!=null
                                                         ){
                                                     if(BuildConfig.DEBUG)Log.d(TAG,"onAuthentication URI: "+requestUri+ " redirectionURI: "+redirect);
+                                                    Intent intent2 = new Intent(getApplicationContext(), ScreenAutheticationWebView.class);
+                                                    intent2.putExtra(ScreenAutheticationWebView.DATA_URI_INTENT,requestUri.trim());
+                                                    intent2.putExtra(ScreenAutheticationWebView.DATA_REDIRECTION_URI,redirect.trim());
+                                                    //Test
+                                                    //For testing purposes only
+                                                    if(currentProfile!=null && currentProfile.length>=3){
+                                                        intent2.putExtra(ScreenAutheticationWebView.DATA_USER,currentProfile[1]);
+                                                        intent2.putExtra(ScreenAutheticationWebView.DATA_PASS,currentProfile[2]);
+                                                    }
+
+                                                    startActivityForResult(intent2,AUTHETICATION_RESULT);
                                                 }
                                             }
                                             break;
@@ -283,15 +297,20 @@ public class MainActivity extends AppCompatActivity {
 
                                             if(eventTypeInt!=ERROR_CODE_DEFAULT &&
                                                     (eventTypeCall=ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum.fromInt(eventTypeInt))!=null ){
+                                                String callerID;
+                                                String groupCallerID;
+                                                int callType;
                                                 switch (eventTypeCall) {
                                                     case NONE:
                                                         break;
                                                     case INCOMING:
                                                         stringError=action.getStringExtra(ConstantsMCOP.CallEventExtras.ERROR_STRING);
                                                         sessionID=action.getStringExtra(ConstantsMCOP.CallEventExtras.SESSION_ID);
-                                                        String callerID=action.getStringExtra(ConstantsMCOP.CallEventExtras.CALLER_USERID);
+                                                        callerID=action.getStringExtra(ConstantsMCOP.CallEventExtras.CALLER_USERID);
+                                                        groupCallerID=action.getStringExtra(ConstantsMCOP.CallEventExtras.CALLER_GROUPID);
+                                                        callType=action.getIntExtra(ConstantsMCOP.CallEventExtras.CALL_TYPE,ERROR_CODE_DEFAULT);
                                                         if(sessionID!=null)userData.addSessionID(sessionID);
-                                                        showData("callEvent ("+sessionID+")","INCOMING"+" -> "+callerID);
+                                                        showData("callEvent ("+sessionID+")","INCOMING"+" -> "+callerID+" "+(groupCallerID!=null?groupCallerID:null)+" callType:"+callType);
                                                         break;
                                                     case RINGING:
                                                         sessionID=action.getStringExtra(ConstantsMCOP.CallEventExtras.SESSION_ID);
@@ -305,7 +324,11 @@ public class MainActivity extends AppCompatActivity {
                                                         break;
                                                     case CONNECTED:
                                                         sessionID=action.getStringExtra(ConstantsMCOP.CallEventExtras.SESSION_ID);
-                                                        showData("callEvent ("+sessionID+")","CONNECTED");
+                                                        callerID=action.getStringExtra(ConstantsMCOP.CallEventExtras.CALLER_USERID);
+                                                        groupCallerID=action.getStringExtra(ConstantsMCOP.CallEventExtras.CALLER_GROUPID);
+                                                        callType=action.getIntExtra(ConstantsMCOP.CallEventExtras.CALL_TYPE,ERROR_CODE_DEFAULT);
+                                                        if(sessionID!=null)userData.addSessionID(sessionID);
+                                                        showData("callEvent ("+sessionID+")","CONNECTED"+" -> "+callerID+" "+(groupCallerID!=null?groupCallerID:null)+" callType:"+callType);
                                                         break;
                                                     case TERMINATED:
                                                         sessionID=action.getStringExtra(ConstantsMCOP.CallEventExtras.SESSION_ID);
@@ -357,25 +380,30 @@ public class MainActivity extends AppCompatActivity {
                                                             break;
                                                         case granted:
                                                             int durationGranted=action.getIntExtra(ConstantsMCOP.FloorControlEventExtras.DURATION_TOKEN,ERROR_CODE_DEFAULT);
+                                                            Log.d(TAG,"floorControl ("+sessionID+") granted");
                                                             showData("floorControl ("+sessionID+")","granted -> Duration: "+durationGranted);
                                                             break;
                                                         case idle:
+                                                            Log.d(TAG,"floorControl ("+sessionID+") idle");
                                                             showData("floorControl ("+sessionID+")","idle");
                                                             break;
                                                         case taken:
                                                             String userIDTaken=action.getStringExtra(ConstantsMCOP.FloorControlEventExtras.USER_ID);
                                                             String displayNameTaken=action.getStringExtra(ConstantsMCOP.FloorControlEventExtras.DISPLAY_NAME);
                                                             boolean allow_request=action.getBooleanExtra(ConstantsMCOP.FloorControlEventExtras.ALLOW_REQUEST,VALUE_BOOLEAN_DEFAULT);
-                                                            showData("floorControl ("+sessionID+")","granted -> userIDTaken(allowRequest="+allow_request+"):("+userIDTaken+":"+displayNameTaken+")");
+                                                            Log.d(TAG,"floorControl ("+sessionID+") taken");
+                                                            showData("floorControl ("+sessionID+")","taken -> userIDTaken(allowRequest="+allow_request+"):("+userIDTaken+":"+displayNameTaken+")");
                                                             break;
                                                         case denied:
                                                             causeString=action.getStringExtra(ConstantsMCOP.FloorControlEventExtras.CAUSE_STRING);
                                                             causeInt=action.getIntExtra(ConstantsMCOP.FloorControlEventExtras.CAUSE_CODE,ERROR_CODE_DEFAULT);
+                                                            Log.d(TAG,"floorControl ("+sessionID+") denied");
                                                             showData("floorControl ("+sessionID+")","denied -> cause("+causeInt+":"+causeString+")");
                                                             break;
                                                         case revoked:
                                                             causeString=action.getStringExtra(ConstantsMCOP.FloorControlEventExtras.CAUSE_STRING);
                                                             causeInt=action.getIntExtra(ConstantsMCOP.FloorControlEventExtras.CAUSE_CODE,ERROR_CODE_DEFAULT);
+                                                            Log.d(TAG,"floorControl ("+sessionID+") revoked");
                                                             showData("floorControl ("+sessionID+")","revoked ->cause("+causeInt+":"+causeString+")");
                                                             break;
                                                         case request_sent:
@@ -415,6 +443,44 @@ public class MainActivity extends AppCompatActivity {
                                             break;
                                         case groupInfoEvent:
                                             if(BuildConfig.DEBUG)Log.d(TAG,"groupInfoEvent");
+                                            String groupID2=action.getStringExtra(ConstantsMCOP.GroupInfoEventExtras.GROUP_ID);
+                                            String displayName=action.getStringExtra(ConstantsMCOP.GroupInfoEventExtras.DISPLAY_NAME);
+                                            int maxDataSizeForSDS=action.getIntExtra(ConstantsMCOP.GroupInfoEventExtras.MAX_DATA_SIZE_FOR_SDS,ERROR_CODE_DEFAULT);
+                                            int maxDataSizeAutoRecv=action.getIntExtra(ConstantsMCOP.GroupInfoEventExtras.MAX_DATA_SIZE_AUTO_RECV,ERROR_CODE_DEFAULT);
+                                            String activeRealTimeVideoMode=action.getStringExtra(ConstantsMCOP.GroupInfoEventExtras.ACTIVE_REAL_TIME_VIDEO_MODE);
+                                            ArrayList<String> participantsList=null;
+                                            ArrayList<String> participantsListDisplayName=null;
+                                            ArrayList<String> participantsListType=null;
+                                            try{
+                                                participantsList= action.getStringArrayListExtra(ConstantsMCOP.GroupInfoEventExtras.PARTICIPANTS_LIST);
+                                                Log.d(TAG,"ParticipantsList: "+participantsList.size());
+                                            }catch (Exception e){
+                                                Log.e(TAG,"Error in participants info");
+                                            }
+                                            try{
+                                                participantsListDisplayName= action.getStringArrayListExtra(ConstantsMCOP.GroupInfoEventExtras.PARTICIPANTS_LIST_DISPLAY_NAME);
+                                                Log.d(TAG,"ParticipantsList display name: "+participantsListDisplayName.size());
+                                            }catch (Exception e){
+                                                Log.e(TAG,"Error in participants info");
+                                            }
+                                            try{
+                                                participantsListType= action.getStringArrayListExtra(ConstantsMCOP.GroupInfoEventExtras.PARTICIPANTS_LIST_TYPE);
+                                                Log.d(TAG,"ParticipantsList type: "+participantsListType.size());
+                                            }catch (Exception e){
+                                                Log.e(TAG,"Error in participants info");
+                                            }
+                                            Log.d(TAG,"INFO Group ("+groupID2+" "+displayName+")");
+                                            Log.d(TAG,"maxDataSizeForSDS:"+maxDataSizeForSDS+"");
+                                            Log.d(TAG,"maxDataSizeAutoRecv:"+maxDataSizeAutoRecv+"");
+                                            Log.d(TAG,"activeRealTimeVideoMode:"+activeRealTimeVideoMode+"");
+                                            Log.d(TAG,"Users:");
+                                            if(participantsList.size()==participantsListDisplayName.size() && participantsList.size()==participantsListType.size())
+                                            for(int con=0;con<participantsList.size();con++){
+                                                Log.d(TAG,"Participant: "+participantsList.get(con));
+                                                Log.d(TAG,"DisplayName: "+participantsListDisplayName.get(con));
+                                                Log.d(TAG,"Type: "+participantsListType.get(con));
+                                            }
+
                                             break;
                                         case groupAffiliationEvent:
                                             if(BuildConfig.DEBUG)Log.d(TAG,"groupAffiliationEvent");
@@ -459,6 +525,43 @@ public class MainActivity extends AppCompatActivity {
                                             break;
                                         case eMBMSNotificationEvent:
                                             if(BuildConfig.DEBUG)Log.d(TAG,"eMBMSNotificationEvent");
+                                            codeError=-1;
+                                            eventTypeInt=action.getIntExtra(ConstantsMCOP.EMBMSNotificationEventExtras.EVENT_TYPE,ERROR_CODE_DEFAULT);
+                                            ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum eventType=null;
+                                            if(eventTypeInt!=ERROR_CODE_DEFAULT &&
+                                                    (eventType=ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum.fromInt(eventTypeInt))!=null ){
+                                                if(BuildConfig.DEBUG)Log.d(TAG,"receive event ");
+                                                switch (eventType) {
+                                                    case none:
+                                                        break;
+                                                    case eMBMSAvailable:
+                                                        if(BuildConfig.DEBUG)Log.d(TAG,"eMBMSNotificationEvent eMBMSAvailable");
+                                                        mainActivity_TextView_error.setText("eMBMSNotificationEvent eMBMSAvailable");
+                                                        break;
+                                                    case UndereMBMSCoverage:
+                                                        if(BuildConfig.DEBUG)Log.d(TAG,"eMBMSNotificationEvent UndereMBMSCoverage");
+                                                        mainActivity_TextView_error.setText("eMBMSNotificationEvent UndereMBMSCoverage");
+                                                        break;
+                                                    case eMBMSBearerInUse:
+                                                        if(BuildConfig.DEBUG)Log.d(TAG,"eMBMSNotificationEvent eMBMSBearerInUse");
+                                                        mainActivity_TextView_error.setText("eMBMSNotificationEvent eMBMSBearerInUse");
+                                                        break;
+                                                    case eMBMSBearerNotInUse:
+                                                        if(BuildConfig.DEBUG)Log.d(TAG,"eMBMSNotificationEvent eMBMSBearerNotInUse");
+                                                        mainActivity_TextView_error.setText("eMBMSNotificationEvent eMBMSBearerNotInUse");
+                                                        break;
+                                                    case NoeMBMSCoverage:
+                                                        if(BuildConfig.DEBUG)Log.d(TAG,"eMBMSNotificationEvent NoeMBMSCoverage");
+                                                        mainActivity_TextView_error.setText("eMBMSNotificationEvent NoeMBMSCoverage");
+                                                        break;
+                                                    case eMBMSNotAvailable:
+                                                        if(BuildConfig.DEBUG)Log.d(TAG,"eMBMSNotificationEvent eMBMSNotAvailable");
+                                                        mainActivity_TextView_error.setText("eMBMSNotificationEvent eMBMSNotAvailable");
+                                                        break;
+                                                }
+                                            }else{
+                                                showLastError("eMBMSNotificationEvent: ",999,"INVALID RECEIVED EVENT");
+                                            }
                                             break;
                                         default:
                                             if(BuildConfig.DEBUG)Log.d(TAG,"Event type is not valid. ");
@@ -471,6 +574,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
             }
+
+
         };
 
         mainActivity_Button_Register.setOnClickListener(new View.OnClickListener() {
@@ -479,8 +584,7 @@ public class MainActivity extends AppCompatActivity {
                 showTypeRegister(getApplicationContext());
             }
         });
-
-        mainActivity_Button_unRegister.setOnClickListener(new View.OnClickListener() {
+        mainActivity_Button_deRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 try {
@@ -523,7 +627,6 @@ public class MainActivity extends AppCompatActivity {
         mainActivity_Button_make_call.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 showMakeCallTypes(getApplicationContext());
 
             }
@@ -570,15 +673,17 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "Speaker true");
                     mainActivity_Button_Speaker.setText("Speaker true");
                 }
-
-
                 mAudioManager.setSpeakerphoneOn(isSpeakerphoneOn);
 
             }
         });
 
-
-
+        mainActivity_Button_Advanced_Functions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showAdvanceFeatures();
+        }
+        });
 
         if(mConnection==null)
         mConnection = new ServiceConnection() {
@@ -603,26 +708,56 @@ public class MainActivity extends AppCompatActivity {
                 isConnect=false;
             }
         };
-
+        /*
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             TelephonyManager tm = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
             if(tm!=null) {
                 String imei = tm.getDeviceId();
                 Log.d(TAG,"imei current:"+imei);
-                String[] client=clients.get(imei);
-                if(client!=null){
-                    this.currentProfile=client;
-                    Log.i(TAG,"currentProfile: " +currentProfile);
-                    connectService(currentProfile[0]);
+                if(clients!=null && imei!=null){
+                    String[] client=clients.get(imei);
+                    if(client!=null){
+                        this.currentProfile=client;
+                        Log.i(TAG,"currentProfile: " +currentProfile);
+                        connectService(currentProfile[0]);
+                    }else{
+                        showOptionsProfiles(clients, this);
+                    }
                 }else{
                     showOptionsProfiles(clients, this);
                 }
+
             }
         }else{
             showOptionsProfiles(clients, this);
         }
         //showOptionsProfiles(clients, this);
+        */
+
+        connectService(null);
+
+    }
+    private void showAdvanceFeatures(){
+
+        final String[] strings={
+        };
+        mDialogShowAdvanceFunction = DialogMenu.newInstance(strings,null);
+        mDialogShowAdvanceFunction.setOnClickItemListener(new DialogMenu.OnClickListener() {
+            @Override
+            public void onClickItem(int item) {
+                if(item>=0 && strings.length>item){
+
+                    if(false){
+
+                    }else
+                    {
+
+                    }
+                }
+            }
+        });
+        mDialogShowAdvanceFunction.show(getSupportFragmentManager(), "SimpleDialog");
     }
 
 
@@ -633,8 +768,11 @@ public class MainActivity extends AppCompatActivity {
                             "org.mcopenplatform.muoapi",
                             "org.mcopenplatform.muoapi.MCOPsdk"));
 
-            Log.i(TAG,"Current Profile: "+client);
-            serviceIntent.putExtra("PROFILE_SELECT",currentProfile!=null?currentProfile[0]:client);
+            if(client==null){
+                Log.i(TAG,"Current Profile: "+client);
+                serviceIntent.putExtra("PROFILE_SELECT",currentProfile!=null?currentProfile[0]:client);
+            }
+
 
             try{
                 ComponentName componentName=this.startService(serviceIntent);
@@ -654,7 +792,7 @@ public class MainActivity extends AppCompatActivity {
             Log.i(TAG,"Bind Service: "+bindService(serviceIntent, mConnection, BIND_AUTO_CREATE));
         }
     }
-
+/*
     private void showOptionsProfiles(Map<String,String[]> stringsList,final Context context){
         if(stringsList==null)return;
         final ArrayList<String> strings=new ArrayList<>();
@@ -662,7 +800,7 @@ public class MainActivity extends AppCompatActivity {
             if(value!=null && value.length>=1 && value[0]!=null){
                 strings.add(value[0]);
             }else{
-                Log.e(TAG,"Erro in process value");
+                Log.e(TAG,"Error in process value");
             }
         }
         if(strings==null || strings.isEmpty())return;
@@ -679,11 +817,41 @@ public class MainActivity extends AppCompatActivity {
         });
         mDialogMenu.show(getSupportFragmentManager(), "SimpleDialog");
     }
-
+*/
     private void showTypeRegister(final Context context){
         final String[] strings={"With External authentication","No authentication"};
         if(strings==null || strings.length==0)return;
         mDialogMenu=null;
+        mDialogMenu = DialogMenu.newInstance(strings,"Registration types");
+        mDialogMenu.setOnClickItemListener(new DialogMenu.OnClickListener() {
+            @Override
+            public void onClickItem(int item) {
+                if(item>=0 && strings.length>item){
+                    Log.d(TAG,"Select type call "+strings[item]);
+                    try {
+                        int typeCalls=-1;
+                        switch (item){
+                            case 0:
+                                    if(mService!=null)
+                                        mService.loginMCOP();
+                                break;
+                            case 1:
+                                //Test
+                                    if(mService!=null)
+                                        mService.authorizeUser(null);
+                                break;
+
+                            default:
+                                break;
+                        }
+
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        mDialogMenu.show(getSupportFragmentManager(), "SimpleDialog");
         if(mDialogMenu==null){
             if(mService!=null) {
                 try {
@@ -696,7 +864,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showMakeCallTypes(final Context context){
-        final String[] strings={"Private call","Group call"
+        final String[] strings={"Private call"
+                ,"Private call(whitout floor control)"
+                ,"Group call"
+                ,"Emergency Group call"
+                ,"Emergency Private call"
+                ,"Chat Group call"
+
         };
         if(strings==null || strings.length==0)return;
         mDialogMenu = DialogMenu.newInstance(strings,"Call types");
@@ -707,20 +881,45 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG,"Select type call "+strings[item]);
                     try {
                         int typeCalls=-1;
-                        switch (item){
-                            case 0:
-                                typeCalls=ConstantsMCOP.CallEventExtras.CallTypeEnum.Audio.getValue() |
-                                        ConstantsMCOP.CallEventExtras.CallTypeEnum.WithFloorCtrl.getValue()|
-                                        ConstantsMCOP.CallEventExtras.CallTypeEnum.Private.getValue();
-                                break;
-                            case 1:
-                                typeCalls=ConstantsMCOP.CallEventExtras.CallTypeEnum.Audio.getValue() |
-                                        ConstantsMCOP.CallEventExtras.CallTypeEnum.WithFloorCtrl.getValue() |
-                                        ConstantsMCOP.CallEventExtras.CallTypeEnum.PrearrangedGroup.getValue();
-                                break;
-                            default:
-                                break;
-                        }
+                            String typeCall=null;
+                            if((typeCall=strings[item])!=null){
+                                if(typeCall.compareTo("Private call")==0){
+                                    typeCalls=ConstantsMCOP.CallEventExtras.CallTypeEnum.Audio.getValue() |
+                                            ConstantsMCOP.CallEventExtras.CallTypeEnum.WithFloorCtrl.getValue()|
+                                            ConstantsMCOP.CallEventExtras.CallTypeEnum.Private.getValue();
+                                }
+                                else if(typeCall.compareTo("Private call(whitout floor control)")==0){
+                                    typeCalls=ConstantsMCOP.CallEventExtras.CallTypeEnum.Audio.getValue() |
+                                            ConstantsMCOP.CallEventExtras.CallTypeEnum.WithoutFloorCtrl.getValue() |
+                                            ConstantsMCOP.CallEventExtras.CallTypeEnum.Private.getValue();
+                                }
+                                else if(typeCall.compareTo("Group call")==0) {
+                                    typeCalls = ConstantsMCOP.CallEventExtras.CallTypeEnum.Audio.getValue() |
+                                            ConstantsMCOP.CallEventExtras.CallTypeEnum.WithFloorCtrl.getValue() |
+                                            ConstantsMCOP.CallEventExtras.CallTypeEnum.PrearrangedGroup.getValue();
+                                }
+                                else if(typeCall.compareTo("Emergency Group call")==0) {
+                                    typeCalls = ConstantsMCOP.CallEventExtras.CallTypeEnum.Audio.getValue() |
+                                            ConstantsMCOP.CallEventExtras.CallTypeEnum.WithFloorCtrl.getValue() |
+                                            ConstantsMCOP.CallEventExtras.CallTypeEnum.PrearrangedGroup.getValue() |
+                                            ConstantsMCOP.CallEventExtras.CallTypeEnum.Emergency.getValue();
+                                }
+                                else if(typeCall.compareTo("Emergency Private call")==0) {
+                                    typeCalls = ConstantsMCOP.CallEventExtras.CallTypeEnum.Audio.getValue() |
+                                            ConstantsMCOP.CallEventExtras.CallTypeEnum.WithFloorCtrl.getValue() |
+                                            ConstantsMCOP.CallEventExtras.CallTypeEnum.Private.getValue() |
+                                            ConstantsMCOP.CallEventExtras.CallTypeEnum.Emergency.getValue();
+                                }
+                                else if(typeCall.compareTo("Chat Group call")==0) {
+                                    typeCalls = ConstantsMCOP.CallEventExtras.CallTypeEnum.Audio.getValue() |
+                                            ConstantsMCOP.CallEventExtras.CallTypeEnum.WithFloorCtrl.getValue() |
+                                            ConstantsMCOP.CallEventExtras.CallTypeEnum.ChatGroup.getValue();
+                                }
+
+                            }
+
+
+
                         if(typeCalls>0 && mService!=null)
                             mService.makeCall(
                                     mainActivity_EditText_affiliation.getText().toString().trim(),
@@ -837,19 +1036,29 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy(){
         if(BuildConfig.DEBUG)Log.i(TAG,"onDestroy");
         super.onDestroy();
-        isConnect=false;
-        if(mConnection!=null && isConnect)
-        try{
-            unbindService(mConnection);
-        }catch (Exception e){
-            Log.e(TAG,"Error in unbind Service");
+
+        if(mConnection!=null && isConnect){
+            try{
+                if(BuildConfig.DEBUG)Log.i(TAG,"unbindService");
+                unbindService(mConnection);
+                isConnect=false;
+            }catch (Exception e){
+                Log.e(TAG,"Error in unbind Service");
+            }
+        }else{
+            Log.e(TAG,"Error 2 in unbind Service");
         }
-        if(serviceIntent!=null);
-        try{
-            stopService(serviceIntent);
-        }catch (Exception e){
-            Log.e(TAG,"Error in stop Service");
+
+        if(serviceIntent!=null){
+            try{
+                stopService(serviceIntent);
+            }catch (Exception e){
+                Log.e(TAG,"Error in stop Service");
+            }
+        }else{
+            Log.e(TAG,"Error 2 in stop Service");
         }
+
         mConnection=null;
     }
 
@@ -857,6 +1066,40 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(BuildConfig.DEBUG)Log.i(TAG,"onActivityResult");
         switch (requestCode){
+            case AUTHETICATION_RESULT:
+                if ( resultCode == ScreenAutheticationWebView.RETURN_ON_AUTHENTICATION_LISTENER_FAILURE) {
+                    String dataError;
+                    if (data != null &&
+                            (dataError= data.getStringExtra(org.mcopenplatform.muoapi.mcopsdk.ScreenAutheticationWebView.RETURN_ON_AUTHENTICATION_ERROR))!=null &&
+                            dataError instanceof String) {
+                        Log.e(TAG,"Authentication Error: "+dataError);
+                    }else{
+                        Log.e(TAG,"Error Processing Authentication.");
+                    }
+                }else if ( resultCode == ScreenAutheticationWebView.RETURN_ON_AUTHENTICATION_LISTENER_OK) {
+                    String dataUri;
+                    if (data != null &&
+                            (dataUri= data.getStringExtra(org.mcopenplatform.muoapi.mcopsdk.ScreenAutheticationWebView.RETURN_ON_AUTHENTICATION_RESPONSE))!=null &&
+                            dataUri instanceof String) {
+                        URI uri = null;
+                        try {
+                            uri = new URI(dataUri);
+                            Log.i(TAG, "Uri: " + uri.toString());
+                            try {
+                                if(mService!=null)
+                                mService.authorizeUser(dataUri);
+                            } catch (RemoteException e) {
+                                e.printStackTrace();
+                            }
+                        } catch (URISyntaxException e) {
+                            Log.e(TAG,"Authentication Error: "+e.getMessage());
+                            e.printStackTrace();
+                        }
+                    }else{
+                        Log.e(TAG,"Error processing file to import Profiles.");
+                    }
+                }
+                break;
         }
     }
 
@@ -875,10 +1118,12 @@ public class MainActivity extends AppCompatActivity {
         if(displayName!=null){
             userData.setDisplayName(displayName);
         }
+        Log.d(TAG,"REGISTERED. MCPTT ID: "+mcpttID+" DISPLAY NAME: "+displayName);
         mainActivity_TextView_info.setText("REGISTERED. MCPTT ID: "+mcpttID+" DISPLAY NAME: "+displayName);
     }
 
     private void showData(String eventType,String data){
+        Log.d(TAG,eventType+": "+data);
         mainActivity_TextView_info.setText(eventType+": "+data);
     }
 
@@ -909,8 +1154,13 @@ public class MainActivity extends AppCompatActivity {
                 }
                 result=result+"groupID:"+groupID+":"+type+"\n";
             }
-        mainActivity_TextView_affiliation.setText("Lists Group Affiliations:\n"+result);
+        Calendar calendar = Calendar.getInstance();
+
+        mainActivity_TextView_affiliation.setText("Lists Group Affiliations:(Time:"+String.format("%1$tA %1$tb %1$td %1$tY at %1$tI:%1$tM %1$Tp", calendar)+")\n"+result);
     }
+
+
+
 
     /**
      * Set permissions for Android 6.0 or above
@@ -918,13 +1168,15 @@ public class MainActivity extends AppCompatActivity {
     protected void setPermissions(){
         //Set Permissions
         //READ_PHONE_STATE
-        if (ContextCompat.checkSelfPermission(this,
+        if (ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED ||
+                //ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE) != PackageManager.PERMISSION_GRANTED
                 ) {
             //Should we show an explanation?
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
@@ -934,13 +1186,21 @@ public class MainActivity extends AppCompatActivity {
                 //this thread waiting for the user's response! After the user
                 //sees the explanation, request the permission again.
                 ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.RECORD_AUDIO,Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.CAMERA,Manifest.permission.READ_PHONE_STATE},
+                        new String[]{
+                                Manifest.permission.RECORD_AUDIO,
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                                Manifest.permission.CAMERA,
+                                Manifest.permission.READ_PHONE_STATE,
+                               // Manifest.permission.FOREGROUND_SERVICE
+                        },
                         GET_PERMISSION);
             } else {
 
                 //No explanation needed, we can request the permission.
                 ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.RECORD_AUDIO,Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.CAMERA,Manifest.permission.READ_PHONE_STATE},
+                        new String[]{Manifest.permission.RECORD_AUDIO,Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.CAMERA,Manifest.permission.READ_PHONE_STATE,Manifest.permission.FOREGROUND_SERVICE},
                         GET_PERMISSION);
 
                 //MY_PERMISSIONS_REQUEST_READ_CONTACTS is an

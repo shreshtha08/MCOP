@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -290,6 +289,10 @@ public abstract class NgnSipSession extends NgnObservableObject implements Compa
         return NgnStringUtils.isNullOrEmpty(mRemotePartyUri) ? "(null)" : mRemotePartyUri;
 
     }
+
+
+
+
     
     public void setRemotePartyUri(String uri){
     	mRemotePartyUri = uri;

@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -21,9 +21,11 @@
 package org.doubango.ngn.services.impl.profiles;
 
 import android.content.Context;
+import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 
+import org.doubango.ngn.BuildConfig;
 import org.doubango.ngn.datatype.profiles.Profiles;
 import org.doubango.ngn.sip.NgnSipPrefrences;
 import org.doubango.utils.Utils;
@@ -49,14 +51,14 @@ class ProfilesUtils {
 
     protected static Profiles getProfiles(Context context) throws Exception {
         if(context==null)return null;
-
+        if(BuildConfig.DEBUG)Log.d(TAG,"getProfiles from raw");
         InputStream inputStream=getFileRaw(context,NAME_FILE_PROFILES_RAW);
         if(inputStream==null)return null;
         return getProfiles(inputStream);
 
     }
     protected static Profiles getProfiles(String string) throws Exception {
-        Log.d(TAG,string);
+        if(BuildConfig.DEBUG)Log.d(TAG,"getProfiles: "+string);
         return getProfiles(string.getBytes());
     }
 

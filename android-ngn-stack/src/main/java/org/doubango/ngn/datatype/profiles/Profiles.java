@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -19,6 +19,8 @@
 * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.doubango.ngn.datatype.profiles;
+
+import android.util.Log;
 
 import org.doubango.ngn.sip.NgnSipPrefrences;
 import org.simpleframework.xml.ElementList;
@@ -51,5 +53,10 @@ public class Profiles {
     public boolean isEmpty(){
         if(profiles==null)return true;
         return profiles.isEmpty();
+    }
+
+    public int size(){
+        if(profiles==null)return -1;
+        return profiles.size();
     }
 }

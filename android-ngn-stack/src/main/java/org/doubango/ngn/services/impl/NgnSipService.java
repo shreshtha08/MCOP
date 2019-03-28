@@ -41,6 +41,7 @@ import org.doubango.ngn.events.NgnRegistrationEventArgs;
 import org.doubango.ngn.events.NgnRegistrationEventTypes;
 import org.doubango.ngn.events.NgnSubscriptionAffiliationEventArgs;
 import org.doubango.ngn.events.NgnSubscriptionAffiliationEventTypes;
+import org.doubango.ngn.events.NgnSubscriptionCMSEventArgs;
 import org.doubango.ngn.events.NgnSubscriptionEventArgs;
 import org.doubango.ngn.events.NgnSubscriptionEventTypes;
 import org.doubango.ngn.model.NgnDeviceInfo.Orientation;
@@ -48,6 +49,7 @@ import org.doubango.ngn.services.INgnConfigurationService;
 import org.doubango.ngn.services.INgnNetworkService;
 import org.doubango.ngn.services.INgnSipService;
 import org.doubango.ngn.services.affiliation.IMyAffiliationService;
+import org.doubango.ngn.services.gms.IMyGMSService;
 import org.doubango.ngn.services.profiles.IMyProfilesService;
 import org.doubango.ngn.sip.MyDRegisterCallback;
 import org.doubango.ngn.sip.MyMessagingAffiliationSession;
@@ -110,6 +112,8 @@ import org.doubango.tinyWRAP.twrap_sms_type_t;
 import org.doubango.utils.Utils;
 
 import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 
@@ -122,6 +126,8 @@ public class NgnSipService extends NgnBaseService implements
 	private final org.doubango.ngn.services.location.IMyLocalizationService mLocalizationService;
 	private final org.doubango.ngn.services.mbms.IMyMbmsService mMbmsService;
 	private final IMyAffiliationService mAffiliationService;
+	private final org.doubango.ngn.services.cms.IMyCMSService mCMSService;
+	private final org.doubango.ngn.services.gms.IMyGMSService mGMSService;
 	private final IMyProfilesService mProfilesService;
 
 
@@ -150,16 +156,19 @@ public class NgnSipService extends NgnBaseService implements
 		mMbmsService=NgnEngine.getInstance().getMbmsService();
 		mAffiliationService=NgnEngine.getInstance().getAffiliationService();
 		mProfilesService=NgnEngine.getInstance().getProfilesService();
+		mCMSService=NgnEngine.getInstance().getCMSService();
+		mGMSService=NgnEngine.getInstance().getGMSService();
 		mConfigurationService = NgnEngine.getInstance()
 				.getConfigurationService();
 		mNetworkService = NgnEngine.getInstance().getNetworkService();
 		mSipCallback = new MySipCallback(this,NgnApplication.getContext());
 		mSipCallback.setLocalizationService(mLocalizationService);
 		mSipCallback.setAffiliationService(mAffiliationService);
+		mSipCallback.setCMSService(mCMSService);
+		mSipCallback.setGMSService(mGMSService);
 		mSipCallback.setMbmsService(mMbmsService);
 		mSipCallback.setConfigurationService(mConfigurationService);
 		mPreferences = new NgnSipPrefrences();
-
 	}
 
 	@Override
@@ -197,11 +206,18 @@ public class NgnSipService extends NgnBaseService implements
 
 	@Override
 	public boolean isRegistered() {
+		if(BuildConfig.DEBUG)Log.i(TAG,"isRegistered execute");
 		if (mRegSession != null) {
-			return mRegSession.isConnected();
+			boolean response=mRegSession.isConnected();
+			if(BuildConfig.DEBUG)Log.i(TAG,"isRegistered "+response);
+			return response;
+		}else{
+			if(BuildConfig.DEBUG)Log.i(TAG,"isRegistered false");
 		}
 		return false;
 	}
+
+
 
 	@Override
 	public ConnectionState getRegistrationState() {
@@ -291,9 +307,14 @@ public class NgnSipService extends NgnBaseService implements
 
 	@Override
 	public boolean configureProfile(Context context){
+		return configureProfile(true,context);
+	}
+
+	@Override
+	public boolean configureProfile(boolean invalidProfile,Context context){
 		if(mProfilesService.getProfileNow(context)!=null){
-			Log.d(TAG,"Use configuration of:"+mProfilesService.getProfileNow(context).getName());
-			mProfilesService.invalidProfile(context);
+			Log.d(TAG,"Use configuration of:"+mPreferences.getName());
+			if(invalidProfile)mProfilesService.invalidProfile(context);
 			mPreferences=mProfilesService.getProfileNow(context);
 			if(mPreferences.getRealm()==null){
 				mPreferences.setRealm(
@@ -337,6 +358,43 @@ public class NgnSipService extends NgnBaseService implements
 								NgnConfigurationEntry.MCPTT_PSI_CALL_PREESTABLISHED,
 								NgnConfigurationEntry.DEFAULT_MCPTT_PSI_CALL_PREESTABLISHED));
 			}
+			if(mPreferences.getMcpttPsiCMS()==null){
+				mPreferences.setMcpttPsiCMS(
+						mConfigurationService.getString(
+								NgnConfigurationEntry.MCPTT_PSI_CMS,
+								NgnConfigurationEntry.DEFAULT_MCPTT_PSI_CMS));
+			}
+			if(mPreferences.isMcpttEnableSubcriptionCMS()==null){
+				mPreferences.setMcpttEnableSubcriptionCMS(
+						mConfigurationService.getBoolean(
+								NgnConfigurationEntry.MCPTT_ENABLE_SUBSCRIPTION_CMS,
+								NgnConfigurationEntry.DEFAULT_MCPTT_ENABLE_SUBSCRIPTION_CMS));
+			}
+
+			if(mPreferences.getCMSXCAPRootURI()==null){
+				mPreferences.setCMSXCAPRootURI(
+						mConfigurationService.getString(
+								NgnConfigurationEntry.CMS_XCAP_ROOT_URI,
+								NgnConfigurationEntry.DEFAULT_CMS_XCAP_ROOT_URI));
+			}
+			if(mPreferences.getMcpttPsiGMS()==null){
+				mPreferences.setMcpttPsiGMS(
+						mConfigurationService.getString(
+								NgnConfigurationEntry.MCPTT_PSI_GMS,
+								NgnConfigurationEntry.DEFAULT_MCPTT_PSI_GMS));
+			}
+			if(mPreferences.isMcpttEnableSubcriptionGMS()==null){
+				mPreferences.setMcpttEnableSubcriptionGMS(
+						mConfigurationService.getBoolean(
+								NgnConfigurationEntry.MCPTT_ENABLE_SUBSCRIPTION_GMS,
+								NgnConfigurationEntry.DEFAULT_MCPTT_ENABLE_SUBSCRIPTION_GMS));
+			}
+			if(mPreferences.getGMSXCAPRootURI()==null){
+				mPreferences.setGMSXCAPRootURI(
+						mConfigurationService.getString(
+								NgnConfigurationEntry.GMS_XCAP_ROOT_URI,
+								NgnConfigurationEntry.DEFAULT_GMS_XCAP_ROOT_URI));
+			}
 			if(mPreferences.isMcpttIsEnableAffiliation()==null){
 				mPreferences.setMcpttIsEnableAffiliation(
 						mConfigurationService.getBoolean(
@@ -355,6 +413,12 @@ public class NgnSipService extends NgnBaseService implements
 						mConfigurationService.getString(
 								NgnConfigurationEntry.MCPTT_PSI_AFFILIATION,
 								NgnConfigurationEntry.DEFAULT_MCPTT_PSI_AFFILIATION));
+			}
+			if(mPreferences.getMcpttPsiAuthentication()==null){
+				mPreferences.setMcpttPsiAuthentication(
+						mConfigurationService.getString(
+								NgnConfigurationEntry.MCPTT_PSI_AUTHENTICATION,
+								NgnConfigurationEntry.DEFAULT_MCPTT_PSI_AUTHENTICATION));
 			}
 			if(mPreferences.getMcpttId()==null){
 				mPreferences.setMcpttId(
@@ -479,6 +543,86 @@ public class NgnSipService extends NgnBaseService implements
 								NgnConfigurationEntry.DEFAULT_MCPTT_PLAY_SOUND_MCPTT_CALL));
 			}
 
+			//IdMs Authentication
+			if(mPreferences.isMcpttIsSelfAuthentication()==null) {
+				mPreferences.setMcpttIsSelfAuthentication(
+						mConfigurationService.getBoolean(
+								NgnConfigurationEntry.SELF_CONFIGURE,
+								NgnConfigurationEntry.DEFAULT_SELF_CONFIGURE));
+			}
+			if(mPreferences.getMcpttSelfAuthenticationClientId()==null) {
+				mPreferences.setMcpttSelfAuthenticationClientId(
+						mConfigurationService.getString(
+								NgnConfigurationEntry.SELF_CONFIGURE_CLIENT_ID,
+								NgnConfigurationEntry.DEFAULT_SELF_CONFIGURE_CLIENT_ID));
+			}
+			if(mPreferences.getMcpttSelfAuthenticationIssuerUri()==null) {
+				mPreferences.setMcpttSelfAuthenticationIssuerUri(
+						mConfigurationService.getString(
+								NgnConfigurationEntry.SELF_CONFIGURE_ISSUER_URI,
+								NgnConfigurationEntry.DEFAULT_SELF_CONFIGURE_ISSUER_URI));
+			}
+			if(mPreferences.getMcpttSelfAuthenticationRedirectUri()==null) {
+				mPreferences.setMcpttSelfAuthenticationRedirectUri(
+						mConfigurationService.getString(
+								NgnConfigurationEntry.SELF_CONFIGURE_REDIRECT_URI,
+								NgnConfigurationEntry.DEFAULT_SELF_CONFIGURE_REDIRECT_URI));
+			}
+
+
+			if(mPreferences.getDisplayName()==null) {
+				mPreferences.setDisplayName(
+						mConfigurationService.getString(
+								NgnConfigurationEntry.IDENTITY_DISPLAY_NAME,
+								NgnConfigurationEntry.DEFAULT_IDENTITY_DISPLAY_NAME));
+			}
+
+			if(mPreferences.isMcpttEnableCMS()==null) {
+				mPreferences.setMcpttEnableCMS(
+						mConfigurationService.getBoolean(
+								NgnConfigurationEntry.ENABLE_CMS,
+								NgnConfigurationEntry.DEFAULT_ENABLE_CMS));
+			}
+
+
+			if(mPreferences.isMcpttUseIssuerUriIdms()==null) {
+				mPreferences.setMcpttUseIssuerUriIdms(
+						mConfigurationService.getBoolean(
+								NgnConfigurationEntry.MCPTT_USE_ISSUER_URI_IDMS,
+								NgnConfigurationEntry.DEFAULT_MCPTT_USE_ISSUER_URI_IDMS));
+			}
+			if(mPreferences.getMcpttUEId()==null) {
+				mPreferences.setMcpttUEId(
+						mConfigurationService.getString(
+								NgnConfigurationEntry.MCPTT_UE_ID,
+								NgnConfigurationEntry.DEFAULT_MCPTT_UE_ID));
+			}
+
+			if(mPreferences.getIdmsTokenEndPoint()==null) {
+				mPreferences.setIdmsTokenEndPoint(
+						mConfigurationService.getString(
+								NgnConfigurationEntry.IDMS_TOKEN_END_POINT,
+								NgnConfigurationEntry.DEFAULT_IDMS_TOKEN_END_POINT));
+			}
+			if(mPreferences.getIdmsAuthEndpoint()==null) {
+				mPreferences.setIdmsAuthEndpoint(
+						mConfigurationService.getString(
+								NgnConfigurationEntry.IDMS_AUTH_END_POINT,
+								NgnConfigurationEntry.DEFAULT_IDMS_AUTH_END_POINT));
+			}
+			if(mPreferences.isMcpttSelfAuthenticationSendTokenRegister()==null) {
+				mPreferences.setMcpttSelfAuthenticationSendTokenRegister(
+						mConfigurationService.getBoolean(
+								NgnConfigurationEntry.SELF_CONFIGURE_SEND_TOKEN_REGISTER,
+								NgnConfigurationEntry.DEFAULT_SELF_CONFIGURE_SEND_TOKEN_REGISTER));
+			}
+			if(mPreferences.isMcpttSelfAuthenticationSendTokenFail()==null) {
+				mPreferences.setMcpttSelfAuthenticationSendTokenFail(
+						mConfigurationService.getBoolean(
+								NgnConfigurationEntry.SELF_CONFIGURE_SEND_TOKEN_FAIL,
+								NgnConfigurationEntry.DEFAULT_SELF_CONFIGURE_SEND_TOKEN_FAIL));
+			}
+
 			return true;
 		}else{
 			Log.d(TAG,"Use configuration default");
@@ -504,6 +648,21 @@ public class NgnSipService extends NgnBaseService implements
 			mPreferences.setMcpttPsiCallPreestablished(mConfigurationService.getString(
 					NgnConfigurationEntry.MCPTT_PSI_CALL_PREESTABLISHED,
 					NgnConfigurationEntry.DEFAULT_MCPTT_PSI_CALL_PREESTABLISHED));
+
+			mPreferences.setMcpttPsiCMS(mConfigurationService.getString(
+					NgnConfigurationEntry.MCPTT_PSI_CMS,
+					NgnConfigurationEntry.DEFAULT_MCPTT_PSI_CMS));
+			mPreferences.setMcpttEnableSubcriptionCMS(mConfigurationService.getBoolean(
+					NgnConfigurationEntry.MCPTT_ENABLE_SUBSCRIPTION_CMS,
+					NgnConfigurationEntry.DEFAULT_MCPTT_ENABLE_SUBSCRIPTION_CMS));
+
+			mPreferences.setMcpttPsiGMS(mConfigurationService.getString(
+					NgnConfigurationEntry.MCPTT_PSI_GMS,
+					NgnConfigurationEntry.DEFAULT_MCPTT_PSI_GMS));
+			mPreferences.setMcpttEnableSubcriptionGMS(mConfigurationService.getBoolean(
+					NgnConfigurationEntry.MCPTT_ENABLE_SUBSCRIPTION_GMS,
+					NgnConfigurationEntry.DEFAULT_MCPTT_ENABLE_SUBSCRIPTION_GMS));
+
 			mPreferences.setMcpttIsEnableAffiliation(mConfigurationService.getBoolean(
 					NgnConfigurationEntry.MCPTT_IS_AFFILIATION,
 					NgnConfigurationEntry.DEFAULT_MCPTT_IS_AFFILIATION));
@@ -575,15 +734,75 @@ public class NgnSipService extends NgnBaseService implements
 					mConfigurationService.getBoolean(
 							NgnConfigurationEntry.MCPTT_PLAY_SOUND_MCPTT_CALL,
 							NgnConfigurationEntry.DEFAULT_MCPTT_PLAY_SOUND_MCPTT_CALL));
+			//Idms authentication
+			mPreferences.setMcpttIsSelfAuthentication(
+					mConfigurationService.getBoolean(
+							NgnConfigurationEntry.SELF_CONFIGURE,
+							NgnConfigurationEntry.DEFAULT_SELF_CONFIGURE));
+			mPreferences.setMcpttSelfAuthenticationClientId(
+					mConfigurationService.getString(
+							NgnConfigurationEntry.SELF_CONFIGURE_CLIENT_ID,
+							NgnConfigurationEntry.DEFAULT_SELF_CONFIGURE_CLIENT_ID));
+			mPreferences.setMcpttSelfAuthenticationIssuerUri(
+					mConfigurationService.getString(
+							NgnConfigurationEntry.SELF_CONFIGURE_ISSUER_URI,
+							NgnConfigurationEntry.DEFAULT_SELF_CONFIGURE_ISSUER_URI));
+			mPreferences.setMcpttUEId(
+					mConfigurationService.getString(
+							NgnConfigurationEntry.MCPTT_UE_ID,
+							NgnConfigurationEntry.DEFAULT_MCPTT_UE_ID));
+			mPreferences.setMcpttSelfAuthenticationRedirectUri(
+					mConfigurationService.getString(
+							NgnConfigurationEntry.SELF_CONFIGURE_REDIRECT_URI,
+							NgnConfigurationEntry.DEFAULT_SELF_CONFIGURE_REDIRECT_URI));
+
+
+			mPreferences.setDisplayName(
+					mConfigurationService.getString(
+							NgnConfigurationEntry.IDENTITY_DISPLAY_NAME,
+							NgnConfigurationEntry.DEFAULT_IDENTITY_DISPLAY_NAME));
+			mPreferences.setMcpttEnableCMS(
+					mConfigurationService.getBoolean(
+							NgnConfigurationEntry.ENABLE_CMS,
+							NgnConfigurationEntry.DEFAULT_ENABLE_CMS));
+
+
+			mPreferences.setMcpttUseIssuerUriIdms(
+					mConfigurationService.getBoolean(
+							NgnConfigurationEntry.MCPTT_USE_ISSUER_URI_IDMS,
+							NgnConfigurationEntry.DEFAULT_MCPTT_USE_ISSUER_URI_IDMS));
+			mPreferences.setIdmsTokenEndPoint(
+					mConfigurationService.getString(
+							NgnConfigurationEntry.IDMS_TOKEN_END_POINT,
+							NgnConfigurationEntry.DEFAULT_IDMS_TOKEN_END_POINT));
+			mPreferences.setIdmsAuthEndpoint(
+					mConfigurationService.getString(
+							NgnConfigurationEntry.IDMS_AUTH_END_POINT,
+							NgnConfigurationEntry.DEFAULT_IDMS_AUTH_END_POINT));
+			mPreferences.setMcpttSelfAuthenticationSendTokenRegister(
+					mConfigurationService.getBoolean(
+							NgnConfigurationEntry.SELF_CONFIGURE_SEND_TOKEN_REGISTER,
+							NgnConfigurationEntry.DEFAULT_SELF_CONFIGURE_SEND_TOKEN_REGISTER));
+
+
+			mPreferences.setMcpttSelfAuthenticationSendTokenFail(
+					mConfigurationService.getBoolean(
+							NgnConfigurationEntry.SELF_CONFIGURE_SEND_TOKEN_FAIL,
+							NgnConfigurationEntry.DEFAULT_SELF_CONFIGURE_SEND_TOKEN_FAIL));
 			mProfilesService.setProfileNow(mPreferences);
 		}
 		return false;
 	}
 
-	@Override
+
 	public boolean register(Context context) {
+		return register(true,context);
+	}
+
+	@Override
+	public boolean register(boolean invalidProfile,Context context) {
 		Log.d(TAG, "register()");
-		configureProfile(context);
+		configureProfile(invalidProfile,context);
 		Log.d(TAG, String.format("realm='%s', impu='%s', impi='%s'",
 				mPreferences.getRealm(), mPreferences.getIMPU(),
 				mPreferences.getIMPI()));
@@ -639,6 +858,17 @@ public class NgnSipService extends NgnBaseService implements
 			Log.e(TAG, "Failed to set PSI Preestablished MCPTT");
 			return false;
 		}
+		if(!mSipStack.setMCPTTPSICMS(mPreferences.getMcpttPsiCMS())){
+			Log.e(TAG, "Failed to set PSI CMS");
+			return false;
+		}
+
+
+		if(!mSipStack.setMCPTTPSIGMS(mPreferences.getMcpttPsiGMS())){
+			Log.e(TAG, "Failed to set PSI GMS");
+			return false;
+		}
+
 		if(!mSipStack.setMCPTTAffiliationIsEnable(mPreferences.isMcpttIsEnableAffiliation())){
 			Log.e(TAG, "Failed to set is enable Affiliation MCPTT");
 			return false;
@@ -649,10 +879,64 @@ public class NgnSipService extends NgnBaseService implements
 		}else{
 			Log.d(TAG,"Configure affiliation PSI: "+mPreferences.getMcpttPsiAffiliation());
 		}
+
+
+		if(!mSipStack.setMCPTTPSIAuthentication(mPreferences.getMcpttPsiAuthentication().trim())){
+			Log.e(TAG, "Failed to set PSI Authentication MCPTT");
+			return false;
+		}else{
+			Log.d(TAG,"Configure Authentication PSI: "+mPreferences.getMcpttPsiAuthentication());
+		}
+
+
+		//Configure data from CMS
+		if(mPreferences!=null){
+			//T100 in seconds
+			if(mPreferences.getT100()>=0 &&
+                    !mSipStack.setMCPTTTimerT100(mPreferences.getT100())){
+				Log.e(TAG, "Failed to set T100");
+				return false;
+			}
+			//T101 in seconds
+            if(mPreferences.getT101()<0 ||
+                    !mSipStack.setMCPTTTimerT101(mPreferences.getT101())){
+				Log.e(TAG, "Failed to set T101");
+				return false;
+			}
+			//T103 in seconds
+            if(mPreferences.getT103()<0 ||
+                    !mSipStack.setMCPTTTimerT103(mPreferences.getT103())){
+				Log.e(TAG, "Failed to set T103");
+				return false;
+			}
+			//T104 in seconds
+            if(mPreferences.getT104()<0 ||
+                    !mSipStack.setMCPTTTimerT104(mPreferences.getT104())){
+				Log.e(TAG, "Failed to set T104");
+				return false;
+			}
+			//T132 in seconds
+            if(mPreferences.getT132()<0 ||
+                    !mSipStack.setMCPTTTimerT132(mPreferences.getT132())){
+				Log.e(TAG, "Failed to set T132");
+				return false;
+			}
+		}
+
+
+
+
 		if(!mSipStack.setMCPTTID(mPreferences.getMcpttId())){
 			Log.e(TAG, "Failed to set MCPTT ID");
 			return false;
 		}
+
+		if(!mSipStack.setMCPTTClientID(mPreferences.getMcpttClientId())){
+			Log.e(TAG, "Failed to set MCPTT client ID");
+			return false;
+		}
+
+
 
 		if(!mSipStack.setMCPTTPriority(mPreferences.getMcpttPriority())){
 			Log.e(TAG, "Failed to set Priority MCPTT");
@@ -865,6 +1149,7 @@ public class NgnSipService extends NgnBaseService implements
 			optSession.delete();
 		}
 		String mcpttInfoRegister=null;
+		mcpttInfoRegister=mCMSService.register(context);
 		if (!mRegSession.register(mcpttInfoRegister)) {
 			Log.e(TAG, "Failed to send REGISTER request");
 			return false;
@@ -882,12 +1167,16 @@ public class NgnSipService extends NgnBaseService implements
 	@Override
 	public boolean unRegister() {
 		if (isRegistered()) {
-			new Thread(new Runnable() {
+			Thread thread=new Thread(new Runnable() {
 				@Override
 				public void run() {
+					if(BuildConfig.DEBUG)Log.d(TAG,"Init unRegister");
 					mSipStack.stop();
+					if(BuildConfig.DEBUG)Log.d(TAG,"End unRegister");
 				}
-			}).start();
+			});
+			thread.setPriority(Thread.MAX_PRIORITY);
+			thread.start();
 		}
 		return true;
 	}
@@ -950,7 +1239,7 @@ public class NgnSipService extends NgnBaseService implements
 		intent.putExtra(org.doubango.ngn.events.NgnMessagingLocationEventArgs.EXTRA_EMBEDDED, args);
 		NgnApplication.getContext().sendBroadcast(intent);
 	}
-	//MCPTT MBMS by Eduardo
+	//MCPTT MBMS
 	private void broadcastMessagingMbmsEvent(org.doubango.ngn.events.NgnMessagingMbmsEventArgs args,
 												 String remoteParty, String date) {
 		final Intent intent = new Intent(
@@ -999,6 +1288,18 @@ public class NgnSipService extends NgnBaseService implements
 		intent.putExtra(NgnSubscriptionAffiliationEventArgs.EXTRA_EMBEDDED, args);
 		NgnApplication.getContext().sendBroadcast(intent);
 	}
+	private void broadcastSubscriptionCMSEvent(org.doubango.ngn.events.NgnSubscriptionCMSEventArgs args) {
+		final Intent intent = new Intent(
+				org.doubango.ngn.events.NgnSubscriptionCMSEventArgs.ACTION_SUBSCRIBTION_CMS_EVENT);
+		intent.putExtra(org.doubango.ngn.events.NgnSubscriptionCMSEventArgs.EXTRA_EMBEDDED, args);
+		NgnApplication.getContext().sendBroadcast(intent);
+	}
+	private void broadcastSubscriptionGMSEvent(org.doubango.ngn.events.NgnSubscriptionGMSEventArgs args) {
+		final Intent intent = new Intent(
+				org.doubango.ngn.events.NgnSubscriptionGMSEventArgs.ACTION_SUBSCRIBTION_GMS_EVENT);
+		intent.putExtra(org.doubango.ngn.events.NgnSubscriptionGMSEventArgs.EXTRA_EMBEDDED, args);
+		NgnApplication.getContext().sendBroadcast(intent);
+	}
 
 	@Override
 	public void onSetProfile() {
@@ -1006,16 +1307,15 @@ public class NgnSipService extends NgnBaseService implements
 	}
 
 
-
-
 	static class MySipCallback extends SipCallback{
 		private  final NgnSipService mSipService;
 		private org.doubango.ngn.services.location.IMyLocalizationService mLocalizationService=null;
 		private IMyAffiliationService mAffiliationService;
+		private org.doubango.ngn.services.cms.IMyCMSService mCMSService;
+		private org.doubango.ngn.services.gms.IMyGMSService mGMSService;
 		private INgnConfigurationService mConfigurationService;
 		private org.doubango.ngn.services.mbms.IMyMbmsService mMbmsService;
 		private Context context;
-
 
 		private MySipCallback(NgnSipService sipService,Context context) {
 			super();
@@ -1030,6 +1330,13 @@ public class NgnSipService extends NgnBaseService implements
 
 		public void setAffiliationService(IMyAffiliationService mAffiliationService) {
 			this.mAffiliationService = mAffiliationService;
+		}
+		public void setCMSService(org.doubango.ngn.services.cms.IMyCMSService mCMSService) {
+			this.mCMSService = mCMSService;
+		}
+
+		public void setGMSService(org.doubango.ngn.services.gms.IMyGMSService mGMSService) {
+			this.mGMSService = mGMSService;
 		}
 		public void setConfigurationService(INgnConfigurationService mConfigurationService) {
 			this.mConfigurationService = mConfigurationService;
@@ -1132,6 +1439,9 @@ public class NgnSipService extends NgnBaseService implements
 									NgnRegistrationEventTypes.REGISTRATION_OK,
 									sipCode, phrase));
 					//Register in coreIMS. Subscribe in service affiliation
+					//On register to authentication service
+					mCMSService.startServiceAuthenticationAfterToken(NgnApplication.getContext());
+
 					//Start the service affiliation;
 					mAffiliationService.startServiceAffiliation();
 				}
@@ -1183,6 +1493,7 @@ public class NgnSipService extends NgnBaseService implements
 									sessionId,
 									NgnRegistrationEventTypes.UNREGISTRATION_INPROGRESS,
 									eventCode, phrase));
+
 				}
 				// Audio/Video/MSRP(Chat, FileTransfer)
 				else if (((mySession = NgnAVSession.getSession(sessionId)) != null)
@@ -1235,6 +1546,8 @@ public class NgnSipService extends NgnBaseService implements
 									sipCode, phrase));
 					//Stop service Location;
 
+
+
 					//All services are cleaned to avoid problems in the event of change of profile.
 					NgnEngine.getInstance().clearServices();
 
@@ -1250,6 +1563,7 @@ public class NgnSipService extends NgnBaseService implements
 							}
 						}
 					}).start();
+
 				}
 				// PagerMode IM
 				else if (NgnMessagingSession.hasSession(sessionId)) {
@@ -1308,6 +1622,86 @@ public class NgnSipService extends NgnBaseService implements
 			return 0;
 		}
 
+		private int newCallProcess(final short code,InviteSession session,SipMessage message,InviteEvent e,final tsip_invite_event_type_t type,final String phrase){
+			NgnInviteEventTypes typeCode=NgnInviteEventTypes.INCOMING;
+			 if(BuildConfig.DEBUG) Log.i(TAG, "OnINVITEevent");
+			if (session != null) /* As we are not owners, the session MUST be null */{
+				Log.e(TAG, "Invalid incoming session");
+				session.hangup(); // To avoid another callback event
+				return -1;
+			}
+
+
+			if (message == null){
+				Log.e(TAG,"Invalid message");
+				return -1;
+			}
+			if(tsip_event_code_dialog_connected==code){
+				typeCode=NgnInviteEventTypes.CONNECTED;
+			}
+
+			final twrap_media_type_t sessionType = e.getMediaType();
+			if (sessionType == twrap_media_type_t.twrap_media_msrp) {
+				if ((session = e.takeMsrpSessionOwnership()) == null){
+					Log.e(TAG,"Failed to take MSRP session ownership");
+					return -1;
+				}
+
+				NgnMsrpSession msrpSession = NgnMsrpSession.takeIncomingSession(mSipService.getSipStack(),
+						(MsrpSession)session, message);
+				if (msrpSession == null){
+					Log.e(TAG,"Failed to create new session");
+					session.hangup();
+					session.delete();
+					return 0;
+				}
+				mSipService.broadcastInviteEvent(new NgnInviteEventArgs(msrpSession.getId(), typeCode, msrpSession.getMediaType(), phrase));
+			}
+			else if ((sessionType == twrap_media_type_t.twrap_media_audio) ||
+					(sessionType == twrap_media_type_t.twrap_media_audio_video) ||
+					(sessionType == twrap_media_type_t.twrap_media_audiovideo) ||
+					(sessionType == twrap_media_type_t.twrap_media_video) ||
+					(sessionType.swigValue() == (twrap_media_type_t.twrap_media_audio.swigValue() | twrap_media_type_t.twrap_media_t140.swigValue())) ||
+					(sessionType.swigValue() == (twrap_media_type_t.twrap_media_audio.swigValue() | twrap_media_type_t.twrap_media_video.swigValue() | twrap_media_type_t.twrap_media_t140.swigValue())) ||
+					(sessionType == twrap_media_type_t.twrap_media_t140)) {
+				if ((session = e.takeCallSessionOwnership()) == null) {
+					Log.e(TAG,"Failed to take audio/video session ownership");
+					return -1;
+				}
+				final NgnInviteEventTypes eType = type == tsip_invite_event_type_t.tsip_i_newcall ? typeCode : NgnInviteEventTypes.REMOTE_TRANSFER_INPROGESS;
+				final NgnAVSession avSession = NgnAVSession.takeIncomingSession(mSipService.getSipStack(), (CallSession)session, sessionType, message);
+				mSipService.broadcastInviteEvent(new NgnInviteEventArgs(avSession.getId(), eType, avSession.getMediaType(), phrase));
+			}
+
+
+			else if((sessionType.swigValue() & twrap_media_type_t.twrap_media_audio_ptt_mcptt.swigValue())  == twrap_media_type_t.twrap_media_audio_ptt_mcptt.swigValue()){
+				Log.d(TAG,"New call, type MCPTT");
+				if(message!=null){
+					sendContactToMbms(message.getSipHeaderValue("Contact"));
+					String pUserAgentServer = message.getSipHeaderValue("User-Agent");
+				}
+
+				if ((session = e.takeCallSessionOwnership()) == null) {
+					Log.e(TAG,"Failed to take audio/video session ownership");
+					return -1;
+				}
+
+				final NgnInviteEventTypes eType = type == tsip_invite_event_type_t.tsip_i_newcall ? typeCode : NgnInviteEventTypes.REMOTE_TRANSFER_INPROGESS;
+				final NgnAVSession avSession = NgnAVSession.takeIncomingSession(mSipService.getSipStack(), (CallSession)session, sessionType, message);
+				if(typeCode==NgnInviteEventTypes.CONNECTED){
+					avSession.setConnectionState(ConnectionState.CONNECTED);
+					((NgnInviteSession) avSession).setState(InviteState.INCALL);
+					avSession.registerCallBacksMCPTT(context);
+				}
+				mSipService.broadcastInviteEvent(new NgnInviteEventArgs(avSession.getId(), eType, avSession.getMediaType(), phrase));
+				return 0;
+			}else {
+				Log.e(TAG,"Invalid media type");
+				return 0;
+			}
+			return -2;
+		}
+
 		@Override
 		public int OnInviteEvent(InviteEvent e) {
 			 final tsip_invite_event_type_t type = e.getType();
@@ -1316,73 +1710,11 @@ public class NgnSipService extends NgnBaseService implements
 			 InviteSession session = e.getSession();
 			 NgnSipSession mySession = null;
 			 SipMessage message = e.getSipMessage();
-
+			 if(BuildConfig.DEBUG)Log.d(TAG,"Oninvite event: code="+code+ "   body="+phrase+"  type="+type.name());
 			switch (type){
                 case tsip_i_newcall:
                 case tsip_i_ect_newcall:
-                    if (session != null) /* As we are not owners, the session MUST be null */{
-                        Log.e(TAG, "Invalid incoming session");
-                        session.hangup(); // To avoid another callback event
-                        return -1;
-                    }
-
-
-                    if (message == null){
-                        Log.e(TAG,"Invalid message");
-                        return -1;
-                    }
-                    final twrap_media_type_t sessionType = e.getMediaType();
-                    if (sessionType == twrap_media_type_t.twrap_media_msrp) {
-                    	if ((session = e.takeMsrpSessionOwnership()) == null){
-                            Log.e(TAG,"Failed to take MSRP session ownership");
-                            return -1;
-                        }
-                    	
-                        NgnMsrpSession msrpSession = NgnMsrpSession.takeIncomingSession(mSipService.getSipStack(), 
-                        		(MsrpSession)session, message);
-                        if (msrpSession == null){
-                        	Log.e(TAG,"Failed to create new session");
-                            session.hangup();
-                            session.delete();
-                            return 0;
-                        }
-                        mSipService.broadcastInviteEvent(new NgnInviteEventArgs(msrpSession.getId(), NgnInviteEventTypes.INCOMING, msrpSession.getMediaType(), phrase));
-                    }
-                    else if ((sessionType == twrap_media_type_t.twrap_media_audio) ||
-                    		(sessionType == twrap_media_type_t.twrap_media_audio_video) ||
-                    		(sessionType == twrap_media_type_t.twrap_media_audiovideo) ||
-                    		(sessionType == twrap_media_type_t.twrap_media_video) ||
-		                    (sessionType.swigValue() == (twrap_media_type_t.twrap_media_audio.swigValue() | twrap_media_type_t.twrap_media_t140.swigValue())) ||
-		                    (sessionType.swigValue() == (twrap_media_type_t.twrap_media_audio.swigValue() | twrap_media_type_t.twrap_media_video.swigValue() | twrap_media_type_t.twrap_media_t140.swigValue())) ||
-		                    (sessionType == twrap_media_type_t.twrap_media_t140)) {
-                            if ((session = e.takeCallSessionOwnership()) == null) {
-                                Log.e(TAG,"Failed to take audio/video session ownership");
-                                return -1;
-                            }
-                            final NgnInviteEventTypes eType = type == tsip_invite_event_type_t.tsip_i_newcall ? NgnInviteEventTypes.INCOMING : NgnInviteEventTypes.REMOTE_TRANSFER_INPROGESS;
-                            final NgnAVSession avSession = NgnAVSession.takeIncomingSession(mSipService.getSipStack(), (CallSession)session, sessionType, message); 
-                            mSipService.broadcastInviteEvent(new NgnInviteEventArgs(avSession.getId(), eType, avSession.getMediaType(), phrase));
-					}
-					else if((sessionType.swigValue() & twrap_media_type_t.twrap_media_audio_ptt_mcptt.swigValue())  == twrap_media_type_t.twrap_media_audio_ptt_mcptt.swigValue()){
-						Log.d(TAG,"New call, type MCPTT");
-						if(message!=null){
-							sendContactToMbms(message.getSipHeaderValue("Contact"));
-							String pUserAgentServer = message.getSipHeaderValue("User-Agent");
-						}
-
-						if ((session = e.takeCallSessionOwnership()) == null) {
-							Log.e(TAG,"Failed to take audio/video session ownership");
-							return -1;
-						}
-						final NgnInviteEventTypes eType = type == tsip_invite_event_type_t.tsip_i_newcall ? NgnInviteEventTypes.INCOMING : NgnInviteEventTypes.REMOTE_TRANSFER_INPROGESS;
-						final NgnAVSession avSession = NgnAVSession.takeIncomingSession(mSipService.getSipStack(), (CallSession)session, sessionType, message);
-						mSipService.broadcastInviteEvent(new NgnInviteEventArgs(avSession.getId(), eType, avSession.getMediaType(), phrase));
-						return 0;
-					}else {
-                        Log.e(TAG,"Invalid media type");
-                        return 0;
-                    }  
-                    break;
+					return newCallProcess(code,session,message, e,type,phrase);
 
                 case tsip_ao_request:
 					Log.d(TAG,"tsip_ao_request");
@@ -1390,7 +1722,7 @@ public class NgnSipService extends NgnBaseService implements
                 	// For backward compatibility keep both "RINGING" and "SIP_RESPONSE"
                     if(code==180){
 						Log.d(TAG,"packet RINGING");
-					}else if(code==200){
+					}else if(code/100==2){
 						if(message!=null){
 							String pUserAgentServer = message.getSipHeaderValue("User-Agent");
 							sendContactToMbms(message.getSipHeaderValue("Contact"));
@@ -1405,7 +1737,7 @@ public class NgnSipService extends NgnBaseService implements
                     }
                     int typeCode=-1;
                     if(((typeCode=(int)(code/100))==4 || typeCode==5 || typeCode==6) && session != null){
-						Log.e(TAG,"Error in invite event");
+						Log.e(TAG,"Error in invite event" +typeCode);
 						switch (typeCode){
 							case 4:
 								Log.e(TAG,"Error: Client Failure Responses");
@@ -1474,11 +1806,11 @@ public class NgnSipService extends NgnBaseService implements
 								case tsip_BYE:
 									Log.d(TAG,"the message SIP receive is BYE");
 								default:
-									Log.e(TAG, "Error processing Invite request 2");
+									if(BuildConfig.DEBUG)Log.e(TAG, "Error processing Invite request 2 type:"+sipMessage.getRequestType().name());
 									break;
 							}
                     	}else{
-							Log.e(TAG, "Error processing Invite request");
+							Log.i(TAG, "Error processing Invite request");
 						}
                         break;
                     }
@@ -1900,10 +2232,6 @@ public class NgnSipService extends NgnBaseService implements
 						_session = e.takeSessionOwnership();
 					}
 
-
-
-
-
 					if (_session == null) {
 						Log.e(NgnSipService.TAG, "Failed to take session ownership");
 						return -1;
@@ -1948,6 +2276,8 @@ public class NgnSipService extends NgnBaseService implements
 
 			return 0;
 		}
+
+
 		@Override
 		public int OnMessagingMbmsEvent(org.doubango.tinyWRAP.MessagingMbmsEvent e) {
 			final tsip_message_event_type_t type = e.getType();
@@ -2196,7 +2526,6 @@ public class NgnSipService extends NgnBaseService implements
 					// mWInfo = content;
 				}
 
-
 				NgnSubscriptionSession ngnSession = NgnSubscriptionSession
 						.getSession(_session.getId());
 				NgnSubscriptionEventArgs eargs = new NgnSubscriptionEventArgs(
@@ -2218,6 +2547,176 @@ public class NgnSipService extends NgnBaseService implements
 			default: {
 				break;
 			}
+			}
+
+			return 0;
+		}
+
+		@Override
+		public int OnSubscriptionGMSEvent(org.doubango.tinyWRAP.SubscriptionGMSEvent e) {
+			final tsip_subscribe_event_type_t type = e.getType();
+			org.doubango.tinyWRAP.SubscriptionGMSSession _session = e.getSession();
+			short code ;
+			String phrase ;
+			SipMessage message;
+			switch (type) {
+				case tsip_i_notify: {
+					code = e.getCode();
+					phrase = e.getPhrase();
+					message = e.getSipMessage();
+					if (message == null || _session == null) {
+						return 0;
+					}
+					final String contentType = message.getSipHeaderValue("c");
+					final byte[] content = message.getSipContent();
+
+					/*if (content == null || content.length == 0) {
+						Log.e(NgnSipService.TAG, "Invalid Notify");
+						return 0;
+					}*/
+
+					Intent intent=new Intent();
+					intent.setAction(org.doubango.ngn.services.gms.IMyGMSService.GMS_ACTION_NOTIFY);
+					intent.putExtra(org.doubango.ngn.services.gms.IMyGMSService.GMS_NEWGMS_NOTIFY,content);
+					NgnApplication.getContext().sendBroadcast(intent);
+
+					org.doubango.ngn.events.NgnSubscriptionGMSEventArgs eargs = new org.doubango.ngn.events.NgnSubscriptionGMSEventArgs(
+							_session.getId(),
+							org.doubango.ngn.events.NgnSubscriptionGMSEventTypes.INCOMING_NOTIFY, code,
+							phrase, content, contentType,
+							EventPackageType.None);
+					mSipService.broadcastSubscriptionGMSEvent(eargs);
+
+					break;
+				}
+
+				case tsip_ao_notify:
+				case tsip_i_subscribe:
+					break;
+				case tsip_ao_subscribe:
+					code = e.getCode();
+					phrase = e.getPhrase();
+					message = e.getSipMessage();
+					if (message == null || _session == null) {
+						return 0;
+					}
+					if (_session != null && code >= 200 && message != null) {
+						Intent intent=new Intent();
+						intent.setAction(org.doubango.ngn.services.gms.IMyGMSService.GMS_ACTION_SUBSCRIBE);
+						if(code/100==2){
+							intent.putExtra(org.doubango.ngn.services.gms.IMyGMSService.GMS_RESPONSE_SUBSCRIBE_OK,phrase);
+						}else{
+							intent.putExtra(org.doubango.ngn.services.gms.IMyGMSService.GMS_RESPONSE_SUBSCRIBE_ERROR,phrase);
+						}
+						NgnApplication.getContext().sendBroadcast(intent);
+
+
+					}
+					break;
+
+				case tsip_i_unsubscribe:
+					break;
+				case tsip_ao_unsubscribe:
+					code = e.getCode();
+					phrase = e.getPhrase();
+					message = e.getSipMessage();
+					if (message == null || _session == null) {
+						return 0;
+					}
+					if (_session != null && code >= 200 && message != null) {
+						Intent intent=new Intent();
+						intent.setAction(IMyGMSService.GMS_ACTION_UNSUBSCRIBE);
+						NgnApplication.getContext().sendBroadcast(intent);
+					}
+					break;
+				default: {
+					break;
+				}
+			}
+
+			return 0;
+		}
+
+		@Override
+		public int OnSubscriptionCMSEvent(org.doubango.tinyWRAP.SubscriptionCMSEvent e) {
+			final tsip_subscribe_event_type_t type = e.getType();
+			org.doubango.tinyWRAP.SubscriptionCMSSession _session = e.getSession();
+			short code ;
+			String phrase ;
+			SipMessage message;
+			switch (type) {
+				case tsip_i_notify: {
+					code = e.getCode();
+					phrase = e.getPhrase();
+					message = e.getSipMessage();
+					if (message == null || _session == null) {
+						return 0;
+					}
+					final String contentType = message.getSipHeaderValue("c");
+					final byte[] content = message.getSipContent();
+
+					/*if (content == null || content.length == 0) {
+						Log.e(NgnSipService.TAG, "Invalid Notify");
+						return 0;
+					}*/
+
+					Intent intent=new Intent();
+					intent.setAction(org.doubango.ngn.services.cms.IMyCMSService.CMS_ACTION_NOTIFY);
+					intent.putExtra(org.doubango.ngn.services.cms.IMyCMSService.CMS_NEWCMS_NOTIFY,content);
+					NgnApplication.getContext().sendBroadcast(intent);
+
+					NgnSubscriptionCMSEventArgs eargs = new org.doubango.ngn.events.NgnSubscriptionCMSEventArgs(
+							_session.getId(),
+							org.doubango.ngn.events.NgnSubscriptionCMSEventTypes.INCOMING_NOTIFY, code,
+							phrase, content, contentType,
+							EventPackageType.None);
+					mSipService.broadcastSubscriptionCMSEvent(eargs);
+
+					break;
+				}
+
+				case tsip_ao_notify:
+				case tsip_i_subscribe:
+					break;
+				case tsip_ao_subscribe:
+					code = e.getCode();
+					phrase = e.getPhrase();
+					message = e.getSipMessage();
+					if (message == null || _session == null) {
+						return 0;
+					}
+					if (_session != null && code >= 200 && message != null) {
+						Intent intent=new Intent();
+						intent.setAction(org.doubango.ngn.services.cms.IMyCMSService.CMS_ACTION_SUBSCRIBE);
+						if(code/100==2){
+							intent.putExtra(org.doubango.ngn.services.cms.IMyCMSService.CMS_RESPONSE_SUBSCRIBE_OK,phrase);
+						}else{
+							intent.putExtra(org.doubango.ngn.services.cms.IMyCMSService.CMS_RESPONSE_SUBSCRIBE_ERROR,phrase);
+						}
+						NgnApplication.getContext().sendBroadcast(intent);
+
+
+					}
+					break;
+
+				case tsip_i_unsubscribe:
+					break;
+				case tsip_ao_unsubscribe:
+					code = e.getCode();
+					phrase = e.getPhrase();
+					message = e.getSipMessage();
+					if (message == null || _session == null) {
+						return 0;
+					}
+					if (_session != null && code >= 200 && message != null) {
+						Intent intent=new Intent();
+						intent.setAction(org.doubango.ngn.services.cms.IMyCMSService.CMS_ACTION_UNSUBSCRIBE);
+						NgnApplication.getContext().sendBroadcast(intent);
+					}
+					break;
+				default: {
+					break;
+				}
 			}
 
 			return 0;
@@ -2274,7 +2773,7 @@ public class NgnSipService extends NgnBaseService implements
 					if (_session != null && code >= 200 && message != null) {
 						Intent intent=new Intent();
 						intent.setAction(IMyAffiliationService.AFFILIATION_ACTION_SUBSCRIBE);
-						if(code==200){
+						if(code/100==2){
 							intent.putExtra(IMyAffiliationService.AFFILIATION_RESPONSE_SUBSCRIBE_OK,phrase);
 						}else{
 							intent.putExtra(IMyAffiliationService.AFFILIATION_RESPONSE_SUBSCRIBE_ERROR,phrase);

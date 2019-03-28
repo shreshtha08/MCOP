@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -68,9 +67,15 @@ int tsip_subscribe_event_signal(tsip_subscribe_event_type_t type, tsip_ssession_
 
 TINYSIP_API int tsip_api_subscribe_send_subscribe(const tsip_ssession_handle_t *ss, ...);
 TINYSIP_API int tsip_api_subscribe_send_unsubscribe(const tsip_ssession_handle_t *ss, ...);
-//MCPTT AFFILIATION by Eduardo
+//MCPTT AFFILIATION
 TINYSIP_API int tsip_api_subscribe_affiliation_send_subscribe(const tsip_ssession_handle_t *ss, ...);
 TINYSIP_API int tsip_api_subscribe_affiliation_unsubscribe(const tsip_ssession_handle_t *ss, ...);
+
+TINYSIP_API int tsip_api_subscribe_cms_send_subscribe(const tsip_ssession_handle_t *ss, ...);
+TINYSIP_API int tsip_api_subscribe_cms_unsubscribe(const tsip_ssession_handle_t *ss, ...);
+
+TINYSIP_API int tsip_api_subscribe_gms_send_subscribe(const tsip_ssession_handle_t *ss, ...);
+TINYSIP_API int tsip_api_subscribe_gms_unsubscribe(const tsip_ssession_handle_t *ss, ...);
 
 TINYSIP_GEXTERN const tsk_object_def_t *tsip_subscribe_event_def_t;
 

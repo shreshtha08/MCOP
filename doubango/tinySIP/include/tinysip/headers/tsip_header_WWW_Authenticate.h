@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -69,7 +68,7 @@ typedef struct tsip_header_WWW_Authenticate_s
 	char* opaque;
 	tsk_bool_t stale;
 	char* algorithm;
-	//By Eduardo
+	//
 	//This is for SQN with SIM
 	char* auts;
 	char* auts_param;

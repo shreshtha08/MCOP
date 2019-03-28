@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -64,6 +63,7 @@ TINYSIP_API int tsip_api_message_send_message(const tsip_ssession_handle_t *ss, 
 TINYSIP_API int tsip_api_message_send_message_location(const tsip_ssession_handle_t *ss, ...);
 //MCPTT MBMS
 TINYSIP_API int tsip_api_message_send_message_mbms(const tsip_ssession_handle_t *ss, ...);
+
 TINYSIP_GEXTERN const tsk_object_def_t *tsip_message_event_def_t;
 
 #if 1 // Backward Compatibility

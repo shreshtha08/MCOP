@@ -11,13 +11,13 @@
 %}
 
 %feature("director") DDebugCallback;
-//By Eduardo
+//
 %feature("director") DRegisterCallback;
 
 %nodefaultctor;
 %include "tinyWRAP_config.h"
 %include "DDebug.h"
-//By Eduardo
+//
 %include "DRegisterCallback.h"
 %include "AudioResampler.h"
 %include "Common.h"
@@ -41,12 +41,13 @@
 %newobject SipStack::getPreferredIdentity;
 %newobject SipStack::getLocalIPnPort;
 %newobject MediaSessionMgr::producerGetCodec;
-//by Eduardo
+
 %newobject MessagingLocationEvent::takeSessionOwnership;
-//MCPTT affiliation by Eduardo
+//MCPTT affiliation
 %newobject MessagingAffiliationEvent::takeSessionOwnership;
 %newobject SubscriptionAffiliationEvent::takeSessionOwnership;
 %newobject PublicationAffiliationEvent::takeSessionOwnership;
+%newobject PublicationAuthenticationEvent::takeSessionOwnership;
 %newobject MessagingLocationEvent::takeSessionOwnership;
 %newobject MessagingEvent::takeSessionOwnership;
 %newobject InviteEvent::takeCallSessionOwnership;

@@ -1,6 +1,5 @@
 
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -239,7 +238,9 @@ tsk_bool_t tsk_strcontains(const char * str, tsk_size_t size, const char * subst
 int tsk_strindexOf(const char * str, tsk_size_t size, const char * substring)
 {
 	if (str && substring){
-		const char* sub_start = strstr(str, substring);
+		//const char* sub_start = strstr(str, substring);
+		tsk_size_t sub_size = tsk_strlen(substring);
+		const char* sub_start = memmem(str, size, substring, sub_size);
 		if (sub_start && (sub_start < (str + size))) {
 			int ret;
 			tsk_subsat_int32_ptr(sub_start, str, &ret);
@@ -256,12 +257,14 @@ int tsk_strLastIndexOf(const char * str, tsk_size_t size, const char * substring
 	if (str && substring){
 		tsk_size_t sub_size = tsk_strlen(substring);
 		const char* last_sub_start = tsk_null;
-		const char* sub_start = strstr(str, substring);
+        //const char* sub_start = strstr(str, substring);
+        const char* sub_start = memmem(str, size, substring, sub_size);
 		const char* end = (str + size);
 		while (sub_start && (sub_start < end)) {
 			last_sub_start = sub_start;
-			if ((sub_start + sub_size) < end){
-				sub_start = strstr((sub_start + sub_size), substring);
+			if ((sub_start + sub_size) < (end-sub_size)){
+                //sub_start = strstr((sub_start + sub_size), substring);
+                sub_start = memmem((sub_start + sub_size), (end - (sub_start + sub_size)), substring, sub_size);
 			}
 			else {
 				break;

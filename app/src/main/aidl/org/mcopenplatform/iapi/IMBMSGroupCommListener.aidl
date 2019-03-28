@@ -1,4 +1,4 @@
-// IMBMSGroupCommListener.aidl
+// IMBMSGroupComListener.aidl
 package org.mcopenplatform.iapi;
 
 interface IMBMSGroupCommListener {

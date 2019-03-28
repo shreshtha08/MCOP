@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -68,6 +67,8 @@
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
+#include <tsip.h>
+#include <tinysip/tsip_ssession.h>
 
 
 static int register_xml_namespaces(xmlXPathContextPtr xpathCtx, const xmlChar* nsList);
@@ -80,7 +81,6 @@ static tsip_uri_t* string_to_uri(const char* stringData);
 #define RESOURCE_LIST_USERS_NS_LIST_NO_DEFAULT	"xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xsi=\"http://www.w3.org/2001/XMLSchema-instance\" cc=\"urn:ietf:params:xml:ns:copycontrol\""
 #define RESOURCE_LIST_USERS_NS_LIST				"xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:cc=\"urn:ietf:params:xml:ns:copycontrol\""
 #define MCPTT_INFO_PARAMS	"xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" targetNamespace=\"urn:3gpp:ns:mcpttInfo:1.0\" xmlns:mcpttinfo=\"urn:3gpp:ns:mcpttInfo:1.0\""
-
 
 #define DUMMY_XML_ROOT							"group"
 
@@ -112,10 +112,16 @@ static int s0000_InProgress_2_Ringing_X_iUPDATE(va_list *app); // QoS can resume
 static int s0000_Inprogress_2_Terminated_X_iCANCEL(va_list *app);
 static int s0000_Ringing_2_Ringing_X_iPRACK(va_list *app); // Alert user
 static int s0000_Ringing_2_Connected_X_Accept(va_list *app);
+static int s0000_Started_2_Connected_X_iINVITE(va_list *app);
+
+
 static int s0000_Ringing_2_Terminated_X_Reject(va_list *app);
 static int s0000_Ringing_2_Terminated_X_iCANCEL(va_list *app);
 static int s0000_Any_2_Any_X_timer100rel(va_list *app);
 
+static tsk_bool_t _fsm_cond_bad_auto_call(tsip_dialog_invite_t* self, tsip_message_t* message);
+
+static tsk_buffer_t* processing_body_invite(tsip_dialog_invite_t* self, tsip_message_t* message);
 
 
 /* ======================== conds ======================== */
@@ -158,6 +164,7 @@ static tsk_bool_t _fsm_cond_bad_content(tsip_dialog_invite_t* self, tsip_message
     const tsdp_message_t* sdp_lo;
     const tsip_header_t* hdr;
     tsk_size_t i;
+	tsk_string_t *boolean_emergency_string=tsk_null;
 
     tsk_bool_t bodiless_INVITE = (TSIP_DIALOG(self)->state == tsip_initial && !TSIP_MESSAGE_HAS_CONTENT(message)); // Initial Bodiless INVITE
 
@@ -168,15 +175,14 @@ static tsk_bool_t _fsm_cond_bad_content(tsip_dialog_invite_t* self, tsip_message
         return tsk_true;
     }
     //Send data configure in client
-    //MCPTT By Eduardo
-
+    //MCPTT
 
     tmedia_session_mgr_set(self->msession_mgr,
                            TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"implicit",TSIP_DIALOG_GET_STACK(self)->pttMCPTT.mcptt_implicit),
                            TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"priority",TSIP_DIALOG_GET_STACK(self)->pttMCPTT.mcptt_priority),
                            TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"granted",TSIP_DIALOG_GET_STACK(self)->pttMCPTT.mcptt_granted),
                            TMEDIA_SESSION_SET_POBJECT(tmedia_mcptt,"mcptt_id_local",(TSIP_DIALOG_GET_STACK(self)->pttMCPTT.mcptt_id)),
-            //Insert Timers that received from CMS MCPTT UE init Config By Eduardo
+            //Insert Timers that received from CMS MCPTT UE init Config
                            TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"t100",TSIP_DIALOG_GET_STACK(self)->pttMCPTT.timer_s.timer_t100),
                            TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"t101",TSIP_DIALOG_GET_STACK(self)->pttMCPTT.timer_s.timer_t101),
                            TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"t103",TSIP_DIALOG_GET_STACK(self)->pttMCPTT.timer_s.timer_t103),
@@ -190,311 +196,49 @@ static tsk_bool_t _fsm_cond_bad_content(tsip_dialog_invite_t* self, tsip_message
             ret = send_ERROR(self, message, 488, "Not Acceptable", "SIP; cause=488; text=\"No common codecs\"");
             return tsk_true;
         }
-        if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_audio_ptt_mcptt) == tmedia_audio_ptt_mcptt)//MCPTT //Added by Eduardo
-        {
-            uint32_t local_ssrc = tmedia_session_mgr_audio_get_ssrc(self->msession_mgr);
-            tmedia_session_t* audio_session = tmedia_session_mgr_find(self->msession_mgr, tmedia_audio);
 
+			if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_audio_ptt_mcptt) == tmedia_audio_ptt_mcptt)
+			//MCPTT //Added
+		{
+			uint32_t local_ssrc = tmedia_session_mgr_audio_get_ssrc(self->msession_mgr);							
+			tmedia_session_t* audio_session = tmedia_session_mgr_find(self->msession_mgr, tmedia_audio);
 
+			//MCPTT Emergence call
+			for(i=0;(hdr = tsip_message_get_headerAt(message, tsip_htype_Dummy, i)); i++)
+			{		
+
+				const tsip_header_Dummy_t* reosurce_priority_hdr = (const tsip_header_Dummy_t*)hdr;
+
+				if(tsk_strcmp(reosurce_priority_hdr->name, "Resource-Priority") == 0){
+					char* header_priority_string=tsk_null;
+					int	header_priority_int=-1;
+					//reosurce_priority_hdr->name, tsip_header_get_name(tsip_htype_Priority);
+					#if HAVE_CRT //Debug memory
+						header_priority_string=calloc(strlen(reosurce_priority_hdr->value)+1,sizeof(char));
+					#else
+						header_priority_string=tsk_calloc(strlen(reosurce_priority_hdr->value)+1,sizeof(char));
+					#endif //HAVE_CRT
+					sscanf(reosurce_priority_hdr->value, "%[^.].%d",header_priority_string,&header_priority_int);
+					#if HAVE_CRT //Debug memory
+						TSIP_DIALOG_GET_SS(self)->pttMCPTT.emergency.resource_priority_string=calloc(strlen(header_priority_string)+1,sizeof(char));
+					#else
+						TSIP_DIALOG_GET_SS(self)->pttMCPTT.emergency.resource_priority_string=tsk_calloc(strlen(header_priority_string)+1,sizeof(char));
+					#endif //HAVE_CRT
+					strcpy(TSIP_DIALOG_GET_SS(self)->pttMCPTT.emergency.resource_priority_string,header_priority_string);
+					TSIP_DIALOG_GET_SS(self)->pttMCPTT.emergency.resource_priority_int=header_priority_int;
+					TSK_FREE(header_priority_string);
+				}
+			}
 
             tmedia_session_mgr_set(self->msession_mgr,
                                    TMEDIA_SESSION_SET_INT32(tmedia_mcptt, "local_ssrc", local_ssrc),
-                                   TMEDIA_SESSION_SET_POBJECT(tmedia_mcptt, "audio_session", audio_session),
+                                   TMEDIA_SESSION_SET_POBJECT(tmedia_mcptt, "audio_session",
+                                                              audio_session),
                                    TMEDIA_SESSION_SET_NULL());
             audio_session->lo_held = tsk_true;
-            if(tsk_striequals("multipart/mixed", TSIP_MESSAGE_CONTENT_TYPE(message)))
-            {
-                tmedia_multipart_body_t* mp_body = tsk_null;
-                tmedia_content_multipart_t* mp_content = tsk_null;
-                char* boundary = tsk_null;
-
-                boundary = tsip_header_get_param_value((tsip_header_t*)message->Content_Type, "boundary");
-                if(boundary != tsk_null)
-                {
-                    mp_body = tmedia_content_multipart_body_parse(TSIP_MESSAGE_CONTENT_DATA(message), TSIP_MESSAGE_CONTENT_DATA_LENGTH(message), "multipart/mixed", boundary);
-
-                    if(mp_body != tsk_null)
-                    {
-                        mp_content = tmedia_content_multipart_body_get_content(mp_body, "application/vnd.3gpp.mcptt-info+xml");
-                        if(mp_content != tsk_null)
-                        {
-                            xmlDoc *pDoc;
-                            xmlNode *pRootElement;
-                            xmlXPathContext *pPathCtx;
-                            xmlXPathObject *pPathObj;
-                            tsip_uri_t* mcptt_request_uri;
-                            tsip_uri_t* mcptt_calling_user_id;//mcptt-calling-user-id
-                            tsip_uri_t* mcptt_called_party_id;
-                            tsip_uri_t* mcptt_calling_group_id;
-
-
-                            static const xmlChar* __xpath_expr_session_type = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='session-type']";//<session-type>
-                            static const xmlChar* __xpath_expr_mcptt_request_uri_old = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='mcptt-request-uri']";//<mcptt-request-uri>
-                            static const xmlChar* __xpath_expr_mcptt_calling_user_id_old = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='mcptt-calling-user-id']";//<mcptt-calling-user-id>
-                            static const xmlChar* __xpath_expr_mcptt_called_party_id_old = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='mcptt-called-party-id']";//<mcptt-called-party-id>
-                            static const xmlChar* __xpath_expr_mcptt_calling_group_id_old = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='mcptt-calling-group-id']";//mcptt-calling-group-id
-                            static const xmlChar* __xpath_expr_mcptt_request_uri = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='mcptt-request-uri']/*[local-name()='mcpttURI']";//<mcptt-request-uri><mcpttURI>
-                            static const xmlChar* __xpath_expr_mcptt_calling_user_id = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='mcptt-calling-user-id']/*[local-name()='mcpttURI']";//<mcptt-calling-user-id><mcpttURI>
-                            static const xmlChar* __xpath_expr_mcptt_called_party_id = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='mcptt-called-party-id']/*[local-name()='mcpttURI']";//<mcptt-called-party-id><mcpttURI>
-                            static const xmlChar* __xpath_expr_mcptt_calling_group_id = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='mcptt-calling-group-id']/*[local-name()='mcpttURI']";//<mcptt-calling-group-id><mcpttURI>
-
-
-                            static const xmlChar* __xml_namespace_mcptt_info = (const xmlChar*)MCPTT_INFO_PARAMS;
-                            char* xmlContent;
-
-                            mcptt_request_uri=tsk_null;
-                            mcptt_calling_user_id=tsk_null;
-                            mcptt_called_party_id=tsk_null;
-                            mcptt_calling_group_id=tsk_null;
-#if HAVE_CRT //Debug memory
-                            xmlContent = (char*)calloc((mp_content->data_size + 1), sizeof(char));
-
-#else
-                            xmlContent = (char*)tsk_calloc((mp_content->data_size + 1), sizeof(char));
-
-#endif //HAVE_CRT
-                            memcpy(xmlContent, mp_content->data, mp_content->data_size);
-                            xmlContent[mp_content->data_size] = '\0';
-
-                            if (!(pDoc = xmlParseDoc(xmlContent))) {
-                                TSK_DEBUG_ERROR("Failed to parse XML content [%s]", xmlContent);
-                                tsk_free(&xmlContent);
-                                return tsk_false;
-                            }
-                            if (!(pRootElement = xmlDocGetRootElement(pDoc))) {
-                                TSK_DEBUG_ERROR("Failed to get root element from XML content [%s]", xmlContent);
-                                xmlFreeDoc(pDoc);
-                                tsk_free(&xmlContent);
-                                return tsk_false;
-                            }
-                            if (!(pPathCtx = xmlXPathNewContext(pDoc))) {
-                                TSK_DEBUG_ERROR("Failed to create path context from XML content [%s]", xmlContent);
-                                xmlFreeDoc(pDoc);
-                                tsk_free(&xmlContent);
-                                return tsk_false;
-                            }
-
-                            if(register_xml_namespaces(pPathCtx, __xml_namespace_mcptt_info) < 0)
-                            {
-                                TSK_DEBUG_ERROR("Error: unable to register namespaces: %s", __xml_namespace_mcptt_info);
-                                xmlXPathFreeContext(pPathCtx);
-                                xmlFreeDoc(pDoc);
-                                tsk_free(&xmlContent);
-                                return tsk_false;
-                            }
-
-
-                            //mcptt_request_uri
-                            if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_request_uri, pPathCtx))) {
-                                TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: %s", __xpath_expr_mcptt_request_uri);
-                                xmlXPathFreeContext(pPathCtx);
-                                xmlFreeDoc(pDoc);
-                                tsk_free(&xmlContent);
-                                return tsk_false;
-                            }
-
-                            if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
-                            {
-                                tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
-                                mcptt_request_uri=string_to_uri(uri->value);
-
-                            }else{
-                                if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_request_uri_old, pPathCtx))) {
-                                    TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: %s", __xpath_expr_mcptt_request_uri_old);
-                                    xmlXPathFreeContext(pPathCtx);
-                                    xmlFreeDoc(pDoc);
-                                    tsk_free(&xmlContent);
-                                    return tsk_false;
-                                }
-                                if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
-                                {
-                                    tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
-                                    mcptt_request_uri=string_to_uri(uri->value);
-
-                                }else{
-                                    TSK_DEBUG_ERROR("Error: the mcptt_request_uri isn?t exist");
-                                    xmlXPathFreeContext(pPathCtx);
-                                    xmlFreeDoc(pDoc);
-                                    tsk_free(&xmlContent);
-                                    return tsk_false;
-                                }
-                            }
-
-                            //mcptt_calling_user_id
-                            if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_calling_user_id, pPathCtx))) {
-                                TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: %s", __xpath_expr_mcptt_calling_user_id);
-                                xmlXPathFreeContext(pPathCtx);
-                                xmlFreeDoc(pDoc);
-                                tsk_free(&xmlContent);
-                                return tsk_false;
-                            }
-
-                            if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
-                            {
-                                tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
-                                mcptt_calling_user_id=string_to_uri(uri->value);
-                            }else{
-                                if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_calling_user_id_old, pPathCtx))) {
-                                    TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: %s", __xpath_expr_mcptt_calling_user_id_old);
-                                    xmlXPathFreeContext(pPathCtx);
-                                    xmlFreeDoc(pDoc);
-                                    tsk_free(&xmlContent);
-                                    return tsk_false;
-                                }
-                                if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
-                                {
-                                    tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
-                                    mcptt_calling_user_id=string_to_uri(uri->value);
-                                }else{
-                                    TSK_DEBUG_ERROR("Error: the mcptt_calling_user_id isn?t exist:");
-                                    xmlXPathFreeContext(pPathCtx);
-                                    xmlFreeDoc(pDoc);
-                                    tsk_free(&xmlContent);
-                                    return tsk_false;
-                                }
-
-                            }
-
-
-
-                            //<session-type>
-                            if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_session_type, pPathCtx))) {
-                                TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: %s", __xpath_expr_session_type);
-                                xmlXPathFreeContext(pPathCtx);
-                                xmlFreeDoc(pDoc);
-                                tsk_free(&xmlContent);
-                                return tsk_false;
-                            }
-
-
-                            if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
-                            {
-                                tsk_string_t* session_type = tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
-                                if(tsk_striequals(session_type->value,"private")==tsk_true){
-                                    //Session MCPTT is private
-                                    TSIP_DIALOG_GET_SS(self)->media.type=tmedia_audio_ptt_mcptt;
-
-                                    //__xpath_expr_mcptt_called_party_id
-                                    if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_called_party_id, pPathCtx))) {
-                                        TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: %s", __xpath_expr_mcptt_called_party_id);
-                                        xmlXPathFreeContext(pPathCtx);
-                                        xmlFreeDoc(pDoc);
-                                        tsk_free(&xmlContent);
-                                        return tsk_false;
-
-                                    }
-                                    //VERSION OLD MCPTTINFO
-                                    if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
-                                    {
-                                        tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
-                                        mcptt_called_party_id=string_to_uri(uri->value);
-
-
-                                    }else{
-
-                                        if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_called_party_id_old, pPathCtx))) {
-                                            TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: %s", __xpath_expr_mcptt_called_party_id_old);
-                                            xmlXPathFreeContext(pPathCtx);
-                                            xmlFreeDoc(pDoc);
-                                            tsk_free(&xmlContent);
-                                            return tsk_false;
-                                        }
-                                        if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
-                                        {
-                                            tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
-                                            mcptt_called_party_id=string_to_uri(uri->value);
-
-
-                                        }else{
-                                            TSK_DEBUG_ERROR("Error: the mcptt_called_party_id isn?t exist");
-                                            xmlXPathFreeContext(pPathCtx);
-                                            xmlFreeDoc(pDoc);
-                                            tsk_free(&xmlContent);
-                                            return tsk_false;
-                                        }
-
-                                    }
-
-
-                                }
-                                else if(tsk_striequals(session_type->value,"prearranged")==tsk_true){
-                                    //Session MCPTT is group
-                                    TSIP_DIALOG_GET_SS(self)->media.type=tmedia_audio_ptt_group_mcptt;
-
-                                    //__xpath_expr_mcptt_calling_group_id
-                                    if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_calling_group_id, pPathCtx))) {
-                                        TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: %s", __xpath_expr_mcptt_calling_group_id);
-                                        xmlXPathFreeContext(pPathCtx);
-                                        xmlFreeDoc(pDoc);
-                                        tsk_free(&xmlContent);
-                                        return tsk_false;
-                                    }
-
-                                    if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
-                                    {
-                                        tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
-                                        mcptt_calling_group_id=string_to_uri(uri->value);
-
-                                    }else{
-                                        //VERSION OLD MCPTTINFO
-                                        if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_calling_group_id_old, pPathCtx))) {
-                                            TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: %s", __xpath_expr_mcptt_calling_group_id_old);
-                                            xmlXPathFreeContext(pPathCtx);
-                                            xmlFreeDoc(pDoc);
-                                            tsk_free(&xmlContent);
-                                            return tsk_false;
-                                        }
-                                        if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
-                                        {
-                                            tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
-                                            mcptt_calling_group_id=string_to_uri(uri->value);
-
-                                        }else{
-                                            TSK_DEBUG_ERROR("Error: the mcptt_calling_group_id isn?t exist");
-                                            xmlXPathFreeContext(pPathCtx);
-                                            xmlFreeDoc(pDoc);
-                                            tsk_free(&xmlContent);
-                                            return tsk_false;
-                                        }
-
-                                    }
-
-                                }else{
-                                    TSK_DEBUG_ERROR("Error: type session isn?t valid: %s", session_type->value);
-                                    xmlXPathFreeContext(pPathCtx);
-                                    xmlFreeDoc(pDoc);
-                                    tsk_free(&xmlContent);
-                                    return tsk_false;
-                                }
-                                if(TSIP_DIALOG_GET_SS(self)->pttMCPTT.ptt_caller_uri == tsk_null)
-                                    TSIP_DIALOG_GET_SS(self)->pttMCPTT.ptt_caller_uri=tsip_uri_tostring(mcptt_calling_user_id, tsk_true, tsk_true);
-
-                                tmedia_session_mgr_set(self->msession_mgr,
-                                                       TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"type_session",(TSIP_DIALOG_GET_SS(self)->media.type)),
-                                                       TMEDIA_SESSION_SET_POBJECT(tmedia_mcptt, "mcptt_request_uri", mcptt_request_uri),
-                                                       TMEDIA_SESSION_SET_POBJECT(tmedia_mcptt, "mcptt_calling_user_id", mcptt_calling_user_id),
-                                                       TMEDIA_SESSION_SET_POBJECT(tmedia_mcptt, "mcptt_called_party_id",mcptt_called_party_id),
-                                                       TMEDIA_SESSION_SET_POBJECT(tmedia_mcptt, "mcptt_calling_group_id", mcptt_calling_group_id),
-                                                       TMEDIA_SESSION_SET_NULL());
-
-                            }
-
-
-
-
-
-
-                            xmlXPathFreeObject(pPathObj);
-
-                            xmlXPathFreeContext(pPathCtx);
-                            xmlFreeDoc(pDoc);
-
-                            tsk_free(&xmlContent);
-                        }
-                    }
-                }
-            }
         }
+        processing_body_invite(self,message);
+
 
         // media type could change if there are zombies (medias with port equal to zero)
         //TSIP_DIALOG_GET_SS(self)->media.type = self->msession_mgr->type;
@@ -505,6 +249,453 @@ static tsk_bool_t _fsm_cond_bad_content(tsip_dialog_invite_t* self, tsip_message
     }
 
     return tsk_false;
+}
+
+static tsk_bool_t _fsm_cond_bad_auto_call(tsip_dialog_invite_t* self, tsip_message_t* message)
+{
+    /*
+     * If the answer is TRUE, it means that the call is an automatic response. But on the other hand, if it is FALSE, it means that it is a normal call and must be treated as such.
+     * */
+    //test
+    tsk_size_t i;
+
+    const tsip_header_t* priv_ans_mode=tsk_null;
+    const tsip_header_t* hdr=tsk_null;
+    const tsip_header_t* ans_mode=tsk_null;
+    for(i=0;(hdr = tsip_message_get_headerAt(message, tsip_htype_Dummy, i)) && (priv_ans_mode==tsk_null || ans_mode==tsk_null); i++)
+    {
+        const tsip_header_Dummy_t* dummy_hdr = (const tsip_header_Dummy_t*)hdr;
+        if(tsk_strcmp(dummy_hdr->name, "Priv-Answer-Mode") == 0)
+        {
+            priv_ans_mode=hdr;
+        }else if(tsk_strcmp(dummy_hdr->name, "Answer-Mode") == 0){
+            ans_mode=hdr;
+        }
+    }
+    //TODO: The operation of accepting the call automatically has not yet been verified correctly, and if it is necessary to distinguish the sending configuration of "answer mode" with the reception of the same.
+    if(priv_ans_mode != tsk_null && tsk_strcmp("Auto",((tsip_header_Referred_By_t*)priv_ans_mode)->uri )==0){
+        //It is mandatory to accept the call automatically
+        return tsk_true;
+    }else if(ans_mode != tsk_null && tsk_strcmp("Auto",((tsip_header_Referred_By_t*)ans_mode)->uri )==0
+		/*&& self && TSIP_DIALOG_GET_STACK(self) && TSIP_DIALOG_GET_STACK(self)->pttMCPTT.mcptt_answer_mode==tsk_true*/){
+        //It must be verified that automatic response is allowed or not in the user configuration.
+        return tsk_true;
+    }
+
+
+    return tsk_false;
+
+}
+
+
+static tsk_buffer_t* processing_body_invite(tsip_dialog_invite_t* self, tsip_message_t* message){
+
+
+        if(tsk_striequals("multipart/mixed", TSIP_MESSAGE_CONTENT_TYPE(message)))
+    {
+        tsk_string_t *boolean_emergency_string=tsk_null;
+        uint32_t floorControlNO = 0;
+        uint32_t floorControlYES = 1;
+        uint32_t withFloorControl=floorControlNO;
+        tmedia_multipart_body_t* mp_body = tsk_null;
+        tmedia_content_multipart_t* mp_content = tsk_null;
+        char* boundary = tsk_null;
+
+        boundary = tsip_header_get_param_value((tsip_header_t*)message->Content_Type, "boundary");
+        if(boundary != tsk_null)
+        {
+            mp_body = tmedia_content_multipart_body_parse(TSIP_MESSAGE_CONTENT_DATA(message), TSIP_MESSAGE_CONTENT_DATA_LENGTH(message), "multipart/mixed", boundary);
+
+            if(mp_body != tsk_null)
+            {
+                mp_content = tmedia_content_multipart_body_get_content(mp_body, "application/vnd.3gpp.mcptt-info+xml");
+                if(mp_content != tsk_null)
+                {
+                    xmlDoc *pDoc;
+                    xmlNode *pRootElement;
+                    xmlXPathContext *pPathCtx;
+                    xmlXPathObject *pPathObj;
+                    tsip_uri_t* mcptt_request_uri;
+                    tsip_uri_t* mcptt_calling_user_id;//mcptt-calling-user-id
+                    tsip_uri_t* mcptt_called_party_id;
+                    tsip_uri_t* mcptt_calling_group_id;
+
+
+                    static const xmlChar* __xpath_expr_session_type = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='session-type']";//<session-type>
+                    static const xmlChar* __xpath_expr_mcptt_request_uri_old = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='mcptt-request-uri']";//<mcptt-request-uri>
+                    static const xmlChar* __xpath_expr_mcptt_calling_user_id_old = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='mcptt-calling-user-id']";//<mcptt-calling-user-id>
+                    static const xmlChar* __xpath_expr_mcptt_called_party_id_old = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='mcptt-called-party-id']";//<mcptt-called-party-id>
+                    static const xmlChar* __xpath_expr_mcptt_calling_group_id_old = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='mcptt-calling-group-id']";//mcptt-calling-group-id
+                    static const xmlChar* __xpath_expr_mcptt_request_uri = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='mcptt-request-uri']/*[local-name()='mcpttURI']";//<mcptt-request-uri><mcpttURI>
+                    static const xmlChar* __xpath_expr_mcptt_calling_user_id = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='mcptt-calling-user-id']/*[local-name()='mcpttURI']";//<mcptt-calling-user-id><mcpttURI>
+                    static const xmlChar* __xpath_expr_mcptt_called_party_id = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='mcptt-called-party-id']/*[local-name()='mcpttURI']";//<mcptt-called-party-id><mcpttURI>
+                    static const xmlChar* __xpath_expr_mcptt_calling_group_id = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='mcptt-calling-group-id']/*[local-name()='mcpttURI']";//<mcptt-calling-group-id><mcpttURI>
+                    //MCPTT emergency
+                    static const xmlChar* __xpath_expr_mcptt_emergency_ind = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='emergency-ind']/*[local-name()='mcpttBoolean']";//<emergency-ind><mcpttBoolean>
+                    static const xmlChar* __xpath_expr_mcptt_alert_ind = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='alert-ind']/*[local-name()='mcpttBoolean']";//<alert-ind><mcpttBoolean>
+                    static const xmlChar* __xpath_expr_imminentperil_ind = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='imminentperil-ind']/*[local-name()='mcpttBoolean']";//<imminentperil-ind><mcpttBoolean>
+
+
+                    static const xmlChar* __xml_namespace_mcptt_info = (const xmlChar*)MCPTT_INFO_PARAMS;
+                    char* xmlContent;
+
+                    mcptt_request_uri=tsk_null;
+                    mcptt_calling_user_id=tsk_null;
+                    mcptt_called_party_id=tsk_null;
+                    mcptt_calling_group_id=tsk_null;
+
+#if HAVE_CRT //Debug memory
+                    xmlContent = (char*)calloc((mp_content->data_size + 1), sizeof(char));
+
+#else
+                    xmlContent = (char*)tsk_calloc((mp_content->data_size + 1), sizeof(char));
+
+#endif //HAVE_CRT
+
+                    memcpy(xmlContent, mp_content->data, mp_content->data_size);
+                    xmlContent[mp_content->data_size] = '\0';
+
+                    if (!(pDoc = xmlParseDoc(xmlContent))) {
+                        TSK_DEBUG_ERROR("Failed to parse XML content ");
+                        tsk_free(&xmlContent);
+                        return tsk_false;
+                    }
+                    if (!(pRootElement = xmlDocGetRootElement(pDoc))) {
+                        TSK_DEBUG_ERROR("Failed to get root element from XML content");
+                        xmlFreeDoc(pDoc);
+                        tsk_free(&xmlContent);
+                        return tsk_false;
+                    }
+                    if (!(pPathCtx = xmlXPathNewContext(pDoc))) {
+                        TSK_DEBUG_ERROR("Failed to create path context from XML content");
+                        xmlFreeDoc(pDoc);
+                        tsk_free(&xmlContent);
+                        return tsk_false;
+                    }
+
+                    if(register_xml_namespaces(pPathCtx, __xml_namespace_mcptt_info) < 0)
+                    {
+                        TSK_DEBUG_ERROR("Error: unable to register namespaces:mcptt-info");
+                        xmlXPathFreeContext(pPathCtx);
+                        xmlFreeDoc(pDoc);
+                        tsk_free(&xmlContent);
+                        return tsk_false;
+                    }
+
+
+                    //mcptt_request_uri
+                    if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_request_uri, pPathCtx))) {
+                        TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: mcptt_request_uri");
+                        xmlXPathFreeContext(pPathCtx);
+                        xmlFreeDoc(pDoc);
+                        tsk_free(&xmlContent);
+                        return tsk_false;
+                    }
+
+                    if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
+                    {
+                        tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
+                        mcptt_request_uri=string_to_uri(uri->value);
+
+                    }else{
+                        if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_request_uri_old, pPathCtx))) {
+                            TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: request_uri");
+                            xmlXPathFreeContext(pPathCtx);
+                            xmlFreeDoc(pDoc);
+                            tsk_free(&xmlContent);
+                            return tsk_false;
+                        }
+                        if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
+                        {
+                            tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
+                            mcptt_request_uri=string_to_uri(uri->value);
+
+                        }else{
+                            TSK_DEBUG_ERROR("Error: the mcptt_request_uri isn?t exist");
+                            xmlXPathFreeContext(pPathCtx);
+                            xmlFreeDoc(pDoc);
+                            tsk_free(&xmlContent);
+                            return tsk_false;
+                        }
+                    }
+
+                    //mcptt_calling_user_id
+                    if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_calling_user_id, pPathCtx))) {
+                        TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: calling-user-id");
+                        xmlXPathFreeContext(pPathCtx);
+                        xmlFreeDoc(pDoc);
+                        tsk_free(&xmlContent);
+                        return tsk_false;
+                    }
+
+                    if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
+                    {
+                        tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
+                        mcptt_calling_user_id=string_to_uri(uri->value);
+                    }else{
+                        if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_calling_user_id_old, pPathCtx))) {
+                            TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: user-id-old");
+                            xmlXPathFreeContext(pPathCtx);
+                            xmlFreeDoc(pDoc);
+                            tsk_free(&xmlContent);
+                            return tsk_false;
+                        }
+                        if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
+                        {
+                            tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
+                            mcptt_calling_user_id=string_to_uri(uri->value);
+                        }else{
+                            TSK_DEBUG_ERROR("Error: the mcptt_calling_user_id isn?t exist:");
+                            xmlXPathFreeContext(pPathCtx);
+                            xmlFreeDoc(pDoc);
+                            tsk_free(&xmlContent);
+                            return tsk_false;
+                        }
+
+                    }
+
+
+
+                    //<session-type>
+                    if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_session_type, pPathCtx))) {
+                        TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: session-type");
+                        xmlXPathFreeContext(pPathCtx);
+                        xmlFreeDoc(pDoc);
+                        tsk_free(&xmlContent);
+                        return tsk_false;
+                    }
+
+
+
+                    if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
+                    {
+                        tsk_string_t* session_type = tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
+                        if(tsk_striequals(session_type->value,"private")==tsk_true){
+                            //Session MCPTT is private
+                            if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_audio_ptt_mcptt) == tmedia_audio_ptt_mcptt){
+                                TSIP_DIALOG_GET_SS(self)->media.type=tmedia_audio_ptt_mcptt_with_floor_control;
+                            }else{
+                                TSIP_DIALOG_GET_SS(self)->media.type=tmedia_audio_ptt_mcptt;// for with out floot control
+                            }
+
+
+                            //__xpath_expr_mcptt_called_party_id
+                            if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_called_party_id, pPathCtx))) {
+                                TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: mcptt-called-party-id");
+                                xmlXPathFreeContext(pPathCtx);
+                                xmlFreeDoc(pDoc);
+                                tsk_free(&xmlContent);
+                                return tsk_false;
+                            }
+                            //VERSION OLD MCPTTINFO
+                            if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
+                            {
+                                tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
+                                mcptt_called_party_id=string_to_uri(uri->value);
+
+
+                            }else{
+
+                                if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_called_party_id_old, pPathCtx))) {
+                                    TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: mcptt-called-parted-id");
+                                    xmlXPathFreeContext(pPathCtx);
+                                    xmlFreeDoc(pDoc);
+                                    tsk_free(&xmlContent);
+                                    return tsk_false;
+                                }
+                                if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
+                                {
+                                    tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
+                                    mcptt_called_party_id=string_to_uri(uri->value);
+
+
+                                }else{
+                                    TSK_DEBUG_ERROR("Error: the mcptt_called_party_id isn?t exist");
+                                    xmlXPathFreeContext(pPathCtx);
+                                    xmlFreeDoc(pDoc);
+                                    tsk_free(&xmlContent);
+                                    return tsk_false;
+                                }
+
+                            }
+
+
+                        }
+                        else if(tsk_striequals(session_type->value,"prearranged")==tsk_true){
+                            //Session MCPTT is group
+							tsip_ssession_t* tsip_ssession=TSIP_DIALOG_GET_SS(self);
+							tsip_ssession->media.type=tmedia_audio_ptt_group_mcptt_with_floor_control;
+                            //__xpath_expr_mcptt_calling_group_id
+                            if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_calling_group_id, pPathCtx))) {
+                                TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: mcptt_calling_group_id");
+                                xmlXPathFreeContext(pPathCtx);
+                                xmlFreeDoc(pDoc);
+                                tsk_free(&xmlContent);
+                                return tsk_false;
+                            }
+
+                            if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
+                            {
+                                tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
+
+                                mcptt_calling_group_id=string_to_uri(uri->value);
+
+								 if(mcptt_calling_group_id && TSIP_DIALOG_GET_SS(self)->pttMCPTT.ptt_group_uri == tsk_null){
+                                    /*
+								     #if HAVE_CRT //Debug memory
+                                     tsip_ssession->pttMCPTT.ptt_group_uri = malloc(strlen(uri->value) + 1);
+                                    #else
+                                     */
+                                    /*
+                                     tsip_ssession->pttMCPTT.ptt_group_uri = tsk_malloc(strlen(uri->value) + 1);
+                                     strcpy(tsip_ssession->pttMCPTT.ptt_group_uri,uri->value);
+                                       */
+                                     tsip_ssession->pttMCPTT.ptt_group_uri=tsip_uri_tostring(mcptt_calling_group_id,tsk_false,tsk_false);
+								 }
+
+                            }else{
+                                //VERSION OLD MCPTTINFO
+                                if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_calling_group_id_old, pPathCtx))) {
+                                    TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: mcptt_calling_group_id");
+                                    xmlXPathFreeContext(pPathCtx);
+                                    xmlFreeDoc(pDoc);
+                                    tsk_free(&xmlContent);
+                                    return tsk_false;
+                                }
+                                if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
+                                {
+                                    tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
+                                    mcptt_calling_group_id=string_to_uri(uri->value);
+
+                                }else{
+                                    TSK_DEBUG_ERROR("Error: the mcptt_calling_group_id isn?t exist");
+                                    xmlXPathFreeContext(pPathCtx);
+                                    xmlFreeDoc(pDoc);
+                                    tsk_free(&xmlContent);
+                                    return tsk_false;
+                                }
+
+                            }
+
+                        }
+                        else if(tsk_striequals(session_type->value,"chat")==tsk_true){
+                            //Session MCPTT is Chat group call.
+                            TSIP_DIALOG_GET_SS(self)->media.type=tmedia_audio_ptt_chat_group_mcptt_with_floor_control;
+
+                            //__xpath_expr_mcptt_calling_group_id
+                            if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_calling_group_id, pPathCtx))) {
+                                TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: mcptt_calling_group_id");
+                                xmlXPathFreeContext(pPathCtx);
+                                xmlFreeDoc(pDoc);
+                                tsk_free(&xmlContent);
+                                return tsk_false;
+                            }
+
+                            if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
+                            {
+                                tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
+                                mcptt_calling_group_id=string_to_uri(uri->value);
+
+                            }else{
+                                //VERSION OLD MCPTTINFO
+                                if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_calling_group_id_old, pPathCtx))) {
+                                    TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: mcptt_calling_group_id");
+                                    xmlXPathFreeContext(pPathCtx);
+                                    xmlFreeDoc(pDoc);
+                                    tsk_free(&xmlContent);
+                                    return tsk_false;
+                                }
+                                if (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0 )
+                                {
+                                    tsk_string_t *uri=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content);
+                                    mcptt_calling_group_id=string_to_uri(uri->value);
+
+                                }else{
+                                    TSK_DEBUG_ERROR("Error: the mcptt_calling_group_id isn?t exist");
+                                    xmlXPathFreeContext(pPathCtx);
+                                    xmlFreeDoc(pDoc);
+                                    tsk_free(&xmlContent);
+                                    return tsk_false;
+                                }
+
+                            }
+
+                        }
+
+                        else{
+                            TSK_DEBUG_ERROR("Error: type session isn?t valid: ");
+                            xmlXPathFreeContext(pPathCtx);
+                            xmlFreeDoc(pDoc);
+                            tsk_free(&xmlContent);
+                            return tsk_false;
+                        }
+                        /*
+                        static const xmlChar* __xpath_expr_mcptt_emergency_ind = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='emergency-ind']/*[local-name()='mcpttBoolean']";//<emergency-ind><mcpttBoolean>
+                    static const xmlChar* __xpath_expr_mcptt_alert_ind = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='alert-ind']/*[local-name()='mcpttBoolean']";//<alert-ind><mcpttBoolean>
+                    static const xmlChar* __xpath_expr_imminentperil_ind = (const xmlChar*)"/*[local-name()='mcpttinfo']/*[local-name()='mcptt-Params']/*[local-name()='imminentperil-ind']/*[local-name()='mcpttBoolean']";//<imminentperil-ind><mcpttBoolean>
+
+                    if(tsk_striequals(session_type->value,"private")==tsk_true){
+
+                        */
+                        //MCPTT emergency
+                        //Now check if the call is type emergency and which type is.
+                        //__xpath_expr_mcptt_calling_group_id
+                        if ((pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_emergency_ind, pPathCtx)) &&
+                            (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0) &&
+                            (boolean_emergency_string=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content)) &&
+                            tsk_striequals(boolean_emergency_string->value,"True")==tsk_true) {
+                            //Session MCPTT is EMERGENCY
+                            TSIP_DIALOG_GET_SS(self)->media.type=TSIP_DIALOG_GET_SS(self)->media.type | tmedia_emergency | tmedia_floor_control;
+                            TSK_DEBUG_INFO("This call is type emergency");
+                        }else if((pPathObj = xmlXPathEvalExpression(__xpath_expr_mcptt_alert_ind, pPathCtx)) &&
+                                 (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0) &&
+                                 (boolean_emergency_string=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content)) &&
+                                 tsk_striequals(boolean_emergency_string->value,"True")==tsk_true){
+                            //Session MCPTT is ALERT
+                            TSIP_DIALOG_GET_SS(self)->media.type=TSIP_DIALOG_GET_SS(self)->media.type | tmedia_alert | tmedia_floor_control;
+                            TSK_DEBUG_INFO("This call is type alert");
+                        }else if((pPathObj = xmlXPathEvalExpression(__xpath_expr_imminentperil_ind, pPathCtx)) &&
+                                 (pPathObj->type == XPATH_NODESET && pPathObj->nodesetval != tsk_null && pPathObj->nodesetval->nodeNr >0) &&
+                                 (boolean_emergency_string=tsk_string_create(pPathObj->nodesetval->nodeTab[0]->children->content)) &&
+                                 tsk_striequals(boolean_emergency_string->value,"True")==tsk_true){
+                            //Session MCPTT is IMMINENTPERIL
+                            TSIP_DIALOG_GET_SS(self)->media.type=TSIP_DIALOG_GET_SS(self)->media.type | tmedia_imminentperil | tmedia_floor_control;
+                            TSK_DEBUG_INFO("This call is type imminentperil");
+                        }else{
+                            TSK_DEBUG_INFO("This call isn?t type emergency");
+                        }
+                        if(TSIP_DIALOG_GET_SS(self)->pttMCPTT.ptt_caller_uri == tsk_null)
+                            TSIP_DIALOG_GET_SS(self)->pttMCPTT.ptt_caller_uri=tsip_uri_tostring(mcptt_calling_user_id, tsk_true, tsk_true);
+                        if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_floor_control) == tmedia_floor_control) {
+                            withFloorControl=floorControlYES;
+                        }
+
+                        tmedia_session_mgr_set(self->msession_mgr,
+                                               TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"type_session",(TSIP_DIALOG_GET_SS(self)->media.type)),
+                                               TMEDIA_SESSION_SET_POBJECT(tmedia_mcptt, "mcptt_request_uri", mcptt_request_uri),
+											   TMEDIA_SESSION_SET_INT32(tmedia_mcptt, "with_floor_control",withFloorControl),//for fulduplex call
+                                               TMEDIA_SESSION_SET_POBJECT(tmedia_mcptt, "mcptt_calling_user_id", mcptt_calling_user_id),
+                                               TMEDIA_SESSION_SET_POBJECT(tmedia_mcptt, "mcptt_called_party_id",mcptt_called_party_id),
+                                               TMEDIA_SESSION_SET_POBJECT(tmedia_mcptt, "mcptt_calling_group_id", mcptt_calling_group_id),
+                                               TMEDIA_SESSION_SET_NULL());
+
+                    }
+
+
+
+
+
+
+                    xmlXPathFreeObject(pPathObj);
+
+                    xmlXPathFreeContext(pPathCtx);
+                    xmlFreeDoc(pDoc);
+
+                    tsk_free(&xmlContent);
+                }
+            }
+        }
+    }
 }
 
 static tsk_bool_t _fsm_cond_toosmall(tsip_dialog_invite_t* self, tsip_message_t* message)
@@ -611,6 +802,8 @@ int tsip_dialog_invite_server_init(tsip_dialog_invite_t *self)
                        TSK_FSM_ADD(_fsm_state_Started, _fsm_action_iINVITE, _fsm_cond_toosmall, _fsm_state_Started, s0000_Started_2_Started_X_iINVITE, "s0000_Started_2_Started_X_iINVITE"),
             // Started -> (100rel && (QoS or ICE)) -> InProgress
                        TSK_FSM_ADD(_fsm_state_Started, _fsm_action_iINVITE, _fsm_cond_use_early_media, _fsm_state_InProgress, s0000_Started_2_InProgress_X_iINVITE, "s0000_Started_2_InProgress_X_iINVITE"),
+            // Started -> (non-100rel and non-QoS, referred to as "basic") -> Accept to connect
+                       TSK_FSM_ADD(_fsm_state_Started, _fsm_action_iINVITE,_fsm_cond_bad_auto_call, _fsm_state_Connected, s0000_Started_2_Connected_X_iINVITE, "s0000_Started_2_Connected_X_iINVITE"),
             // Started -> (non-100rel and non-QoS, referred to as "basic") -> Ringing
                        TSK_FSM_ADD_ALWAYS(_fsm_state_Started, _fsm_action_iINVITE, _fsm_state_Ringing, s0000_Started_2_Ringing_X_iINVITE, "s0000_Started_2_Ringing_X_iINVITE"),
 
@@ -964,6 +1157,98 @@ int s0000_Ringing_2_Ringing_X_iPRACK(va_list *app)
     return ret;
 }
 
+
+/* Started -> (iINVITE) -> Connected */
+int s0000_Started_2_Connected_X_iINVITE(va_list *app)
+{
+
+    int ret;
+
+    tsip_dialog_invite_t *self;
+    //const tsip_action_t* action;
+    tsk_bool_t mediaType_changed;
+
+    self = va_arg(*app, tsip_dialog_invite_t *);
+    //va_arg(*app, const tsip_message_t *);
+    //action = va_arg(*app, const tsip_action_t *);
+
+    //tsip_dialog_invite_t *self = va_arg(*app, tsip_dialog_invite_t *);
+    tsip_request_t *request = va_arg(*app, tsip_request_t *);
+
+    self->is_client = tsk_false;
+
+    TSK_DEBUG_INFO("s0000_Started_2_Connected_X_iINVITE");
+
+
+    /* Determine whether the remote party support UPDATE */
+    self->support_update = tsip_message_allowed(self->last_iInvite, "UPDATE");
+
+
+    /* Get Media type from the action */
+    /*
+    mediaType_changed = (TSIP_DIALOG_GET_SS(self)->media.type != action->media.type && action->media.type != tmedia_none);
+    if(self->msession_mgr && mediaType_changed){
+        ret = tmedia_session_mgr_set_media_type(self->msession_mgr, action->media.type);
+    }
+*/
+    /* Appy media params received from the user */
+  /*
+    if(!TSK_LIST_IS_EMPTY(action->media.params)){
+        ret = tmedia_session_mgr_set_3(self->msession_mgr, action->media.params);
+    }
+*/
+    /* set MSRP callback */
+    /*
+    if((self->msession_mgr->type & tmedia_msrp) == tmedia_msrp){
+        ret = tmedia_session_mgr_set_msrp_cb(self->msession_mgr, TSIP_DIALOG_GET_SS(self)->userdata, TSIP_DIALOG_GET_SS(self)->media.msrp.callback);
+    }
+    */
+    /* Cancel 100rel timer */
+    TSIP_DIALOG_TIMER_CANCEL(100rel);
+
+    /* send 2xx OK */
+    ret = send_RESPONSE(self,request, 200, "OK", tsk_true);
+
+    /* say we're waiting for the incoming ACK */
+    self->is_initial_iack_pending = tsk_true;
+
+    /* do not start the session until we get the ACK message
+    * http://code.google.com/p/doubango/issues/detail?id=157
+    */
+    /* do not start the session until we get at least one remote SDP
+     * https://code.google.com/p/doubango/issues/detail?id=438
+     */
+    // FIXME: (chrome) <-RTCWeb Breaker-> (chrome) do not work if media session is not started on i200
+    // http://code.google.com/p/webrtc2sip/issues/detail?id=45
+    if(/*TSIP_DIALOG_GET_STACK(self)->network.mode == tsip_stack_mode_webrtc2sip*/ TSIP_MESSAGE_HAS_CONTENT(self->last_iInvite)){
+        ret = tsip_dialog_invite_msession_start(self);
+    }
+
+    /* Session Timers */
+    if(self->stimers.timer.timeout){
+        if(self->stimers.is_refresher){
+            /* RFC 4028 - 9. UAS Behavior
+                It is RECOMMENDED that this refresh be sent oncehalf the session interval has elapsed.
+                Additional procedures for this refresh are described in Section 10.
+            */
+            tsip_dialog_invite_stimers_schedule(self, (self->stimers.timer.timeout*1000)/2);
+        }
+        else{
+            tsip_dialog_invite_stimers_schedule(self, (self->stimers.timer.timeout*1000));
+        }
+    }
+    /* update state */
+    tsip_dialog_update_2(TSIP_DIALOG(self), request);
+
+    /* alert the user */
+
+    TSIP_DIALOG_INVITE_SIGNAL(self, tsip_i_newcall,
+                              tsip_event_code_dialog_connected, "connected request.", request);
+
+
+    return ret;
+}
+
 /* Ringing -> (oAccept) -> Connected */
 int s0000_Ringing_2_Connected_X_Accept(va_list *app)
 {
@@ -1034,6 +1319,8 @@ int s0000_Ringing_2_Connected_X_Accept(va_list *app)
             tsip_dialog_invite_stimers_schedule(self, (self->stimers.timer.timeout*1000));
         }
     }
+
+
 
     /* alert the user (dialog) */
     TSIP_DIALOG_SIGNAL(self, tsip_event_code_dialog_connected, "Dialog connected");
@@ -1237,7 +1524,7 @@ static tsip_uri_t *string_to_uri(const char* stringData){
         return uri;
     }
     else
-    TSK_DEBUG_ERROR("'%s' is not uri", stringData);
+    TSK_DEBUG_ERROR("is not uri");
     return uri;
 }
 

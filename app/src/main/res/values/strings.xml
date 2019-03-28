@@ -1,6 +1,5 @@
 <!--
   ~
-  ~ * Copyright (C) 2018 Eduardo Zarate Lasurtegui
   ~ *  Copyright (C) 2018, University of the Basque Country (UPV/EHU)
   ~ *
   ~ * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -29,6 +28,11 @@
     <string name="Not_be_connected_with_the_service">Not connected to Service: </string>
     <string name="Error_when_accessing_service">Error accessing Service: </string>
     <!--END-->
+
+    <string name="Cancel">Cancel</string>
+    <string name="Ok">Ok</string>
+
+
 
 </resources>
 

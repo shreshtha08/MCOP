@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -32,6 +31,7 @@ import android.hardware.Camera.PreviewCallback;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
+import org.doubango.ngn.BuildConfig;
 import org.doubango.ngn.NgnApplication;
 import org.doubango.ngn.NgnEngine;
 import org.doubango.ngn.utils.NgnConfigurationEntry;
@@ -237,17 +237,22 @@ public class NgnCameraProducer {
 	}
 	
 	private static void initializeCallbacks(PreviewCallback callback, Camera camera){
+		if(BuildConfig.DEBUG)Log.d(TAG,"initializeCallbacks");
 		if(camera != null){
 			if(NgnCameraProducer.setPreviewCallbackWithBufferMethod != null){
+				if(BuildConfig.DEBUG)Log.w(TAG,"initializeCallbacks NgnCameraProducer.setPreviewCallbackWithBufferMethod!=null");
 				try {
 					NgnCameraProducer.setPreviewCallbackWithBufferMethod.invoke(camera, callback);
 				} catch (Exception e) {
-					Log.e(NgnCameraProducer.TAG, e.toString());
+					if(BuildConfig.DEBUG)Log.e(NgnCameraProducer.TAG,"Error in initializeCallbacks"+ e.toString());
 				}
 			}
 			else{
+				if(BuildConfig.DEBUG)Log.d(TAG,"initializeCallbacks NgnCameraProducer.setPreviewCallbackWithBufferMethod==null");
 				camera.setPreviewCallback(callback);
 			}
+		}else{
+			if(BuildConfig.DEBUG)Log.w(TAG,"Camera is null in initializeCallbacks");
 		}
 	}
 	

@@ -93,8 +93,13 @@ public class NgnProxyVideoConsumerSV extends NgnProxyVideoConsumer{
     public void setContext(Context context){
     	mContext = context;
     }
-    
-    @Override
+
+	/**
+	 *
+	 * @param context
+	 * @return This "View" is used to present the video on screen
+	 */
+	@Override
     public final View startPreview(Context context){
 		Log.d(TAG,"start Preview");
     	mContext = context == null ? mContext : context;
@@ -224,6 +229,7 @@ public class NgnProxyVideoConsumerSV extends NgnProxyVideoConsumer{
     }
     
    // @deprecated: never called
+	@Deprecated
     private int consumeCallback(ProxyVideoFrame _frame){    	
 		if(!super.mValid || mRGB565Bitmap == null){
 			Log.e(TAG, "Invalid state");
@@ -266,6 +272,9 @@ public class NgnProxyVideoConsumerSV extends NgnProxyVideoConsumer{
 			if(canvas == null){
 				return;
 			}
+			/**
+			 * Copy byteBuffer from MCVideo
+			 */
 			mRGB565Bitmap.copyPixelsFromBuffer(mVideoFrame);
 			if(super.mFullScreenRequired){
 				// destroy cropped bitmap if surface has changed
@@ -342,12 +351,16 @@ public class NgnProxyVideoConsumerSV extends NgnProxyVideoConsumer{
         }
 
         @Override
+		@Deprecated
         public int consume(ProxyVideoFrame frame){
             return myConsumer.consumeCallback(frame);
         }        
         
         @Override
 		public int bufferCopied(long nCopiedSize, long nAvailableSize) {
+        	/*
+        	the Frame has been copied
+        	 */
 			return myConsumer.bufferCopiedCallback(nCopiedSize, nAvailableSize);
 		}
 
@@ -370,6 +383,7 @@ public class NgnProxyVideoConsumerSV extends NgnProxyVideoConsumer{
 	
 	/**
 	 * MyProxyVideoConsumerPreview
+	 * This "View" is used to present the video on screen
 	 */
 	static class MyProxyVideoConsumerPreview extends SurfaceView implements SurfaceHolder.Callback {
 		private final SurfaceHolder mHolder;
@@ -378,7 +392,7 @@ public class NgnProxyVideoConsumerSV extends NgnProxyVideoConsumer{
 		private Rect mSurfDisplay;
 		private final float mRatio;
 		private boolean mSurfaceChanged;
-		
+
 		MyProxyVideoConsumerPreview(Context context, int width, int height, int fps) {
 			super(context);
 			

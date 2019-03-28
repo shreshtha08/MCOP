@@ -83,7 +83,7 @@ typedef enum tsip_event_type_e
 {
 	tsip_event_invite,
 	tsip_event_message,
-	//By Eduardo
+	//
 	tsip_event_message_location,
 	//MCPTT affiliation
 	tsip_event_message_affiliatio,

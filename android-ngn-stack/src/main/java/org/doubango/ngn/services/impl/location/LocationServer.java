@@ -1,23 +1,23 @@
 /*
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui
-*  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
-*
-* Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
-*
-* This file is part of MCOP MCPTT Client
-*
-* This is free software: you can redistribute it and/or modify it under the terms of
-* the GNU General Public License as published by the Free Software Foundation, either version 3
-* of the License, or (at your option) any later version.
-*
-* This is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-* See the GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License along
-* with this program; if not, write to the Free Software Foundation, Inc.,
-* 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/
+
+ *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
+ *
+ * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
+ *
+ * This file is part of MCOP MCPTT Client
+ *
+ * This is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
+ *
+ * This is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
 
 package org.doubango.ngn.services.impl.location;
 
@@ -47,10 +47,15 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
+import org.doubango.ngn.BuildConfig;
 import org.doubango.ngn.NgnApplication;
 import org.doubango.ngn.datatype.location.DataCell;
 import org.doubango.ngn.datatype.location.DataReport;
@@ -91,7 +96,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-class LocationServer implements android.location.LocationListener, LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class LocationServer implements android.location.LocationListener, LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     private final static String TAG = Utils.getTAG(LocationServer.class.getCanonicalName());
 
     public static final String ACTION_CONFIGURE = TAG + ".ACTION_CONFIGURE";
@@ -102,7 +107,9 @@ class LocationServer implements android.location.LocationListener, LocationListe
     private static final int NUM_CHARS_MNC = 3;
     private static final int MAX_NUM_POINT_POLYGON = 20;
     private static final int MIN_NUM_POINT_POLYGON = 3;
-    private static final int MIN_INTERVAL_LOCATION_MSEG=1000;
+    private static final int MIN_INTERVAL_LOCATION_MSEG = 1000;
+    private com.google.android.gms.location.FusedLocationProviderClient mFusedLocationClient;
+    private static final boolean USE_NEW_VERSION_LOCATION = true;
 
 
     private Context context;
@@ -131,21 +138,22 @@ class LocationServer implements android.location.LocationListener, LocationListe
     private PendingResult<Status> statusPendingResultLocation;
     private static LocationServer mLocationServer;
     private Runnable runnableService;
-    private boolean isOldVersion=false;
+    private boolean isOldVersion = false;
+    private LocationCallback mLocationCallback;
 
 
-    protected LocationServer() {
+    public LocationServer() {
     }
 
-    protected static LocationServer getInstance(Context context, Intent intent,boolean isOldVersion) {
+    protected static LocationServer getInstance(Context context, Intent intent, boolean isOldVersion) {
         if (mLocationServer == null || intent != null) {
-            mLocationServer = new LocationServer(context, intent,isOldVersion);
+            mLocationServer = new LocationServer(context, intent, isOldVersion);
         }
         return mLocationServer;
     }
 
 
-    protected LocationServer(Context context, Intent intent,boolean oldVersion) {
+    protected LocationServer(Context context, Intent intent, boolean oldVersion) {
         Log.d(TAG, "Start service location.");
         if (context == null || intent == null) return;
         polynomPoints = new HashMap<>();
@@ -153,16 +161,25 @@ class LocationServer implements android.location.LocationListener, LocationListe
         byte[] datasConfigure = intent.getByteArrayExtra(ACTION_CONFIGURE);
         Boolean isConfigure = configure(datasConfigure);
         isStartLoclization = false;
-        isOldVersion=oldVersion;
+        isOldVersion = oldVersion;
         if (isConfigure) {
+            if (BuildConfig.DEBUG) Log.d(TAG, "Location is Configure");
 
 
             //Init Calendar
             lastCalendar = Calendar.getInstance();
             //Location start
             // Create an instance of GoogleAPIClient.
+
+
             if (mGoogleApiClient == null) {
-                Log.d(TAG, "Start Google API.");
+                if (BuildConfig.DEBUG) Log.d(TAG, "Start new version Google API.");
+                mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
+                startLocationUpdates(USE_NEW_VERSION_LOCATION);
+            }
+
+            if (mGoogleApiClient == null) {
+                if (BuildConfig.DEBUG) Log.d(TAG, "Start Google API.");
                 mGoogleApiClient = new GoogleApiClient.Builder(context)
                         .addConnectionCallbacks(this)
                         .addOnConnectionFailedListener(this)
@@ -170,6 +187,12 @@ class LocationServer implements android.location.LocationListener, LocationListe
                         .build();
                 mGoogleApiClient.connect();
             }
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                configureLastLocation(USE_NEW_VERSION_LOCATION);
+            }
+
             lastDataCell = getCurrentDataCell(context);
 
             isStart = true;
@@ -179,12 +202,14 @@ class LocationServer implements android.location.LocationListener, LocationListe
             return;
 
         } else {
-            Log.e(TAG, "No configuration.");
+            if (BuildConfig.DEBUG) Log.e(TAG, "Location No configuration.");
             if (onReportListener != null) onReportListener.onConfiguration(false);
         }
 
 
     }
+
+
 
     protected static boolean isRequestReport(Context context, byte[] datasReport) {
         return getLocationInfoRequestReport(context, datasReport) != null;
@@ -196,7 +221,7 @@ class LocationServer implements android.location.LocationListener, LocationListe
         if (datasReport == null || datasReport.length == 0) return null;
         try {
             //Log.d(TAG,"receive new data info for location: "+new String(datasReport));
-            LocationInfo locationInfoRequest = LocationUtils.getLocationInfo(datasReport,context);
+            LocationInfo locationInfoRequest = LocationUtils.getLocationInfo(datasReport, context);
             TRequestType requestType;
             if ((requestType = locationInfoRequest.getRequest()) != null && locationInfoRequest.getConfiguration() == null) {
                 if (requestType != null) {
@@ -217,8 +242,15 @@ class LocationServer implements android.location.LocationListener, LocationListe
             if (dataRequest == null || dataRequest.length == 0 || context == null) return false;
             LocationInfo locationInfoRequest = getLocationInfoRequestReport(context, dataRequest);
             if (locationInfoRequest == null || dataReportNoEmergency == null) return false;
-            Object locationInfoReport = createReport(dataReportNoEmergency, null, locationInfoRequest.getRequest().getRequestId(), context,isOldVersion);
-            if (isStart() && onReportListener != null) onReportListener.onReport(LocationUtils.getLocationInfoToString(locationInfoReport,context));
+            Object locationInfoReport = createReport(
+                    dataReportNoEmergency,
+                    null,
+                    locationInfoRequest.getRequest().getRequestId(),
+                    context,
+                    onReportListener != null ? onReportListener.isEmergency() : false,
+                    isOldVersion);
+            if (isStart() && onReportListener != null)
+                onReportListener.onReport(LocationUtils.getLocationInfoToString(locationInfoReport, context));
             return true;
         } catch (Exception e) {
             Log.e(TAG, "Error send report 1:" + e.getMessage());
@@ -226,12 +258,18 @@ class LocationServer implements android.location.LocationListener, LocationListe
         return false;
     }
 
-    private boolean sendRequestNow(Context context, String requestId,boolean oldVersion) {
+    private boolean sendRequestNow(Context context, String requestId, boolean oldVersion) {
         try {
             if (requestId == null || requestId.isEmpty() || context == null || dataReportNoEmergency == null)
                 return false;
-            Object locationInfoReport = createReport(dataReportNoEmergency, null, requestId, context, oldVersion);
-            if (onReportListener != null) onReportListener.onReport(LocationUtils.getLocationInfoToString(locationInfoReport,context));
+            Object locationInfoReport = createReport(dataReportNoEmergency,
+                    null,
+                    requestId,
+                    context,
+                    onReportListener != null ? onReportListener.isEmergency() : false,
+                    oldVersion);
+            if (onReportListener != null)
+                onReportListener.onReport(LocationUtils.getLocationInfoToString(locationInfoReport, context));
             return true;
         } catch (Exception e) {
             Log.e(TAG, "Error send report:" + e.getMessage());
@@ -245,7 +283,7 @@ class LocationServer implements android.location.LocationListener, LocationListe
             return;
         }
         handlerService = new Handler();
-        runnableService=new Runnable() {
+        runnableService = new Runnable() {
             @Override
             public void run() {
                 if (isStart) {
@@ -261,21 +299,27 @@ class LocationServer implements android.location.LocationListener, LocationListe
             }
         };
 
-        long intervalTimemseg=MIN_INTERVAL_LOCATION_MSEG;
-        if(dataReportNoEmergency!=null && (dataReportNoEmergency.getMinimumIntervalLength()*1000)>= MIN_INTERVAL_LOCATION_MSEG){
-            intervalTimemseg=(dataReportNoEmergency.getMinimumIntervalLength()*1000);
+        long intervalTimemseg = MIN_INTERVAL_LOCATION_MSEG;
+        if (dataReportNoEmergency != null && (dataReportNoEmergency.getMinimumIntervalLength() * 1000) >= MIN_INTERVAL_LOCATION_MSEG) {
+            intervalTimemseg = (dataReportNoEmergency.getMinimumIntervalLength() * 1000);
         }
         handlerService.postDelayed(runnableService
-        , intervalTimemseg);
+                , intervalTimemseg);
     }
-    protected boolean sendReportNow(List<String> triggersNow){
+
+    protected boolean sendReportNow(List<String> triggersNow) {
         //SendReport
-        Object locationInfo = createReport(dataReportNoEmergency, triggersNow, context, isOldVersion);
+
+        Object locationInfo = createReport(dataReportNoEmergency,
+                triggersNow,
+                context,
+                onReportListener != null ? onReportListener.isEmergency() : false,
+                isOldVersion);
         if (locationInfo != null) try {
             Log.d(TAG, "Triggers set.");
-            String reportString=null;
+            String reportString = null;
             if (onReportListener != null)
-                onReportListener.onReport(LocationUtils.getLocationInfoToString(locationInfo,context));
+                onReportListener.onReport(LocationUtils.getLocationInfoToString(locationInfo, context));
 
         } catch (Exception e) {
             Log.e(TAG, "Error generating XML Report:" + e.toString());
@@ -283,7 +327,6 @@ class LocationServer implements android.location.LocationListener, LocationListe
         }
         return true;
     }
-
 
 
     /**
@@ -297,8 +340,12 @@ class LocationServer implements android.location.LocationListener, LocationListe
     //INIT event for send report
     public interface OnReportListener {
         void onReport(String xmlReport);
+
         void onConfiguration(Boolean isConfiguration);
-        void errorLocation(String error,int code);
+
+        void errorLocation(String error, int code);
+
+        boolean isEmergency();
     }
 
     public void setOnClickItemAddListener(OnReportListener onReportListener) {
@@ -306,117 +353,164 @@ class LocationServer implements android.location.LocationListener, LocationListe
     }
 
     //END event for send report
-    private Object createReport(DataReport dataReport, List<String> triggers, Context context,boolean oldVersion) {
-        return createReport(dataReport, triggers, null, context, oldVersion);
+
+
+    protected String createReport(Context context) {
+        Object locationInfoReport = createReport(dataReportNoEmergency,
+                null,
+                context,
+                onReportListener != null ? onReportListener.isEmergency() : false,
+                isOldVersion);
+        try {
+            return locationInfoReport != null ? LocationUtils.getLocationInfoToString(locationInfoReport, context) : null;
+        } catch (Exception e) {
+            if (BuildConfig.DEBUG) Log.e(TAG, "Error in parse report location: " + e.getMessage());
+        }
+        return null;
     }
 
-    private Object createReport(DataReport dataReport, List<String> triggers, String reportID, Context context,boolean oldVersion) {
-            if(oldVersion){
-                org.doubango.ngn.datatype.mcpttlocOld.LocationInfo locationInfo = new org.doubango.ngn.datatype.mcpttlocOld.LocationInfo();
-                org.doubango.ngn.datatype.mcpttlocOld.TReportType tReportType = new org.doubango.ngn.datatype.mcpttlocOld.TReportType();
-                (locationInfo).setReport(tReportType);
-                if (triggers != null)
-                    (tReportType).setTriggerId(triggers);
-                (tReportType).setReportType("NonEmergency");
-                if (reportID != null && !reportID.isEmpty()) (tReportType).setReportID(reportID);
-                if (dataReport.getInfoReport() != null) {
-                    org.doubango.ngn.datatype.mcpttlocOld.TCurrentLocationType currentLocationType = new org.doubango.ngn.datatype.mcpttlocOld.TCurrentLocationType();
-                    (tReportType).setCurrentLocation((currentLocationType));
-                    if (dataReport.getInfoReport().contains(InfoReport.GEOGRAPHICALCORDINATE)) {
-                        if (currientLocation != null) {
-                            (currentLocationType).setCurrentCoordinate(LocationUtils.locationDegreeTo3gppIanosOld(currientLocation));
-                        }
-                    }
-                    if (dataReport.getInfoReport().contains(InfoReport.MBMSSAID)) {
-                        (currentLocationType).setMbmsSaId(2);//TODO: android API does not support it
-                    }
-                    if (dataReport.getInfoReport().contains(InfoReport.MBSFNAREA)) {
-                        (currentLocationType).setMbsfnArea(1);//TODO: android API does not support it
-                    }
-                    if (dataReport.getInfoReport().contains(InfoReport.SERVICEECGI)) {
-                        DataCell currentDataCell = getCurrentDataCell(context);
-                        if (currentDataCell != null) {
-                            (currentLocationType).setCurrentServingEcgi(currentDataCell.getECGI());
-                        }
 
+    private Object createReport(DataReport dataReport, List<String> triggers, Context context, boolean emergencyAlert, boolean oldVersion) {
+        return createReport(dataReport, triggers, null, context, emergencyAlert, oldVersion);
+    }
+
+    private Object createReport(DataReport dataReport, List<String> triggers, String reportID, Context context, boolean emergencyAlert, boolean oldVersion) {
+        if (BuildConfig.DEBUG) Log.d(TAG, "createReport location");
+        if (oldVersion) {
+            org.doubango.ngn.datatype.mcpttlocOld.LocationInfo locationInfo = new org.doubango.ngn.datatype.mcpttlocOld.LocationInfo();
+            org.doubango.ngn.datatype.mcpttlocOld.TReportType tReportType = new org.doubango.ngn.datatype.mcpttlocOld.TReportType();
+            (locationInfo).setReport(tReportType);
+            if (triggers != null)
+                (tReportType).setTriggerId(triggers);
+            String reportType = "NonEmergency";
+            if (emergencyAlert) reportType = "Emergency";
+            (tReportType).setReportType(reportType);
+            if (reportID != null && !reportID.isEmpty()) (tReportType).setReportID(reportID);
+            if (dataReport.getInfoReport() != null) {
+                org.doubango.ngn.datatype.mcpttlocOld.TCurrentLocationType currentLocationType = new org.doubango.ngn.datatype.mcpttlocOld.TCurrentLocationType();
+                (tReportType).setCurrentLocation((currentLocationType));
+                if (dataReport.getInfoReport().contains(InfoReport.GEOGRAPHICALCORDINATE)) {
+                    if (currientLocation != null) {
+                        org.doubango.ngn.datatype.mcpttlocOld.TPointCoordinate tPointCoordinate = LocationUtils.locationDegreeTo3gppIanosOld(currientLocation);
+                        if (BuildConfig.DEBUG)
+                            Log.d(TAG, "current location:" + tPointCoordinate.getLatitude() + "," + tPointCoordinate.getLongitude());
+                        (currentLocationType).setCurrentCoordinate(tPointCoordinate);
+                    } else {
+                        if (BuildConfig.DEBUG)
+                            Log.d(TAG, "currientLocation is null. And it can not send the current location");
                     }
-                    if (dataReport.getInfoReport().contains(InfoReport.NEIGHBOURINGECGI)) {
-                        List<DataCell> dataCells = getDataCell(context);
-                        ArrayList<String> neighbouringEcgis = new ArrayList<>();
-                        if (dataCells != null)
-                            for (int con1 = 0, con = 0; con < dataCells.size() && con1 < dataReport.getNumNeighbour(); con++) {
-                                if (!dataCells.get(con).isRegister()) {
-                                    con1++;
-                                    Log.d(TAG, dataCells.size() + " con: " + con);
-                                    //New
-                                    neighbouringEcgis.add(dataCells.get(con).getECGI());
-                                }
-                            }
-                        (currentLocationType).setNeighbouringEcgi(neighbouringEcgis);
+                }
+                if (dataReport.getInfoReport().contains(InfoReport.MBMSSAID)) {
+                    (currentLocationType).setMbmsSaId(2);//TODO: android API does not support it
+                }
+                if (dataReport.getInfoReport().contains(InfoReport.MBSFNAREA)) {
+                    (currentLocationType).setMbsfnArea(1);//TODO: android API does not support it
+                }
+                if (dataReport.getInfoReport().contains(InfoReport.SERVICEECGI)) {
+                    DataCell currentDataCell = getCurrentDataCell(context);
+                    if (currentDataCell != null) {
+                        (currentLocationType).setCurrentServingEcgi(currentDataCell.getECGI());
                     }
 
                 }
-                return locationInfo;
-            }else{
-                org.doubango.ngn.datatype.mcpttloc.LocationInfo locationInfo = new org.doubango.ngn.datatype.mcpttloc.LocationInfo();
-                org.doubango.ngn.datatype.mcpttloc.TReportType tReportType = new org.doubango.ngn.datatype.mcpttloc.TReportType();
-                (locationInfo).setReport(tReportType);
-                if (triggers != null)
-                    (tReportType).setTriggerId(triggers);
-                (tReportType).setReportType("NonEmergency");
-                if (reportID != null && !reportID.isEmpty()) (tReportType).setReportID(reportID);
-                if (dataReport.getInfoReport() != null) {
-                    org.doubango.ngn.datatype.mcpttloc.TCurrentLocationType currentLocationType = new org.doubango.ngn.datatype.mcpttloc.TCurrentLocationType();
-                    (tReportType).setCurrentLocation((currentLocationType));
-                    if (dataReport.getInfoReport().contains(InfoReport.GEOGRAPHICALCORDINATE)) {
-
-                        if (currientLocation != null) {
-                            (currentLocationType).setCurrentCoordinate(LocationUtils.locationDegreeTo3gppIanos(currientLocation));
-                        }
-                    }
-                    if (dataReport.getInfoReport().contains(InfoReport.MBMSSAID)) {
-                        //New
-                        LocationType locationType=new LocationType();
-                        locationType.setType(ProtectionType.Normal);
-                        locationType.setSaId(2);
-                        (currentLocationType).setMbmsSaId(locationType);//TODO: android API does not support it
-
-                    }
-                    if (dataReport.getInfoReport().contains(InfoReport.MBSFNAREA)) {
-                        //New
-                        LocationType locationType=new LocationType();
-                        locationType.setType(ProtectionType.Normal);
-                        locationType.setMbsfnAreaId(1);
-                        (currentLocationType).setMbsfnArea(locationType);//TODO: android API does not support it
-                    }
-                    if (dataReport.getInfoReport().contains(InfoReport.SERVICEECGI)) {
-                        DataCell currentDataCell = getCurrentDataCell(context);
-                        if (currentDataCell != null) {
-                            (currentLocationType).setCurrentServingEcgi(currentDataCell.getECGI());
-                        }
-
-                    }
-                    if (dataReport.getInfoReport().contains(InfoReport.NEIGHBOURINGECGI)) {
-                        List<DataCell> dataCells = getDataCell(context);
-                        ArrayList<LocationType> neighbouringEcgis = new ArrayList<>();
-                        if (dataCells != null)
-                            for (int con1 = 0, con = 0; con < dataCells.size() && con1 < dataReport.getNumNeighbour(); con++) {
-                                if (!dataCells.get(con).isRegister()) {
-                                    con1++;
-                                    Log.d(TAG, dataCells.size() + " con: " + con);
-                                    //New
-                                    LocationType locationType=new LocationType();
-                                    locationType.setType(ProtectionType.Normal);
-                                    locationType.setEcgi(dataCells.get(con).getECGI());
-                                    neighbouringEcgis.add(locationType);
-                                }
+                if (dataReport.getInfoReport().contains(InfoReport.NEIGHBOURINGECGI)) {
+                    List<DataCell> dataCells = getDataCell(context);
+                    ArrayList<String> neighbouringEcgis = new ArrayList<>();
+                    if (dataCells != null)
+                        for (int con1 = 0, con = 0; con < dataCells.size() && con1 < dataReport.getNumNeighbour(); con++) {
+                            if (!dataCells.get(con).isRegister()) {
+                                con1++;
+                                Log.d(TAG, dataCells.size() + " con: " + con);
+                                //New
+                                neighbouringEcgis.add(dataCells.get(con).getECGI());
                             }
-                        (currentLocationType).setNeighbouringEcgi(neighbouringEcgis);
-                    }
-
+                        }
+                    (currentLocationType).setNeighbouringEcgi(neighbouringEcgis);
                 }
-                return locationInfo;
+
             }
+            return locationInfo;
+        } else {
+            org.doubango.ngn.datatype.mcpttloc.LocationInfo locationInfo = new org.doubango.ngn.datatype.mcpttloc.LocationInfo();
+            org.doubango.ngn.datatype.mcpttloc.TReportType tReportType = new org.doubango.ngn.datatype.mcpttloc.TReportType();
+            (locationInfo).setReport(tReportType);
+            if (triggers != null)
+                (tReportType).setTriggerId(triggers);
+            String reportType = "NonEmergency";
+            if (emergencyAlert) reportType = "Emergency";
+            (tReportType).setReportType(reportType);
+            if (reportID != null && !reportID.isEmpty()) (tReportType).setReportID(reportID);
+            if (dataReport.getInfoReport() != null) {
+                org.doubango.ngn.datatype.mcpttloc.TCurrentLocationType currentLocationType = new org.doubango.ngn.datatype.mcpttloc.TCurrentLocationType();
+                (tReportType).setCurrentLocation((currentLocationType));
+                if (dataReport.getInfoReport().contains(InfoReport.GEOGRAPHICALCORDINATE)) {
+                    if (currientLocation != null) {
+                        org.doubango.ngn.datatype.mcpttloc.TPointCoordinate tPointCoordinate = LocationUtils.locationDegreeTo3gppIanos(currientLocation);
+                        if (BuildConfig.DEBUG)
+                            Log.d(TAG, "current location:" + tPointCoordinate.getLatitude() + "," + tPointCoordinate.getLongitude());
+                        (currentLocationType).setCurrentCoordinate(tPointCoordinate);
+                    } else {
+                        if (BuildConfig.DEBUG)
+                            Log.d(TAG, "currientLocation is null. And it can not send the current location");
+                    }
+                } else {
+                    if (BuildConfig.DEBUG)
+                        Log.d(TAG, "it do not contains" + " GEOGRAPHICALCORDINATE");
+                }
+                if (dataReport.getInfoReport().contains(InfoReport.MBMSSAID)) {
+                    //New
+                    LocationType locationType = new LocationType();
+                    locationType.setType(ProtectionType.Normal);
+                    locationType.setSaId(2);
+                    (currentLocationType).setMbmsSaId(locationType);//TODO: android API does not support it
+
+                } else {
+                    if (BuildConfig.DEBUG) Log.d(TAG, "it do not contains" + " MBMSSAID");
+                }
+                if (dataReport.getInfoReport().contains(InfoReport.MBSFNAREA)) {
+                    //New
+                    LocationType locationType = new LocationType();
+                    locationType.setType(ProtectionType.Normal);
+                    locationType.setMbsfnAreaId(1);
+                    (currentLocationType).setMbsfnArea(locationType);//TODO: android API does not support it
+                } else {
+                    if (BuildConfig.DEBUG) Log.d(TAG, "it do not contains" + " MBSFNAREA");
+                }
+                if (dataReport.getInfoReport().contains(InfoReport.SERVICEECGI)) {
+                    DataCell currentDataCell = getCurrentDataCell(context);
+                    if (currentDataCell != null) {
+                        LocationType locationType = new LocationType();
+                        locationType.setType(ProtectionType.Normal);
+                        locationType.setEcgi(currentDataCell.getECGI());
+                        (currentLocationType).setCurrentServingEcgi(locationType);
+                    }
+
+                } else {
+                    if (BuildConfig.DEBUG) Log.d(TAG, "it do not contains" + " SERVICEECGI");
+                }
+                if (dataReport.getInfoReport().contains(InfoReport.NEIGHBOURINGECGI)) {
+                    List<DataCell> dataCells = getDataCell(context);
+                    ArrayList<LocationType> neighbouringEcgis = new ArrayList<>();
+                    if (dataCells != null)
+                        for (int con1 = 0, con = 0; con < dataCells.size() && con1 < dataReport.getNumNeighbour(); con++) {
+                            if (!dataCells.get(con).isRegister()) {
+                                con1++;
+                                Log.d(TAG, dataCells.size() + " con: " + con);
+                                //New
+                                LocationType locationType = new LocationType();
+                                locationType.setType(ProtectionType.Normal);
+                                locationType.setEcgi(dataCells.get(con).getECGI());
+                                neighbouringEcgis.add(locationType);
+                            }
+                        }
+                    (currentLocationType).setNeighbouringEcgi(neighbouringEcgis);
+                } else {
+                    if (BuildConfig.DEBUG) Log.d(TAG, "it do not contains" + " NEIGHBOURINGECGI");
+                }
+
+            }
+            return locationInfo;
+        }
 
     }
 
@@ -686,7 +780,7 @@ class LocationServer implements android.location.LocationListener, LocationListe
         }
         try {
             //Log.d(TAG,"receive new data info for location: "+new String(bytes));
-            LocationInfo locationInfo = LocationUtils.getLocationInfo(bytes,context);
+            LocationInfo locationInfo = LocationUtils.getLocationInfo(bytes, context);
             if (locationInfo != null && locationInfo.getConfiguration() != null) {
                 return configure(locationInfo);
             }
@@ -752,8 +846,8 @@ class LocationServer implements android.location.LocationListener, LocationListe
             return null;
         }
         if (Build.VERSION.SDK_INT >= 23 &&
-                ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Log.e(TAG, "Location service needs location permission.");
             return null;
         }
@@ -805,8 +899,10 @@ class LocationServer implements android.location.LocationListener, LocationListe
                     // Log.d(TAG, "cellinfo type:"+"GSM"+" isRegister:"+cellInfo.isRegistered());
                 } else if ((cellInfo instanceof CellInfoCdma)) {
                     //Log.d(TAG, "cellinfo type:"+"CDMA"+" isRegister:"+cellInfo.isRegistered());
-                } else if ((cellInfo instanceof CellInfoWcdma)) {
-                    // Log.d(TAG, "cellinfo type:"+"WCDMA"+" isRegister:"+cellInfo.isRegistered());
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                    if ((cellInfo instanceof CellInfoWcdma)) {
+                        // Log.d(TAG, "cellinfo type:"+"WCDMA"+" isRegister:"+cellInfo.isRegistered());
+                    }
                 }
 
             }
@@ -817,6 +913,7 @@ class LocationServer implements android.location.LocationListener, LocationListe
     }
 
     private static DataReport setDataReport(TRequestedLocationType locationInformation) {
+        if (BuildConfig.DEBUG) Log.d(TAG, "setDataReport");
         if (locationInformation != null) {
             long minimumIntervalLength = locationInformation.getMinimumIntervalLength();
             if (minimumIntervalLength <= 0) {
@@ -827,23 +924,42 @@ class LocationServer implements android.location.LocationListener, LocationListe
             DataReport dataReport = new DataReport(minimumIntervalLength);
             Set<InfoReport> infoReports = null;
             if (locationInformation.getGeographicalCordinate() != null) {
+                if (BuildConfig.DEBUG) Log.d(TAG, "it add info report " + "GEOGRAPHICALCORDINATE");
                 infoReports = addInfoReport(infoReports, InfoReport.GEOGRAPHICALCORDINATE);
+            } else {
+                if (BuildConfig.DEBUG)
+                    Log.d(TAG, "it do not add info report " + "GEOGRAPHICALCORDINATE");
             }
             if (locationInformation.getMbmsSaId() != null) {
+                if (BuildConfig.DEBUG) Log.d(TAG, "it add info report " + "MBMSSAID");
                 infoReports = addInfoReport(infoReports, InfoReport.MBMSSAID);
+            } else {
+                if (BuildConfig.DEBUG) Log.d(TAG, "it do not add info report " + "MBMSSAID");
             }
             if (locationInformation.getMbsfnArea() != null) {
+                if (BuildConfig.DEBUG) Log.d(TAG, "it add info report " + "MBSFNAREA");
+
                 infoReports = addInfoReport(infoReports, InfoReport.MBSFNAREA);
+            } else {
+                if (BuildConfig.DEBUG) Log.d(TAG, "it do not add info report " + "MBSFNAREA");
             }
             if (locationInformation.getServingEcgi() != null) {
+                if (BuildConfig.DEBUG) Log.d(TAG, "it add info report " + "SERVICEECGI");
+
                 infoReports = addInfoReport(infoReports, InfoReport.SERVICEECGI);
+            } else {
+                if (BuildConfig.DEBUG) Log.d(TAG, "it do not add info report " + "SERVICEECGI");
             }
             if (locationInformation.getNeighbouringEcgi() != null) {
+                if (BuildConfig.DEBUG) Log.d(TAG, "it add info report " + "NEIGHBOURINGECGI");
+
                 infoReports = addInfoReport(infoReports, InfoReport.NEIGHBOURINGECGI);
                 List<TEmptyType> list = locationInformation.getNeighbouringEcgi();
                 if (list != null) {
                     dataReport.setNumNeighbour(list.size());
                 }
+            } else {
+                if (BuildConfig.DEBUG) Log.d(TAG, "no add info report " + "NEIGHBOURINGECGI");
             }
 
             dataReport.setInfoReport(infoReports);
@@ -859,13 +975,80 @@ class LocationServer implements android.location.LocationListener, LocationListe
 
     //INIT Location GPS
 
-    private boolean startLocationUpdates() {
+    private void configureLastLocation(boolean newVersion) {
+        if(newVersion){
+            if(mFusedLocationClient!=null)
+                try {
+                    mFusedLocationClient.getLastLocation()
+                            .addOnCompleteListener(new OnCompleteListener<Location>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Location> task) {
+                                    if (task.isSuccessful() && task.getResult() != null) {
+                                            updateLocation(task.getResult());
+                                    } else {
+                                        if(BuildConfig.DEBUG)Log.w(TAG, "Failed to get location.");
+                                    }
+                                }
+                            });
+                } catch (SecurityException unlikely) {
+                    Log.e(TAG, "Lost location permission." + unlikely);
+                }
+        }else{
+            if (mGoogleApiClient != null)
+                if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                        ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    updateLocation(LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient));
+                }
+        }
+
+    }
+
+    private boolean startLocationUpdates(boolean newVersion) {
         Log.d(TAG, "Start Location Update.");
         mLocationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_LOW_POWER)
                 .setInterval(TIME_INTERVAL)
                 .setFastestInterval(TIME_INTERVAL_MIN);
-        ;
+        if (newVersion) {
+            return startLocationUpdatesNew();
+        } else {
+            return startLocationUpdatesOld();
+        }
+
+    }
+
+    private boolean startLocationUpdatesNew() {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+
+            mLocationCallback=new LocationCallback(){
+                @Override
+                public void onLocationResult(LocationResult locationResult) {
+                    if (locationResult == null) {
+                        if(BuildConfig.DEBUG)Log.w(TAG,"the onLocationResult is null");
+                        return;
+                    }
+                    if(locationResult.getLocations().size()>1){
+                        if(BuildConfig.DEBUG)Log.w(TAG,"The device receive a lot of location");
+                    }
+                    for (Location location : locationResult.getLocations()) {
+                        updateLocation(location);
+                    }
+                };
+            };
+
+            mFusedLocationClient.requestLocationUpdates(mLocationRequest,
+                    mLocationCallback,
+                    null /* Looper */);
+            return true;
+        }
+        return false;
+
+    }
+
+    private boolean startLocationUpdatesOld() {
+
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -912,12 +1095,18 @@ class LocationServer implements android.location.LocationListener, LocationListe
         }
     }
 
-    private void stopLocationUpdates() {
-        Log.d(TAG, "Stop location update.");
-        isStartLoclization = false;
-        if (mGoogleApiClient == null || !mGoogleApiClient.isConnected()) return;
-        LocationServices.FusedLocationApi.removeLocationUpdates(
-                mGoogleApiClient, this);
+    private void stopLocationUpdates(boolean newVersion) {
+        Log.d(TAG, "Stop Location Update.");
+        mLocationRequest = LocationRequest.create()
+                .setPriority(LocationRequest.PRIORITY_LOW_POWER)
+                .setInterval(TIME_INTERVAL)
+                .setFastestInterval(TIME_INTERVAL_MIN);
+        if (newVersion) {
+             stopLocationUpdatesNew();
+        } else {
+             stopLocationUpdatesOld();
+        }
+
         //Stop loop
         try{
             if(handlerService!=null && runnableService!=null){
@@ -929,8 +1118,21 @@ class LocationServer implements android.location.LocationListener, LocationListe
             Log.e(TAG,"Error in Location:"+e.getMessage());
         }
 
+    }
 
+    private void stopLocationUpdatesNew() {
+        Log.d(TAG, "Stop location update.");
+        isStartLoclization = false;
+        if (mFusedLocationClient == null) return;
+        mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+    }
 
+    private void stopLocationUpdatesOld() {
+        Log.d(TAG, "Stop location update.");
+        isStartLoclization = false;
+        if (mGoogleApiClient == null || !mGoogleApiClient.isConnected()) return;
+        LocationServices.FusedLocationApi.removeLocationUpdates(
+                mGoogleApiClient, this);
     }
 
 
@@ -966,46 +1168,44 @@ class LocationServer implements android.location.LocationListener, LocationListe
             if(currientLocation==null || currientLocation.getTime()<location.getTime()){
                 Log.d(TAG,"New location received.");
                 currientLocation=location;
+                if (lastLocation == null) {
+                    //Init Location;
+                    lastLocation = location;
+                }
             }else{
                 Log.w(TAG,"Old location received.");
             }
-            if (lastLocation == null) {
-                //Init Location;
-                lastLocation = location;
-            }
+
         }else{
-            Log.e(TAG,"Location isn´t logic 1");
+           if(BuildConfig.DEBUG) Log.w(TAG,"Location isn´t logic 1");
         }
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+        if(BuildConfig.DEBUG)Log.d(TAG,"onConnected location.");
+
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+
 
             Log.e(TAG,"No location permission.");
 
         }else{
-            updateLocation(LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient));
+            if(BuildConfig.DEBUG)Log.d(TAG,"init updateLocation");
+            configureLastLocation(USE_NEW_VERSION_LOCATION);
 
             if(currientLocation!=null){
-                Log.d(TAG,"Last locations: "+"Lat="+currientLocation.getLatitude()+" Lon="+currientLocation.getLongitude());
-
+                if(BuildConfig.DEBUG)Log.d(TAG,"Last locations: "+"Lat="+currientLocation.getLatitude()+" Lon="+currientLocation.getLongitude());
             }else{
-                Log.e(TAG,"Invalid last location.");
+                if(BuildConfig.DEBUG)Log.e(TAG,"Invalid last location.");
             }
         }
 
         if(!isStartLoclization){
             Log.d(TAG,"Service location started.");
-            startLocationUpdates();
+            startLocationUpdates(USE_NEW_VERSION_LOCATION);
         }else{
             Log.d(TAG,"Service location started.");
         }
@@ -1116,7 +1316,7 @@ class LocationServer implements android.location.LocationListener, LocationListe
 
     public void onDestroy(){
         Log.d(TAG,"Location service stopped.");
-        stopLocationUpdates();
+        stopLocationUpdates(USE_NEW_VERSION_LOCATION);
         isStart=false;
     }
 

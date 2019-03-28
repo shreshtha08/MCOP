@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -26,11 +25,13 @@
 */
 package org.doubango.ngn.services.impl;
 
+import android.content.Context;
 import android.util.Log;
 
-import org.doubango.ngn.NgnApplication;
 import org.doubango.ngn.services.INgnStorageService;
 import org.doubango.utils.Utils;
+
+import java.io.File;
 
 /**@page NgnStorageService_page Storage Service
  * This service is used to manage storage functions.
@@ -39,11 +40,11 @@ import org.doubango.utils.Utils;
 public class NgnStorageService  extends NgnBaseService implements INgnStorageService{
 	private final static String TAG = Utils.getTAG(NgnStorageService.class.getCanonicalName());
 	
-	private final String mCurrentDir;
+	private final File mCurrentDir;
 	private final String mContentShareDir;
 	
-	public NgnStorageService(){
-		mCurrentDir = String.format("/data/data/%s", NgnApplication.getContext().getPackageName());
+	public NgnStorageService(Context context){
+		mCurrentDir = context.getFilesDir();
 		mContentShareDir = "/sdcard/wiPhone";
 	}
 	
@@ -60,7 +61,7 @@ public class NgnStorageService  extends NgnBaseService implements INgnStorageSer
 	}
 	
 	@Override
-	public String getCurrentDir(){
+	public File getCurrentDir(){
 		return this.mCurrentDir;
 	}
 	

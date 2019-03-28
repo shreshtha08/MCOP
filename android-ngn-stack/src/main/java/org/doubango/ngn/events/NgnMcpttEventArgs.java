@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -37,6 +36,8 @@ public class NgnMcpttEventArgs extends NgnEventArgs{
     private NgnMcpttEventTypes mEventType;
     
     public static final String ACTION_MCPTT_EVENT = TAG + ".ACTION_MCPTT_EVENT";
+
+
 
     private static long sessionId;
     private NgnMcpttEventTypes type;

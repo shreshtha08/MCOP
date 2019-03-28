@@ -88,7 +88,7 @@ import java.util.Map;
  */
 public class NgnAVSession extends NgnInviteSession{
 	private static final String TAG = Utils.getTAG(NgnAVSession.class.getCanonicalName());
-	
+
 	private NgnT140Callback mT140Callback;
 	private CallSession mSession;
 	private boolean mConsumersAndProducersInitialzed;
@@ -156,7 +156,6 @@ public class NgnAVSession extends NgnInviteSession{
 	private short grantedTimeSecMCPTT=-1;
 	private Handler handlerSendRTCPreportPeriody;
 	private Runnable sendRTCPDelayRunnable;
-
 	private short lastCodeDenied;
 	private String lastPhraseDenied;
 	private short lastCodeRevoke;
@@ -194,7 +193,7 @@ public class NgnAVSession extends NgnInviteSession{
 			public void onReceive(Context context, Intent intent) {
 				final String action = intent.getAction();
 				// Registration Event
-				if(NgnMcpttEventArgs.ACTION_MCPTT_EVENT.equals(action)){
+				if((NgnMcpttEventArgs.ACTION_MCPTT_EVENT+""+getId()).equals(action)){
 					Log.d(TAG,"MCPTT EVENT");
 					NgnMcpttEventArgs args = intent.getParcelableExtra(NgnEventArgs.EXTRA_EMBEDDED);
 					final NgnMcpttEventTypes type;
@@ -234,8 +233,7 @@ public class NgnAVSession extends NgnInviteSession{
 							break;
 						case TOKEN_GRANTED:
 							Log.d(TAG, "TOKEN_GRANTED");
-							Utils.playerSound1(context
-							);
+
 							setmPTTState(PTTState.GRANTED);
 							grantedTimeSecMCPTT=intent.getShortExtra(NgnMcpttEventArgs.EXTRA_TIME,new Short("-1"));
 							Log.d(TAG,"Time Granted:"+grantedTimeSecMCPTT);
@@ -273,7 +271,7 @@ public class NgnAVSession extends NgnInviteSession{
 			}
 		};
 		final IntentFilter intentFilter = new IntentFilter();
-		intentFilter.addAction(NgnMcpttEventArgs.ACTION_MCPTT_EVENT);
+		intentFilter.addAction(NgnMcpttEventArgs.ACTION_MCPTT_EVENT+""+getId());
 		if(mContext!=null){
 			Log.d(TAG,"Register MCPTT event");
 			mContext.registerReceiver(mSipBroadCastRecvMCPTT, intentFilter);
@@ -410,9 +408,9 @@ public class NgnAVSession extends NgnInviteSession{
 
 	public boolean requestMCPTTToken()
 	{
-		if(this.mMediaType==null){
+		if(getMediaType()==null){
 			Log.e(TAG,"Unable to perform the token request: one of the values is null");
-		}else if ((mMediaType.getValue() & NgnMediaType.SessionMCPTT.getValue()) != NgnMediaType.SessionMCPTT.getValue()) {
+		}else if ((getMediaType().getValue() & NgnMediaType.SessionMCPTT.getValue()) != NgnMediaType.SessionMCPTT.getValue()) {
 			Log.e(TAG,"Unable to perform the token request: call is not MCPTT type");
 			return false;
 		}else{
@@ -435,10 +433,17 @@ public class NgnAVSession extends NgnInviteSession{
 
 	public boolean releaseMCPTTToken()
 	{
-		if(this.mMediaType==null){
+		if(getMediaType()==null){
 			Log.e(TAG,"Unable to perform the token Release: one of the values is null");
-		}else if ((mMediaType.getValue() & NgnMediaType.SessionMCPTT.getValue()) != NgnMediaType.SessionMCPTT.getValue()) {
-			Log.e(TAG,"Unable to perform the token Release: call is not a MCPTT type");
+		}
+
+		else if ((getMediaType().getValue() & NgnMediaType.WithFloorControl.getValue()) != NgnMediaType.WithFloorControl.getValue()) {
+			if(BuildConfig.DEBUG)Log.w(TAG,"Unable to perform the token Release: This Call does not have floor control");
+			return false;
+		}
+
+		else if ((getMediaType().getValue() & NgnMediaType.SessionMCPTT.getValue()) != NgnMediaType.SessionMCPTT.getValue()) {
+			if(BuildConfig.DEBUG)Log.w(TAG,"Unable to perform the token Release: call is not a MCPTT type");
 			return false;
 		}else{
 			Log.d(TAG,"The call is PoC type and token release process starts");
@@ -495,17 +500,31 @@ public class NgnAVSession extends NgnInviteSession{
 	}
 	@Override
 	public String getRemotePartyUri(){
-		if(((mMediaType.getValue() & NgnMediaType.SessionMCPTT.getValue()) == NgnMediaType.SessionMCPTT.getValue()) ){
+		String result=null;
+		if(((getMediaType().getValue() & NgnMediaType.SessionMCPTT.getValue()) == NgnMediaType.SessionMCPTT.getValue())
+				){
 			if(mSession!=null)
-			return mSession.getSipPartyUri();
+			result= mSession.getSipPartyUri();
+		}else{
+			result=super.getRemotePartyUri();
 		}
-		return super.getRemotePartyUri();
+		return (result==null)?result:result.replace("<","").replace(">","");
+	}
 
+	public String getPTTMcpttGroupIdentity(){
+		String result=null;
+		if(((getMediaType().getValue() & NgnMediaType.SessionMCPTT.getValue()) == NgnMediaType.SessionMCPTT.getValue()) ){
+			if(mSession!=null)
+				result= mSession.getPTTMcpttGroupIdentity();
+		}else{
+			result=null;
+		}
+		return (result==null)?result:result.replace("<","").replace(">","");
 	}
 
 	@Override
 	public String getRemotePartyDisplayName(){
-		if((mMediaType.getValue() & NgnMediaType.SessionMCPTT.getValue()) == NgnMediaType.SessionMCPTT.getValue() ){
+		if((getMediaType().getValue() & NgnMediaType.SessionMCPTT.getValue()) == NgnMediaType.SessionMCPTT.getValue() ){
 			return mSession.getSipPartyUri();
 		}
 
@@ -533,7 +552,7 @@ public class NgnAVSession extends NgnInviteSession{
         if (avSession != null){
         	NgnMediaType _newMediaType = NgnMediaType.ConvertFromNative(newMediaType);
         	if(_newMediaType != NgnMediaType.None){
-        		avSession.mMediaType = _newMediaType; // mediaType must be updated here because it's used by initializeConsumersAndProducers();
+        		avSession.setMediaType(_newMediaType); // mediaType must be updated here because it's used by initializeConsumersAndProducers();
         	}
         	avSession.mConsumersAndProducersInitialzed = false;
         	return avSession.initializeConsumersAndProducers();
@@ -550,6 +569,7 @@ public class NgnAVSession extends NgnInviteSession{
      * @sa @ref makeAudioCall() @ref makeAudioVideoCall()
      */
     public static NgnAVSession createOutgoingSession(NgnSipStack sipStack, NgnMediaType mediaType){
+    	if(BuildConfig.DEBUG)Log.d(TAG,"createOutgoingSession type:"+mediaType.getValue());
         synchronized (sSessions){
             final NgnAVSession avSession = new NgnAVSession(sipStack, null, mediaType, InviteState.INPROGRESS);
             sSessions.put(avSession.getId(), avSession);
@@ -677,8 +697,12 @@ public class NgnAVSession extends NgnInviteSession{
     
     protected NgnAVSession(NgnSipStack sipStack, CallSession session, NgnMediaType mediaType, InviteState callState){
 		super(sipStack);
+		if(BuildConfig.DEBUG)Log.d(TAG,"NgnAVSession");
+
 		mSession = (session == null) ? new CallSession(sipStack) : session;
-	    super.mMediaType = mediaType;
+		if(BuildConfig.DEBUG)Log.d(TAG,"Created new session: "+(mSession!=null?mSession.getId():-1));
+
+		setMediaType(mediaType);
 
 	    mConfigurationService = NgnEngine.getInstance().getConfigurationService();
 	    
@@ -753,24 +777,37 @@ public class NgnAVSession extends NgnInviteSession{
 			ProxyPlugin plugin;
 			NgnProxyPlugin myProxyPlugin;
 			// Video
-			if(NgnMediaType.isVideoType(super.mMediaType)){
+			if(NgnMediaType.isVideoType(super.getMediaType())){
+				if(BuildConfig.DEBUG)Log.w(TAG,"Now it is using video");
 				if((plugin = mediaMgr.findProxyPluginConsumer(twrap_media_type_t.twrap_media_video)) != null){
 					if((myProxyPlugin = NgnProxyPluginMgr.findPlugin(plugin.getId())) != null){
 						mVideoConsumer = (NgnProxyVideoConsumer)myProxyPlugin;
 						mVideoConsumer.setContext(mContext);
 						mVideoConsumer.setSipSessionId(super.getId());
+					}else{
+						if(BuildConfig.DEBUG)Log.w(TAG,"no Consumer Find myProxyPlugin");
 					}
+				}else{
+					if(BuildConfig.DEBUG)Log.w(TAG,"NO Consumer Find twrap_media_video");
 				}
 				if((plugin = mediaMgr.findProxyPluginProducer(twrap_media_type_t.twrap_media_video)) != null){
 					if((myProxyPlugin = NgnProxyPluginMgr.findPlugin(plugin.getId())) != null){
 						mVideoProducer = (NgnProxyVideoProducer)myProxyPlugin;
 						mVideoProducer.setContext(mContext);
 						mVideoProducer.setSipSessionId(super.getId());
+					}else{
+						if(BuildConfig.DEBUG)Log.w(TAG,"no Producer Find myProxyPlugin");
 					}
+				}else{
+					if(BuildConfig.DEBUG)Log.w(TAG,"NO Producer Find twrap_media_video");
 				}
+			}else{
+				if(BuildConfig.DEBUG)Log.w(TAG,"Now it do not use video");
 			}
 			// Audio
-			if(NgnMediaType.isAudioType(super.mMediaType)){
+			if(NgnMediaType.isAudioType(getMediaType())){
+				if(BuildConfig.DEBUG)Log.w(TAG,"Now it is using audio");
+
 				if((plugin = mediaMgr.findProxyPluginConsumer(twrap_media_type_t.twrap_media_audio)) != null){
 					if((myProxyPlugin = NgnProxyPluginMgr.findPlugin(plugin.getId())) != null){
 						mAudioConsumer = (NgnProxyAudioConsumer)myProxyPlugin;
@@ -783,10 +820,14 @@ public class NgnAVSession extends NgnInviteSession{
 						mAudioProducer.setSipSessionId(super.getId());
 					}
 				}
+			}else{
+				if(BuildConfig.DEBUG)Log.w(TAG,"Now it do not use audio");
 			}
 			
 			mConsumersAndProducersInitialzed = true;
 			return true;
+		}else{
+			if(BuildConfig.DEBUG)Log.e(TAG,"Error in getMediaSessionMgr");
 		}
 		
 		return false;	
@@ -856,6 +897,7 @@ public class NgnAVSession extends NgnInviteSession{
 	 * @return the view where the remote video stream will be displayed
 	 */
 	public final View startVideoConsumerPreview(){
+		if(BuildConfig.DEBUG)Log.d(TAG,"startVideoConsumerPreview");
 		if(mVideoConsumer != null){
 			return mVideoConsumer.startPreview(mContext);
 		}else{
@@ -872,12 +914,20 @@ public class NgnAVSession extends NgnInviteSession{
 	 * FrameLayout, ...) in order to display it.
 	 * @return the view where the local video stream will be displayed
 	 */
-	public final View startVideoProducerPreview(){
+	public final View startVideoProducerPreview(Context context){
+		mContext = context == null ? mContext : context;
+		if(BuildConfig.DEBUG)Log.w(TAG,"startVideoProducerPreview");
 		if(mVideoProducer != null){
 			return mVideoProducer.startPreview(mContext);
+		}else{
+			if(BuildConfig.DEBUG)Log.w(TAG,"it is not possible startPreview Video produce");
+			initializeConsumersAndProducers();
+			return mVideoProducer.startPreview(mContext);
 		}
-		return null;
+		//return null;
 	}
+
+
 	
 	/**
 	 * Checks whether we are sending video or not
@@ -1054,6 +1104,7 @@ public class NgnAVSession extends NgnInviteSession{
 	}
 	
 	public void setMicrophoneMute(boolean mute) {
+		if(BuildConfig.DEBUG)Log.d(TAG,"Execute setMicrophoneMute:"+mute);
 		if(NgnApplication.isSLEs2KnownToWork()){
 			final MediaSessionMgr mediaMgr;
 			if((mediaMgr = super.getMediaSessionMgr()) != null){
@@ -1066,9 +1117,12 @@ public class NgnAVSession extends NgnInviteSession{
 		    if(mAudioProducer != null){
 		        mAudioProducer.setOnMute(mute);
 		        mMuteOn = mAudioProducer.isOnMute();
-		    } 
+		    }
 		}
 	}
+
+
+
 	
 	public boolean onVolumeChanged(boolean bDown){
 		if(!NgnApplication.isSLEs2KnownToWork()){
@@ -1175,9 +1229,9 @@ public class NgnAVSession extends NgnInviteSession{
 
     }
 
-	public boolean acceptCallMCPTT(Context context) {
-		Log.d(TAG,"MCPTT call accepted");
-		if((mMediaType.getValue() & NgnMediaType.SessionMCPTT.getValue()) == NgnMediaType.SessionMCPTT.getValue())
+
+    public void registerCallBacksMCPTT(Context context){
+		if((getMediaType().getValue() & NgnMediaType.SessionMCPTT.getValue()) == NgnMediaType.SessionMCPTT.getValue())
 		{
 			registerCallMCPTT(context);
 			Log.d(TAG,"MCPTT call accepted");
@@ -1189,16 +1243,32 @@ public class NgnAVSession extends NgnInviteSession{
 				mMcpttMbmsCallback = new MyMcpttMbmsCallback(this);
 			mSession.setMcpttMbmsCallback(mMcpttMbmsCallback);
 			//MCPTT event for Location
-			if(mMediaType==NgnMediaType.SessionAudioGroupMCPTT){
-				Log.e(TAG,"SessionAudioGroupMCPTT");
+			if((getMediaType().getValue() & NgnMediaType.SessionAudioGroupMCPTT.getValue())==NgnMediaType.SessionAudioGroupMCPTT.getValue()){
+				if(BuildConfig.DEBUG)Log.d(TAG,"SessionAudioGroupMCPTT");
 				sendMCPTTEventForLocation(TypeMcpttSignallingEvent.GROUP_CALL_NON_EMERGENCY);
-			}else if(mMediaType==NgnMediaType.SessionAudioMCPTT){
-				Log.e(TAG,"SessionAudioMCPTT");
+			}else 	if((getMediaType().getValue() & NgnMediaType.SessionAudioMCPTT.getValue())==NgnMediaType.SessionAudioMCPTT.getValue()){
+				if(BuildConfig.DEBUG)Log.d(TAG,"SessionAudioMCPTT");
 				sendMCPTTEventForLocation(TypeMcpttSignallingEvent.PRIVATE_CALL_NON_EMERGENCY);
 			}
 		}else{
 			Log.d(TAG,"Not MCPTT session");
 		}
+	}
+
+    private void registerCallBacks(Context context){
+			if ((getMediaType().getValue() & NgnMediaType.SessionMCPTT.getValue()) == NgnMediaType.SessionMCPTT.getValue())
+		{
+			registerCallMCPTT(context);
+			Log.d(TAG,"MCPTT call accepted");
+			if (mMcpttCallback == null)
+				mMcpttCallback = new MyMcpttCallback(this);
+			mSession.setMcpttCallback(mMcpttCallback);
+		}
+	}
+
+	public boolean acceptCallMCPTT(Context context) {
+		Log.d(TAG,"MCPTT call accepted");
+		registerCallBacksMCPTT(context);
 		return mSession.accept(null);
 	}
 
@@ -1206,9 +1276,30 @@ public class NgnAVSession extends NgnInviteSession{
 
 
 
+	//MCPTT private
+	public boolean makeCallMCPTT(String remoteUri
+			,Context context
+			,boolean answerMode
+								 ){
+		return makeCallMCPTT(remoteUri,context
+				,answerMode
+				,(String)null,-1);
+	}
 	public boolean makeCallMCPTT(String remoteUri,Context context
+								,boolean answerMode
+								 ,EmergencyCallType emergencyCallType, int levelEmergency
+
+			){
+		return makeCallMCPTT( remoteUri, context
+				,answerMode
+				,emergencyCallType.toString(),  levelEmergency);
+	}
+	public boolean makeCallMCPTT(String remoteUri,Context context
+			,boolean answerMode
+			,String emergencyType, int levelEmergency
 	)
 	{
+		Log.d(TAG,"makeCallMCPTT");
 		super.mOutgoing = true;
 		super.setToUri(remoteUri);
 		boolean ret=false;
@@ -1217,16 +1308,31 @@ public class NgnAVSession extends NgnInviteSession{
 				NgnConfigurationEntry.DEFAULT_QOS_PRECOND_BANDWIDTH_LEVEL);
 		tmedia_bandwidth_level_t bl = tmedia_bandwidth_level_t.swigToEnum(level);
 		config.setMediaInt(twrap_media_type_t.twrap_media_audiovideo, "bandwidth-level", bl.swigValue());
-		if(NgnMediaType.ConvertToNative(mMediaType)==null){
-		}else if((mMediaType.getValue() & NgnMediaType.SessionAudioMCPTT.getValue())==NgnMediaType.SessionAudioMCPTT.getValue()){
+		if(NgnMediaType.ConvertToNative(getMediaType())==null){
+		}else if(((getMediaType().getValue() & NgnMediaType.SessionAudioMCPTT.getValue())==NgnMediaType.SessionAudioMCPTT.getValue())
+				){
 			registerCallMCPTT(context);
-				ret = mSession.call(remoteUri, NgnMediaType.ConvertToNative(super.getMediaType()),config);
+			if((getMediaType().getValue() & NgnMediaType.SessionEmergency.getValue()) == NgnMediaType.SessionEmergency.getValue() ||
+					(getMediaType().getValue() & NgnMediaType.SessionAlert.getValue()) == NgnMediaType.SessionAlert.getValue() ||
+					(getMediaType().getValue() & NgnMediaType.SessionImminentperil.getValue()) == NgnMediaType.SessionImminentperil.getValue()){
+				if(BuildConfig.DEBUG)Log.d(TAG,"Type call is emergency and the level is "+levelEmergency);
+				ret = mSession.callEmergency(remoteUri, NgnMediaType.ConvertToNative(super.getMediaType())
+						,answerMode
+						,emergencyType,levelEmergency,config);
+
+			}else
+				ret = mSession.call(remoteUri, NgnMediaType.ConvertToNative(super.getMediaType())
+						,answerMode
+						,config);
+
+			if(BuildConfig.DEBUG)Log.d(TAG,"init call type: "+super.getMediaType().name());
+
 
 
 			if(!ret){
 				Log.e(TAG,"Mistranslation of the SIP address 2");
 			}else{
-				if ((mMediaType.getValue() & NgnMediaType.SessionAudioMCPTT.getValue()) == NgnMediaType.SessionAudioMCPTT.getValue()){
+				if ((getMediaType().getValue() & NgnMediaType.SessionAudioMCPTT.getValue()) == NgnMediaType.SessionAudioMCPTT.getValue()){
 					Log.d(TAG,"MCPTT Audio type call");
 					if (mMcpttCallback == null){
 						mMcpttCallback = new MyMcpttCallback(this);
@@ -1241,18 +1347,36 @@ public class NgnAVSession extends NgnInviteSession{
 				}config.delete();
 			}
 			//MCPTT event for Location
-			if(mMediaType==NgnMediaType.SessionAudioGroupMCPTT){
+			if(getMediaType()==NgnMediaType.SessionAudioGroupMCPTT){
 				sendMCPTTEventForLocation(TypeMcpttSignallingEvent.GROUP_CALL_NON_EMERGENCY);
-			}else if(mMediaType==NgnMediaType.SessionAudioMCPTT){
+			}else if(getMediaType()==NgnMediaType.SessionAudioMCPTT){
 				sendMCPTTEventForLocation(TypeMcpttSignallingEvent.PRIVATE_CALL_NON_EMERGENCY);
 			}
 		}else{
-			Log.e(TAG,"Mistranslation of the SIP address: "+mMediaType.getValue()+" "+NgnMediaType.ConvertToNative(mMediaType).swigValue());
+			Log.e(TAG,"Mistranslation of the SIP address: "+getMediaType().getValue()+" "+NgnMediaType.ConvertToNative(getMediaType()).swigValue());
 		}
 
 		return ret;
 	}
+
+	//MCPTT group
 	public boolean makeCallGroupMCPTT(String remoteUri,Context context
+			,boolean answerMode
+	){
+			return makeCallGroupMCPTT(remoteUri,context
+					,answerMode
+					,(String)null,-1);
+	}
+	public boolean makeCallGroupMCPTT(String remoteUri,Context context
+			,boolean answerMode
+			,EmergencyCallType emergencyCallType, int levelEmergency){
+		return makeCallGroupMCPTT( remoteUri, context
+				,answerMode
+				,emergencyCallType.toString(),  levelEmergency);
+	}
+	public boolean makeCallGroupMCPTT(String remoteUri,Context context
+			,boolean answerMode
+			,String emergencyType, int levelEmergency
 	)
 	{
 		super.mOutgoing = true;
@@ -1263,15 +1387,24 @@ public class NgnAVSession extends NgnInviteSession{
 				NgnConfigurationEntry.DEFAULT_QOS_PRECOND_BANDWIDTH_LEVEL);
 		tmedia_bandwidth_level_t bl = tmedia_bandwidth_level_t.swigToEnum(level);
 		config.setMediaInt(twrap_media_type_t.twrap_media_audiovideo, "bandwidth-level", bl.swigValue());
-		if(NgnMediaType.ConvertToNative(mMediaType)==null){
-		}else if((mMediaType.getValue() & NgnMediaType.SessionAudioGroupMCPTT.getValue())==NgnMediaType.SessionAudioGroupMCPTT.getValue()){
+		if(NgnMediaType.ConvertToNative(getMediaType())==null){
+		}else if((getMediaType().getValue() & NgnMediaType.SessionAudioGroupMCPTT.getValue())==NgnMediaType.SessionAudioGroupMCPTT.getValue()){
 			registerCallMCPTT(context);
-				ret = mSession.call(remoteUri, NgnMediaType.ConvertToNative(super.getMediaType()),config);
+			if((getMediaType().getValue() & NgnMediaType.SessionEmergency.getValue()) == NgnMediaType.SessionEmergency.getValue() ||
+					(getMediaType().getValue() & NgnMediaType.SessionAlert.getValue()) == NgnMediaType.SessionAlert.getValue() ||
+					(getMediaType().getValue() & NgnMediaType.SessionImminentperil.getValue()) == NgnMediaType.SessionImminentperil.getValue()){
+				ret = mSession.callEmergency(remoteUri, NgnMediaType.ConvertToNative(super.getMediaType())
+						,answerMode
+						,emergencyType,levelEmergency,config);
+			}else
+				ret = mSession.call(remoteUri, NgnMediaType.ConvertToNative(super.getMediaType())
+						,answerMode
+						,config);
 
 			if(!ret){
 				Log.e(TAG,"Mistranslation of the SIP address 3");
 			}else{
-				if ((mMediaType.getValue() & NgnMediaType.SessionGroupMCPTT.getValue()) == NgnMediaType.SessionGroupMCPTT.getValue()){
+				if ((getMediaType().getValue() & NgnMediaType.SessionGroup.getValue()) == NgnMediaType.SessionGroup.getValue()){
 					sendMCPTTEventForLocation(TypeMcpttSignallingEvent.GROUP_CALL_NON_EMERGENCY);
 					Log.d(TAG,"MCPTT Group type call");
 					if (mMcpttCallback == null){
@@ -1286,7 +1419,7 @@ public class NgnAVSession extends NgnInviteSession{
 				}config.delete();
 			}
 		}else{
-			Log.e(TAG,"Mistranslation of the SIP address: "+mMediaType.getValue()+" "+NgnMediaType.ConvertToNative(mMediaType).swigValue());
+			Log.e(TAG,"Mistranslation of the SIP address: "+getMediaType().getValue()+" "+NgnMediaType.ConvertToNative(getMediaType()).swigValue());
 		}
 
 
@@ -1295,16 +1428,30 @@ public class NgnAVSession extends NgnInviteSession{
 		return ret;
 	}
 
+	public String getMcpttEmergencyResourcePriorityString(){
+		if(mSession!=null){
+			return mSession.getPttMcpttEmergencyResourcePriorityString();
+		}
+		return null;
+	}
+
+	public int getMcpttEmergencyResourcePriority(){
+		if(mSession!=null){
+			return mSession.getPttMcpttEmergencyResourcePriority();
+		}
+		return -1;
+	}
+
 	/**
 	 * Ends an audio/video call. The call could be in any state: incoming, outgoing, incall, ...
 	 * @return true if succeed and false otherwise
 	 */
     public boolean hangUpCall(){
     	if (super.isActive()) {
-			//unconfigureCallPoC();
-			Log.d(TAG,"Hang up Call");
-			NgnEngine.getInstance().getMbmsService().stopServiceMbms();
-    		return super.isConnected() ? mSession.hangup() : mSession.reject();
+
+    		if(BuildConfig.DEBUG)Log.d(TAG,"Hang up Call");
+			NgnEngine.getInstance().getMbmsService().hangUpCallMbms(getId());
+    		return isConnected() ? mSession.hangup() : mSession.reject();
     	}else{
 			Log.e(TAG,"Inactive call");
 		}

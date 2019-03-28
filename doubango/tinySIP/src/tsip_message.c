@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -39,6 +38,7 @@
 
  */
 #include "tinysip/tsip_message.h"
+#include <tinysip.h>
 
 #include "tinysip/headers/tsip_header_Allow.h"
 #include "tinysip/headers/tsip_header_Contact.h"
@@ -152,6 +152,7 @@ int tsip_message_add_headers(tsip_message_t *self, ...)
 
 	return 0;
 }
+
 
 int tsip_message_add_content(tsip_message_t *self, const char* content_type, const void* content, tsk_size_t size)
 {
@@ -642,6 +643,7 @@ static tsk_object_t* tsip_message_dtor(tsk_object_t *self)
 		TSK_OBJECT_SAFE_FREE(message->To);
 		
 		TSK_OBJECT_SAFE_FREE(message->Content);
+
 
 		TSK_OBJECT_SAFE_FREE(message->headers);
 

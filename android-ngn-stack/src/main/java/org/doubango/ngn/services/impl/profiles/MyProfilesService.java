@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -23,6 +23,8 @@ package org.doubango.ngn.services.impl.profiles;
 import android.content.Context;
 import android.util.Log;
 
+import org.doubango.ngn.BuildConfig;
+import org.doubango.ngn.NgnApplication;
 import org.doubango.ngn.NgnEngine;
 import org.doubango.ngn.datatype.profiles.Profiles;
 import org.doubango.ngn.services.impl.preference.PreferencesManager;
@@ -71,9 +73,9 @@ public class MyProfilesService implements IMyProfilesService {
             }
             return true;
         }catch (NoSuchMethodException e) {
-            Log.e(TAG,"Error reading profiles. No access method:"+e.toString());
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error reading profiles. No access method:"+e.toString());
         } catch (Exception e1) {
-            Log.e(TAG,"Error reading profiles:"+e1.toString());
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error reading profiles:"+e1.toString());
         }
         return false;
     }
@@ -83,6 +85,7 @@ public class MyProfilesService implements IMyProfilesService {
             if(!readProfile(context))return null;
         }
         if(profilesMap!=null){
+            loadDataCMS(context,profilesMap.get(name));
             return profilesMap.get(name);
         }
         return null;
@@ -100,17 +103,25 @@ public class MyProfilesService implements IMyProfilesService {
     }
 
     public boolean setProfileNow(Context context,String nameProfile){
-        if(nameProfile==null)return false;
-        if(profilesMap==null)return false;
+        if(nameProfile==null){
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error in setProfileNow. nameProfile is null");
+            return false;
+        }
+        if(profilesMap==null){
+            if(BuildConfig.DEBUG)Log.w(TAG,"Warning in setProfileNow. profilesMap is null");
+            return false;
+        }
         NgnSipPrefrences profileNow=profilesMap.get(nameProfile);
         if(profileNow==null)return false;
         if(MyProfilesService.profileNow==null) MyProfilesService.profileNow =profileNow;
         if(MyProfilesService.profileNow.getName()!=null && profileNow.getName()!=null) {
             if (MyProfilesService.profileNow.getName().compareTo(profileNow.getName()) == 0) {
-                Log.d(TAG, "The same profile is selected");
+                if(BuildConfig.DEBUG)Log.d(TAG, "The same profile is selected");
             } else {
 
-                Log.d(TAG, "The same profile isn´t selected");
+                if(BuildConfig.DEBUG) Log.d(TAG, "The same profile isn´t selected");
+                //Now remote all data from CMS for the last profile
+                deleteDataCMS(context);
             }
         }
         MyProfilesService.profileNow=profileNow;
@@ -127,7 +138,7 @@ public class MyProfilesService implements IMyProfilesService {
         return;
     }
     public NgnSipPrefrences getProfileNow(Context context){
-        if(profilesNow==null){
+        if(profileNow==null){
             String name=NgnEngine.getInstance().getConfigurationService().getString(NgnConfigurationEntry.PROFILE_USE,NgnConfigurationEntry.DEFAULT_PROFILE_USE);
             if(NgnConfigurationEntry.DEFAULT_PROFILE_USE.compareTo(name)!=0){
                 profileNow=getProfile(context,name,false);
@@ -149,6 +160,30 @@ public class MyProfilesService implements IMyProfilesService {
 
         return false;
     }
+    private boolean loadDataCMS(Context context,NgnSipPrefrences ngnSipPrefrences){
+
+        //To load configuration that the device downloaded from the CMS.
+        if(ngnSipPrefrences!=null){
+            if(NgnEngine.getInstance().getCMSService().configureAllProfile(context,ngnSipPrefrences)){
+                if(BuildConfig.DEBUG)Log.d(TAG,"Load data to CMS: OK");
+                return false;
+            }else{
+                if(BuildConfig.DEBUG)Log.i(TAG,"Error loading data to CMS.");
+            }
+        }
+        return false;
+
+    }
+
+    private boolean deleteDataCMS(Context context){
+    if(NgnEngine.getInstance().getCMSService().deleteAllProfile(context)){
+        if(BuildConfig.DEBUG)Log.d(TAG,"delete ok data CMS");
+        return true;
+    }else {
+        if(BuildConfig.DEBUG)Log.i(TAG, "Error in delete data CMS");
+    }
+    return false;
+    }
     //Used by NGNsipService to load data from default profile.
 
 
@@ -168,16 +203,30 @@ public class MyProfilesService implements IMyProfilesService {
     }
 
     public boolean importProfiles(String profiles,Context context){
-        if(profiles==null || profiles.isEmpty())return false;
+        boolean result=false;
+        if(profiles==null || profiles.isEmpty()){
+            if(BuildConfig.DEBUG)Log.e(TAG,"in importProfiles profile or context is null");
+            return false;
+        }
         try {
             Profiles profilesNews=ProfilesUtils.getProfiles(profiles);
+
             if(profilesNews!=null && !profilesNews.isEmpty()){
-                return saveProfiles(profilesNews,context);
+
+                result=saveProfiles(profilesNews,context);
+                if(result && profilesNews.size()==1){
+                    //Select this profile
+                    return setProfileNow(context,profilesNews.getProfiles().get(0).getName());
+                }else if(!result){
+                    if(BuildConfig.DEBUG)Log.e(TAG,"Error in saveProfile");
+                }
+            }else{
+                if(BuildConfig.DEBUG)Log.e(TAG,"Error importing profiles");
             }
         } catch (Exception e) {
-            Log.e(TAG,"Error importing profiles "+e.toString());
+            if(BuildConfig.DEBUG) Log.e(TAG,"Error importing profiles "+e.toString());
         }
-        return false;
+        return result;
     }
 
     private  boolean saveProfiles(Profiles profiles, Context context){
@@ -185,15 +234,20 @@ public class MyProfilesService implements IMyProfilesService {
 
             preferencesManager=new PreferencesManager(IMPORTED_PROFILES_SAVED);
             try {
-                if(preferencesManager.putString(context,IMPORTED_PROFILES_SAVED,ProfilesUtils.getStringOfProfiles(context,profiles))){
+                String profileString=ProfilesUtils.getStringOfProfiles(context,profiles);
+                if(preferencesManager.putString(context,IMPORTED_PROFILES_SAVED,profileString)){
                     profilesNow=null;
                     profilesMap=null;
-                    return true;
+                    return readProfile(context);
+                }else{
+                    if(BuildConfig.DEBUG)Log.e(TAG,"Error in save profiles");
                 }
             } catch (Exception e) {
-                Log.e(TAG,"Error importing profiles "+e.toString());
+                if(BuildConfig.DEBUG)Log.e(TAG,"Error importing profiles "+e.toString());
             }
             return false;
+        }else{
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error in import profile. the new profiles is not valid.");
         }
         return false;
     }
@@ -203,10 +257,10 @@ public class MyProfilesService implements IMyProfilesService {
         preferencesManager=new PreferencesManager(IMPORTED_PROFILES_SAVED);
         String profiles=preferencesManager.getString(context,IMPORTED_PROFILES_SAVED);
         if(profiles!=null && !profiles.isEmpty() && !profiles.equalsIgnoreCase(PreferencesManager.STRING_DEFAULT)){
-            Log.w(TAG,"Device has imported profiles");
+            if(BuildConfig.DEBUG)Log.w(TAG,"Device has imported profiles");
             return ProfilesUtils.getProfiles(profiles);
         }else{
-            Log.w(TAG,"Device doesn´t have imported profiles.");
+            if(BuildConfig.DEBUG)Log.w(TAG,"Device doesn´t have imported profiles.");
         }
         return ProfilesUtils.getProfiles(context);
     }

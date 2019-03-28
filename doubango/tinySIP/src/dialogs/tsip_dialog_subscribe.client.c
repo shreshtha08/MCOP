@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -37,6 +36,7 @@
  *
 
  */
+#include <tinysip.h>
 #include "tinysip/dialogs/tsip_dialog_subscribe.h"
 
 #include "tinysip/headers/tsip_header_Dummy.h"
@@ -641,15 +641,16 @@ int tsip_dialog_subscribe_Any_2_Terminated_X_Error(va_list *app)
 **/
 int send_SUBSCRIBE(tsip_dialog_subscribe_t *self)
 {
-	char* mcptt_info;
+	char* body_string  = tsk_null;
 	const int64_t NUM_MAX_EXPIRES=4294967295000;/*milisecons*/
 	const char* contentType="application/vnd.3gpp.mcptt-info+xml";
+	const char* contentTypeResourceList="application/resource-lists+xml";
 	tsip_dialog_t *dialog;
 	tsip_stack_t *stack;
 	tsip_ssession_t *tsip_ssession_t;
 	tsip_request_t *request;
 	int ret = -1;
-	//tsip_uri_t* psi_affiliation;
+	tsip_uri_t* psi_affiliation;
 	
 	dialog=TSIP_DIALOG(self);
 	stack=TSIP_DIALOG_GET_STACK(self);
@@ -658,23 +659,25 @@ int send_SUBSCRIBE(tsip_dialog_subscribe_t *self)
 		dialog->expires = 0;
 	}
 
-	//MCPTT AFFILIATION by eduardo
-	if((tsip_ssession_t->media.type & tmedia_affiliation) == tmedia_affiliation && !self->unsubscribing){
+	//MCPTT AFFILIATION
+	if(((tsip_ssession_t->media.type & tmedia_affiliation) == tmedia_affiliation
+         )
+       && !self->unsubscribing){
 		if(self->unsubscribing){
 			dialog->expires = 0;//No Receive notify. 
 		}else{
 			dialog->expires = NUM_MAX_EXPIRES;//Receive notify.
 		}
 		//select URI_remote
-		/*
+
 		psi_affiliation=stack->pttMCPTTAffiliation.psi_affiliation;
 		if(psi_affiliation!=tsk_null){
 			dialog->uri_remote_target=tsip_uri_clone(stack->pttMCPTTAffiliation.psi_affiliation,tsk_true, tsk_false);
 			dialog->uri_remote=tsip_uri_clone(stack->pttMCPTTAffiliation.psi_affiliation,tsk_true, tsk_false);
 		}
-		*/
+
 	}
-	//MCPTT by Eduardo
+	//MCPTT
 	if(((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_mcptt) == tmedia_mcptt) && self->unsubscribing==tsk_false){
 		//The request_uri is PSI in New Invite to MCPTT
 		tsip_dialog_request_configure_mcptt(TSIP_DIALOG(self));
@@ -684,49 +687,120 @@ int send_SUBSCRIBE(tsip_dialog_subscribe_t *self)
 	if((request = tsip_dialog_request_new(dialog, "SUBSCRIBE"))){
 
 		
-		//MCPTT by Eduardo Insert parameter in contact
+		//MCPTT Insert parameter in contact
 		if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_mcptt) == tmedia_mcptt){
 			TSIP_HEADER_ADD_PARAM(request->Contact, "+g.3gpp.icsi-ref", "\"urn%3Aurn-7%3A3gpp-service.ims.icsi.mcptt\"");
 			TSIP_HEADER_ADD_PARAM(request->Contact, "+g.3gpp.mcptt",tsk_null);
 		}
 
 		if((tsip_ssession_t->media.type & tmedia_affiliation) == tmedia_affiliation){
-			
-			
+
+
 			//TSIP_HEADER_ADD_PARAM(request->Contact, "urn:urn-7:3gpp-service.ims.icsi.mcptt", tsk_null);
 			//new param insert in headers P-Preferred-Service
 			tsip_message_add_headers(request,
-				TSIP_HEADER_DUMMY_VA_ARGS("P-Preferred-Service", "urn:urn-7:3gpp-service.ims.icsi.mcptt"),
-				tsk_null);
+									 TSIP_HEADER_DUMMY_VA_ARGS("P-Preferred-Service", "urn:urn-7:3gpp-service.ims.icsi.mcptt"),
+									 tsk_null);
 			tsip_message_add_headers(request,
-				TSIP_HEADER_DUMMY_VA_ARGS("Accept", "application/pidf+xml"),
-				tsk_null);
+									 TSIP_HEADER_DUMMY_VA_ARGS("Accept", "application/pidf+xml"),
+									 tsk_null);
 			//it isn�t necessary
 			/*tsip_message_add_headers(request,
 				TSIP_HEADER_DUMMY_VA_ARGS("Content-Type",contentType),
 				tsk_null);*/
 			tsip_message_add_headers(request,
-				TSIP_HEADER_DUMMY_VA_ARGS("Event","presence"),
-				tsk_null);
+									 TSIP_HEADER_DUMMY_VA_ARGS("Event","presence"),
+									 tsk_null);
 
 
 			//add body
 
 			//mcpt-info
-			mcptt_info = tsip_dialog_subscribe_create_mcpttinfo(self);
-			if(mcptt_info){
-				tsip_message_add_content(request,contentType, mcptt_info, tsk_strlen(mcptt_info));
+			body_string = tsip_dialog_subscribe_create_mcpttinfo(self);
+			if(body_string){
+				tsip_message_add_content(request,contentType, body_string, tsk_strlen(body_string));
 			}
-			
 
+
+		}
+		else if((tsip_ssession_t->media.type & tmedia_cms) == tmedia_cms ||
+                (tsip_ssession_t->media.type & tmedia_gms) == tmedia_gms){
+			tmedia_multipart_body_t* body = tsk_null;
+			tmedia_content_multipart_t* content = tsk_null;
+			tmedia_content_multipart_t* mcptt_info_content = tsk_null;
+			char* content_type_hdr  = tsk_null;
+
+
+
+			//new param insert in headers P-Asserted-Service
+            tsip_message_add_headers(request,
+                                     TSIP_HEADER_DUMMY_VA_ARGS("P-Preferred-Service", "urn:urn-7:3gpp-service.ims.icsi.mcptt"),
+                                     tsk_null);
+			tsip_message_add_headers(request,
+									 TSIP_HEADER_DUMMY_VA_ARGS("Accept", "application/xcap-diff+xml"),
+									 tsk_null);
+
+			tsip_message_add_headers(request,
+									 TSIP_HEADER_DUMMY_VA_ARGS("Event","xcap-diff"),
+									 tsk_null);
+
+
+			//add body
+
+
+
+
+
+            if(self->unsubscribing!=tsk_true && TSIP_DIALOG(self)->curr_action)
+            if(TSIP_DIALOG(self)->curr_action->payload2 && TSK_BUFFER_SIZE(TSIP_DIALOG(self)->curr_action->payload2)>0){
+                //multipart with token
+                body = tmedia_content_multipart_body_create("multipart/mixed", tsk_null);
+                if(body)
+                {
+                    //mcptt-info with access token.
+                    mcptt_info_content = tmedia_content_multipart_create(TSK_BUFFER_DATA(TSIP_DIALOG(self)->curr_action->payload2),  TSK_BUFFER_SIZE(TSIP_DIALOG(self)->curr_action->payload2), "application/vnd.3gpp.mcptt-info+xml",tsk_null);
+                    if(mcptt_info_content){
+                        tmedia_content_multipart_body_add_content(body, mcptt_info_content);
+                    }
+
+                    content = tmedia_content_multipart_create( TSK_BUFFER_DATA(TSIP_DIALOG(self)->curr_action->payload), TSK_BUFFER_SIZE(TSIP_DIALOG(self)->curr_action->payload),contentTypeResourceList,tsk_null);
+                    if(content){
+                        tmedia_content_multipart_body_add_content(body,content);
+                    }
+                    body_string = tmedia_content_multipart_body_tostring(body);
+                    content_type_hdr = tmedia_content_multipart_body_get_header(body);
+                }
+                if(body_string){
+                    tsip_message_add_content(request,content_type_hdr, body_string, tsk_strlen(body_string));
+                }
+            }
+			else
+            if( TSIP_DIALOG(self)->curr_action->payload &&
+                    TSIP_DIALOG(self)->curr_action->payload!=tsk_null &&
+                     TSK_BUFFER_DATA(TSIP_DIALOG(self)->curr_action->payload) &&
+                     TSK_BUFFER_SIZE(TSIP_DIALOG(self)->curr_action->payload)>0){
+                //resource_list
+                tsip_message_add_content(request,contentTypeResourceList, TSK_BUFFER_DATA(TSIP_DIALOG(self)->curr_action->payload), TSK_BUFFER_SIZE(TSIP_DIALOG(self)->curr_action->payload));
+            }else{
+                TSK_DEBUG_ERROR("it can not subscribe to the CMS, missing data for this purpose.");
+
+            }
+
+
+
+
+
+		}
+		else {
+            /* apply action params to the request */
+            if(dialog->curr_action){
+                tsip_dialog_apply_action(request,dialog->curr_action);
+            }
+            /* send the request */
 		}
 
 
-		/* apply action params to the request */
-		if(dialog->curr_action){
-			tsip_dialog_apply_action(request,dialog->curr_action);
-		}
-		/* send the request */
+
 		ret = tsip_dialog_request_send(dialog, request);
 		TSK_OBJECT_SAFE_FREE(request);
 	}
@@ -797,7 +871,6 @@ static char* tsip_dialog_subscribe_create_mcpttinfo(const tsip_dialog_subscribe_
 		
 	ret = tsk_strndup(TSK_BUFFER_DATA(output), TSK_BUFFER_SIZE(output));
 	TSK_OBJECT_SAFE_FREE(output);
-//#endif	
 
 	
 	return ret;
@@ -816,6 +889,15 @@ int send_200NOTIFY(tsip_dialog_subscribe_t *self, const tsip_request_t* request)
 		
 		if((type & tmedia_affiliation) == tmedia_affiliation){
 			//is notify affiliation
+		}else
+		if((type & tmedia_cms) == tmedia_cms){
+			//is notify cms
+		}else
+		if((type & tmedia_gms) == tmedia_gms){
+			//is notify gms
+		}else
+		{
+
 		}
 		ret = tsip_dialog_response_send(TSIP_DIALOG(self), response);
 		TSK_OBJECT_SAFE_FREE(response);
@@ -827,14 +909,25 @@ int send_200NOTIFY(tsip_dialog_subscribe_t *self, const tsip_request_t* request)
 int process_i_notify(tsip_dialog_subscribe_t *self, const tsip_request_t* notify)
 {
 	int control=0;
-	//MCPTT AFFILIATION by eduardo
+	//MCPTT AFFILIATION
 	tmedia_type_t type=(TSIP_DIALOG_GET_SS(self))->media.type;
 
 	if((type & tmedia_affiliation) == tmedia_affiliation ){
 		//recieve Notify of affiliation
 		TSK_DEBUG_INFO("Recieve Notify of affiliation");
 		control++;
-	}else{
+	}else
+	if((type & tmedia_cms) == tmedia_cms ){
+		//recieve Notify of cms
+		TSK_DEBUG_INFO("Recieve Notify of CMS");
+		control++;
+	}else
+	if((type & tmedia_gms) == tmedia_gms ){
+		//recieve Notify of gms
+		TSK_DEBUG_INFO("Recieve Notify of GMS");
+		control++;
+	}else
+	{
 		TSK_DEBUG_INFO("Recieve Notify");
 	}
 
@@ -868,10 +961,15 @@ int tsip_dialog_subscribe_OnTerminated(tsip_dialog_subscribe_t *self)
 			TSIP_DIALOG(self)->last_error.phrase ? TSIP_DIALOG(self)->last_error.phrase : "Dialog terminated",
 			TSIP_DIALOG(self)->last_error.message);
 
+
 	/* Remove from the dialog layer. */
-	if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_affiliation) == tmedia_affiliation){
+	/*
+    if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_affiliation) == tmedia_affiliation ||
+            (TSIP_DIALOG_GET_SS(self)->media.type & tmedia_cms) == tmedia_cms ||
+            (TSIP_DIALOG_GET_SS(self)->media.type & tmedia_gms) == tmedia_gms){
 		TSIP_DIALOG(self)->expires = 0;
 	}
+	 */
 	return tsip_dialog_remove(TSIP_DIALOG(self));
 }
 

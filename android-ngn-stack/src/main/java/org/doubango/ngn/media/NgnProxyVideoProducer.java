@@ -85,11 +85,11 @@ public class NgnProxyVideoProducer extends NgnProxyPlugin{
         mFrameHeight = mHeight = NgnProxyVideoProducer.DEFAULT_VIDEO_HEIGHT;
 		mFps = NgnProxyVideoProducer.DEFAULT_VIDEO_FPS;
 		
-		mCheckFps = NgnApplication.isHovis();
+		mCheckFps =NgnApplication.isHovis();
 		mFrameDuration = 1000/mFps;
 		mNextFrameTime = 0;
 		
-		mAsyncPush = NgnApplication.isHovis();
+		mAsyncPush =NgnApplication.isHovis();
 		mLock = mAsyncPush ? new ReentrantLock() : null;
 		mConditionPushBuffer = (mLock != null) ? mLock.newCondition() : null;
     }
@@ -113,6 +113,7 @@ public class NgnProxyVideoProducer extends NgnProxyPlugin{
     
 	// Very important: Must be done in the UI thread
 	public final View startPreview(Context context){
+		if(BuildConfig.DEBUG)Log.w(TAG,"startPreview");
 		mContext = context == null ? mContext : context;
 		if(mPreview == null && mContext != null){
 			mPreview = new MyProxyVideoProducerPreview(this);
@@ -175,6 +176,10 @@ public class NgnProxyVideoProducer extends NgnProxyPlugin{
 	}
 
 	public int getNativeCameraHardRotation(boolean preview){
+		return getNativeCameraHardRotation(preview,"CAMERA_FACING_FRONT");
+	}
+
+	public int getNativeCameraHardRotation(boolean preview,String cameraString){
 		// only for 2.3 and above
 		if(NgnApplication.getSDKVersion() >= 9){			
 			try {
@@ -211,7 +216,7 @@ public class NgnProxyVideoProducer extends NgnProxyPlugin{
 
 				final Field fieldFacing = clsCameraInfo.getField("facing");
 				final Field fieldOrient = clsCameraInfo.getField("orientation");
-				final Field fieldFrontFacingConst = clsCameraInfo.getField("CAMERA_FACING_FRONT");
+				final Field fieldFrontFacingConst = clsCameraInfo.getField(cameraString);
 								
 				if (fieldFacing.getInt(info) == fieldFrontFacingConst.getInt(info)) {
 					rotation = (fieldOrient.getInt(info) - orientation + 360) % 360;     					
@@ -354,7 +359,7 @@ public class NgnProxyVideoProducer extends NgnProxyPlugin{
 	private Runnable mRunnablePush = new Runnable() {
 		@Override
 		public void run() {
-			Log.d(TAG, "===== Video Producer AsynThread (Start) ===== ");
+			Log.d(TAG, "===== Video Producer AsyncThread (Start) ===== ");
 			
 			while (mValid && mStarted) {
 				try {
@@ -455,10 +460,10 @@ public class NgnProxyVideoProducer extends NgnProxyPlugin{
 		if(camera != null && mProducer != null){
 			try{				
 				Camera.Parameters parameters = camera.getParameters();
-				final Size prevSize = getCameraBestPreviewSize(camera);
+				 Size prevSize = parameters.getPreviewSize();
 				parameters.setPreviewSize(prevSize.width, prevSize.height);
 				camera.setParameters(parameters);
-				
+
 				if(prevSize != null && super.isValid() && (mWidth != prevSize.width || mHeight != prevSize.height)){
 					mFrameWidth = prevSize.width;
 					mFrameHeight = prevSize.height;
@@ -471,7 +476,7 @@ public class NgnProxyVideoProducer extends NgnProxyPlugin{
 				Log.d(TAG, String.format("setPreviewSize [%d x %d ]", mFrameWidth, mFrameHeight));
 				mVideoFrame = ByteBuffer.allocateDirect((mFrameWidth * mFrameHeight * 3) >> 1);				
 			} catch(Exception e){
-				Log.e(TAG, e.toString());
+				Log.e(TAG, "Error in setPreview 1"+e.toString());
 			}
 								
 			try {
@@ -487,23 +492,27 @@ public class NgnProxyVideoProducer extends NgnProxyPlugin{
 
 				camera.setParameters(parameters);
 			} catch (Exception e) {
-				Log.e(TAG, e.toString());
+				Log.e(TAG,"Error in setPreview 2" +e.toString());
 			}
-			
-			// Camera Orientation
-			int rotation = compensCamRotation(false);
-			Log.d(TAG, String.format("setDisplayOrientation [%d] ",rotation ));
-			NgnCameraProducer.setDisplayOrientation(camera, rotation);
-			
-			// Callback Buffers
-			if(NgnProxyVideoProducer.sAddCallbackBufferSupported){
-				for(int i=0; i<NgnProxyVideoProducer.CALLABACK_BUFFERS_COUNT; i++){
-					if(i == 0 || (mVideoCallbackData == null)){
-						mVideoCallbackData = new byte[mVideoFrame.capacity()];
+			try{
+				// Camera Orientation
+				int rotation = compensCamRotation(false);
+				Log.d(TAG, String.format("setDisplayOrientation [%d] ",rotation ));
+				NgnCameraProducer.setDisplayOrientation(camera, rotation);
+
+				// Callback Buffers
+				if(NgnProxyVideoProducer.sAddCallbackBufferSupported){
+					for(int i=0; i<NgnProxyVideoProducer.CALLABACK_BUFFERS_COUNT; i++){
+						if(i == 0 || (mVideoCallbackData == null)){
+							mVideoCallbackData = new byte[mVideoFrame.capacity()];
+						}
+						NgnCameraProducer.addCallbackBuffer(camera, new byte[mVideoFrame.capacity()]);
 					}
-					NgnCameraProducer.addCallbackBuffer(camera, new byte[mVideoFrame.capacity()]);
 				}
+			} catch(Exception e){
+				Log.e(TAG, "Error in setPreviewSize"+e.toString());
 			}
+
 			
 			try{
     			camera.startPreview();
@@ -585,13 +594,13 @@ public class NgnProxyVideoProducer extends NgnProxyPlugin{
 		public void surfaceCreated(SurfaceHolder holder) {
 			Log.d(TAG,"surfaceCreated()");
 			try {
-				mCamera = NgnCameraProducer.openCamera(myProducer.mFps, 
-						myProducer.mWidth, 
-						myProducer.mHeight, 
+				mCamera = NgnCameraProducer.openCamera(myProducer.mFps,
+						myProducer.mWidth,
+						myProducer.mHeight,
 						mHolder,
 						myProducer.previewCallback
 						);
-				
+
 			} catch (Exception exception) {
 				Log.e(TAG, exception.toString());
 			}

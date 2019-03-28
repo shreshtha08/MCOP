@@ -68,6 +68,7 @@ typedef struct tdav_codec_amr_s
 	tdav_codec_amr_type_t type;
 	tdav_codec_amr_mode_t mode;
 
+
 	enum Mode encoder_mode;
 	void* encoder;
 	void* decoder;

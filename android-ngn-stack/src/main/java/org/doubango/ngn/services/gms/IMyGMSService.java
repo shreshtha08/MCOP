@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -27,30 +26,49 @@
 
 package org.doubango.ngn.services.gms;
 
-import org.doubango.ngn.datatype.gms.pocListService.ns.list_service.Group;
+import android.content.Context;
+
+import org.doubango.ngn.datatype.ms.gms.ns.list_service.Group;
 import org.doubango.ngn.services.INgnBaseService;
+import org.doubango.utils.Utils;
 
 
 public interface IMyGMSService extends INgnBaseService{
+    final static String TAG = Utils.getTAG(IMyGMSService.class.getCanonicalName());
+
+
+    public static final String GMS_ACTION_NOTIFY=TAG +".GMS_ACTION_NOTIFY";
+    public static final String GMS_ACTION_SUBSCRIBE=TAG +".GMS_ACTION_SUBSCRIBE";
+    public static final String GMS_ACTION_UNSUBSCRIBE=TAG +".GMS_ACTION_UNSUBSCRIBE";
+
+    public static final String GMS_RESPONSE_SUBSCRIBE_ERROR=TAG +".GMS_RESPONSE_SUBSCRIBE_ERROR";
+    public static final String GMS_RESPONSE_SUBSCRIBE_OK=TAG +".GMS_RESPONSE_SUBSCRIBE_OK";
+
+    public static final String GMS_NEWGMS_NOTIFY=TAG +".GMS_NEWGMS_NOTIFY";
+
+
 
 
 
 
     void setOnGMSListener(IMyGMSService.OnGMSListener onGMSListener);
 
-    //Init affiliation action
+    //Init GMS action
 
-    void newGroupData(String groupData);
-
-    Group getCurrentGroups();
+    Group getGroupInfo(String group);
 
 
-    //end affiliation action
+    //end GMS action
 
     interface OnGMSListener{
-        void onGMSErrorNewGroup(String error);
-        void onGMSNewGroup(Group group);
+        void onGMSErrorGroup(String error);
+        void onGMSGroup(Group group);
     }
+
+    /**
+     * Executed when the service starts
+     */
+    void startServiceGMS(Context context);
 
 
 

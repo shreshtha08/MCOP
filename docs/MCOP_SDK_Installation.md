@@ -6,7 +6,7 @@
 
 ### Requirements
 
-* [**Mock App**](Mock.md) to bypass the the SIM authentication.
+* [**Provisioning App**](Provisioning.md) to configure the users and bypass the the SIM authentication.
 
 ### Download the MCOP SDK
 
@@ -30,7 +30,7 @@ Once Android Studio is installed, click on **SDK Manager** ![SDK Manager](../ima
 
 Import the project in Android Studio by selecting **File --> Open:** Select the **MCOP-SDK** project folder.
 
-Android **SKD Platform 27** is defined as compilation version. If not installed, a message is shown in Android Studio to *"Install missing platform(s) and sync project"*.
+Android **SKD Platform 28** is defined as compilation version. If not installed, a message is shown in Android Studio to *"Install missing platform(s) and sync project"*.
 
 Connect a phone to the computer via USB cable. **USB debugging** mode must be previously activated, on phone *Settings --> Developer Options*. Once connected, click OK on *"Allow USB debugging?"* message.
 
@@ -54,9 +54,9 @@ Once installed, allow requested permissions:
 
 * For a full user experience, we recommend checking out our [**MCOP MCPTT Client**](https://demo.mcopenplatform.org/gitlist/mcop/MCOP-MCPTT-Client.git/blob/master/docs/MCOP_MCPTT_Client_Installation.md), with a full GUI interface.
 
-* Every time the [**MCOP MCPTT Client**](https://demo.mcopenplatform.org/gitlist/mcop/MCOP-MCPTT-Client.git/blob/master/README.md) *(or the mentioned built in Test Client)* is started, a list of user profiles is displayed, in order to select the one to register with. By default some test profiles are loaded.
+* Every time the [**MCOP MCPTT Client**](https://demo.mcopenplatform.org/gitlist/mcop/MCOP-MCPTT-Client.git/blob/master/README.md) *(or the mentioned built in Test Client)* is started, it uses the configuration selected in the [**Provisioning App**](Provisioning.md).
 
-* **IMPORTANT**: In order to test the Test Client against our [demo.mcopenplatform.org](https://demo.mcopenplatform.org) testing platform, this profile files need to be configured first before building the project. **Full detailed information is available in [Profiles](Profiles.md) documentation**.
+* **IMPORTANT**: In order to test the Test Client against our [demo.mcopenplatform.org](https://demo.mcopenplatform.org) testing platform, the user configuration settings provided by email when booking a testing slot need to be updated in the [Provisioning App](https://demo.mcopenplatform.org/gitlist/mcop/MCOP-SDK.git/raw/master/provisioning/MCOP_ProvisioningTool.apk). **Full detailed information is available in [Provisioning Tool](TestingPlatform.md) documentation**.
 
 * Check [MCOP MCPTT App Development](MCOP_App_developing_steps.md) guide for more info on app development using the MCOP SDK.
 
@@ -64,7 +64,7 @@ Once installed, allow requested permissions:
 
 Example screenshots of the raw test client that comes built in with the SDK.
 
-![Profiles Demo Client](../images/images_DemoClient_Profiles.png) ![Demo Client](../images/images_DemoClient.png)
+![Demo Client](../images/images_DemoClient.png)
 
 ### Possible Errors
 

@@ -99,6 +99,10 @@ public class SipCallback {
     return (getClass() == SipCallback.class) ? tinyWRAPJNI.SipCallback_OnPublicationAffiliationEvent(swigCPtr, this, PublicationAffiliationEvent.getCPtr(e), e) : tinyWRAPJNI.SipCallback_OnPublicationAffiliationEventSwigExplicitSipCallback(swigCPtr, this, PublicationAffiliationEvent.getCPtr(e), e);
   }
 
+  public int OnPublicationAuthenticationEvent(PublicationAuthenticationEvent e) {
+    return (getClass() == SipCallback.class) ? tinyWRAPJNI.SipCallback_OnPublicationAuthenticationEvent(swigCPtr, this, PublicationAuthenticationEvent.getCPtr(e), e) : tinyWRAPJNI.SipCallback_OnPublicationAuthenticationEventSwigExplicitSipCallback(swigCPtr, this, PublicationAuthenticationEvent.getCPtr(e), e);
+  }
+
   public int OnRegistrationAuthenticationEvent(RegistrationAuthenticationEvent e) {
     return (getClass() == SipCallback.class) ? tinyWRAPJNI.SipCallback_OnRegistrationAuthenticationEvent(swigCPtr, this, RegistrationAuthenticationEvent.getCPtr(e), e) : tinyWRAPJNI.SipCallback_OnRegistrationAuthenticationEventSwigExplicitSipCallback(swigCPtr, this, RegistrationAuthenticationEvent.getCPtr(e), e);
   }
@@ -113,6 +117,14 @@ public class SipCallback {
 
   public int OnSubscriptionAffiliationEvent(SubscriptionAffiliationEvent e) {
     return (getClass() == SipCallback.class) ? tinyWRAPJNI.SipCallback_OnSubscriptionAffiliationEvent(swigCPtr, this, SubscriptionAffiliationEvent.getCPtr(e), e) : tinyWRAPJNI.SipCallback_OnSubscriptionAffiliationEventSwigExplicitSipCallback(swigCPtr, this, SubscriptionAffiliationEvent.getCPtr(e), e);
+  }
+
+  public int OnSubscriptionCMSEvent(SubscriptionCMSEvent e) {
+    return (getClass() == SipCallback.class) ? tinyWRAPJNI.SipCallback_OnSubscriptionCMSEvent(swigCPtr, this, SubscriptionCMSEvent.getCPtr(e), e) : tinyWRAPJNI.SipCallback_OnSubscriptionCMSEventSwigExplicitSipCallback(swigCPtr, this, SubscriptionCMSEvent.getCPtr(e), e);
+  }
+
+  public int OnSubscriptionGMSEvent(SubscriptionGMSEvent e) {
+    return (getClass() == SipCallback.class) ? tinyWRAPJNI.SipCallback_OnSubscriptionGMSEvent(swigCPtr, this, SubscriptionGMSEvent.getCPtr(e), e) : tinyWRAPJNI.SipCallback_OnSubscriptionGMSEventSwigExplicitSipCallback(swigCPtr, this, SubscriptionGMSEvent.getCPtr(e), e);
   }
 
 }

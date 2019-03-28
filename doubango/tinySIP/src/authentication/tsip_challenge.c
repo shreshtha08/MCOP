@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -652,7 +651,6 @@ int tsip_challenge_get_response(tsip_challenge_t *self, const char* method, cons
 			self->qop,
 			(const tsk_md5string_t *)&ha2,
 			response);
-		TSK_DEBUG_INFO("Response in authentication response: %s",response);
 		if(self->qop){
 			self->nc++;
 		}
@@ -832,7 +830,7 @@ static tsk_object_t* tsip_challenge_ctor(tsk_object_t *self, va_list * app)
 		challenge->nonce = tsk_strdup(va_arg(*app, const char*));
 		challenge->opaque = tsk_strdup(va_arg(*app, const char*));
 		challenge->algorithm = tsk_strdup(va_arg(*app, const char*));
-		//By Eduardo
+		//
 		//This is for SQN with SIM
 		challenge->auts = tsk_strdup(va_arg(*app, const char*));
 		challenge->auts_param = tsk_strdup(va_arg(*app, const char*));
@@ -864,7 +862,7 @@ static tsk_object_t* tsip_challenge_dtor(tsk_object_t *self)
 		TSK_FREE(challenge->nonce);
 		TSK_FREE(challenge->opaque);
 		TSK_FREE(challenge->algorithm);
-		//By Eduardo
+		//
 		//This is for SQN with SIM
 		TSK_FREE(challenge->auts);
 		TSK_FREE(challenge->auts_param);

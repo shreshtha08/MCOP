@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -429,7 +428,7 @@ public class NgnNetworkService  extends NgnBaseService implements INgnNetworkSer
 			return true;
 		}
 		
-		Log.d(TAG, "acquireNetworkLock()");
+		if(BuildConfig.DEBUG)Log.d(TAG, "acquireNetworkLock()");
 
 		boolean connected = false;
 		NetworkInfo networkInfo = NgnApplication.getConnectivityManager().getActiveNetworkInfo();
@@ -493,14 +492,19 @@ public class NgnNetworkService  extends NgnBaseService implements INgnNetworkSer
 
 	@Override
 	public boolean release() {
-		if (mWifiLock != null) {
-			if(mWifiLock.isHeld()){
-				Log.d(TAG, "releaseNetworkLock()");
-				mWifiLock.release();
-			}	
-			mWifiLock = null;
-		}
+			try {
+				if (mWifiLock != null) {
+					if(mWifiLock.isHeld()){
+						Log.d(TAG, "releaseNetworkLock()");
+						mWifiLock.release();
+					}
 
+				}
+			}catch (Exception e){
+				Log.e(TAG,"Error in Lock Wifi:"+e.getMessage());
+			}finally {
+				mWifiLock = null;
+			}
 		mAcquired = false;
 		return true;
 	}

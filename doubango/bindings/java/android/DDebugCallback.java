@@ -55,6 +55,10 @@ public class DDebugCallback {
     tinyWRAPJNI.DDebugCallback_director_connect(this, swigCPtr, swigCMemOwn, true);
   }
 
+  public int OnDebugTest(String message) {
+    return (getClass() == DDebugCallback.class) ? tinyWRAPJNI.DDebugCallback_OnDebugTest(swigCPtr, this, message) : tinyWRAPJNI.DDebugCallback_OnDebugTestSwigExplicitDDebugCallback(swigCPtr, this, message);
+  }
+
   public int OnDebugInfo(String message) {
     return (getClass() == DDebugCallback.class) ? tinyWRAPJNI.DDebugCallback_OnDebugInfo(swigCPtr, this, message) : tinyWRAPJNI.DDebugCallback_OnDebugInfoSwigExplicitDDebugCallback(swigCPtr, this, message);
   }

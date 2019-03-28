@@ -1,29 +1,26 @@
 /*
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
- *  Copyright (C) 2018, University of the Basque Country (UPV/EHU)
- *
- * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
- *
- * This file is part of MCOP MCPTT Client
- *
- * This is free software: you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation, either version 3
- * of the License, or (at your option) any later version.
- *
- * This is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- */
+  Copyright (C) 2019, University of the Basque Country (UPV/EHU)
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 package org.mcopenplatform.muoapi;
+import android.os.ParcelFileDescriptor;
+
+
 
 /**
  * AIDL definition {@link https://developer.android.com/guide/components/aidl.html}
  * Used as a callback for MCOP SDK server-client communication, and for MCPTT (Mission Critical Push to Talk) Services.
- * @author Eduardo Zarate Lasurtegui
  * @version 0.1
  */
 interface IMCOPCallback {
@@ -37,4 +34,6 @@ interface IMCOPCallback {
      * @param actionList Intent list. Each component in the list contains an event.
      */
     void handleOnEvent(in List<Intent> actionList);
+
+
 }

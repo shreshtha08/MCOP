@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   ~
-  ~ * Copyright (C) 2018 Eduardo Zarate Lasurtegui
   ~ *  Copyright (C) 2018, University of the Basque Country (UPV/EHU)
   ~ *
   ~ * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -68,12 +67,10 @@
         android:hardwareAccelerated="true"
         android:label="@string/app_name">
         <service android:name=".NgnNativeService" />
-        <!-- #if HAVE_MCPTT_LOCATION -->
         <service
             android:name=".services.impl.location.LocationServer"
             android:enabled="true"
             android:exported="true" />
-        <!-- #endif HAVE_MCPTT_LOCATION -->
         <activity
             android:name="net.openid.appauth.RedirectUriReceiverActivity"
             tools:node="replace">

@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -84,7 +83,7 @@ tsk_param_t *tsk_params_parse_param(const char* line, tsk_size_t size)
 	if(line && size){
 		const char* start = line;
 		const char* end = (line + size);
-		const char* equal = strstr(line, "=");
+		const char* equal = memmem(line, size, "=", 1);
 		tsk_param_t *param = tsk_param_create_null();
 
 		if (param && equal && equal<end) {

@@ -6,7 +6,6 @@
 
 /* #line 1 "./ragel/thttp_parser_header_WWW_Authenticate.rl" */
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -104,8 +103,8 @@ int thttp_header_WWW_Authenticate_tostring(const thttp_header_t* header, tsk_buf
 thttp_header_WWW_Authenticate_t *thttp_header_WWW_Authenticate_parse(const char *data, tsk_size_t size)
 {
 	int cs = 0;
-	//const char *p = data; //Mikel. MCPTT client. A1 sends \n\r\t characters in Proxy-Authenticate
-	char* p = tsk_strdup(data);
+	char *p = malloc(size);
+	memcpy(p, data, size);
 	const char *pe = p + size;
 	const char *eof = pe;
 	tsk_size_t i = 0;

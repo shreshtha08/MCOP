@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -260,7 +259,6 @@ const tsip_header_t* SipMessage::getSipHeader(const char* name, unsigned index /
 			goto bail;
 		}else pos++; }
 
-
 	tsk_list_foreach(item, m_pSipMessage->headers){
 		if(tsk_striequals(tsip_header_get_name_2(TSIP_HEADER(item->data)), name)){
 			if(pos++ >= index){
@@ -298,9 +296,6 @@ char* SipMessage::getSipHeaderValue(const char* name, unsigned index /* = 0*/)
 	// SWIG: %newobject getHeaderValueAt;
 	return tsk_null;
 }
-
-
-
 
 // e.g. getHeaderParamValue("content-type", "charset");
 char* SipMessage::getSipHeaderParamValue(const char* name, const char* param, unsigned index /*=0*/)
@@ -351,23 +346,25 @@ unsigned SipMessage::getSipContent(void* output, unsigned maxsize)
 
 const void* SipMessage::getSipContentPtr()
 {
-	if(m_pSipMessage && m_pSipMessage->Content){
-		return m_pSipMessage->Content->data;
-	}
-	return tsk_null;
+    if(m_pSipMessage && m_pSipMessage->Content){
+        return m_pSipMessage->Content->data;
+    }
+    return tsk_null;
 }
 
-//MCPTT by Eduardo
+//MCPTT
 unsigned SipMessage::getSipContentSdp(void* output, unsigned maxsize)
 {
 	return getSipContentContetType(output, maxsize,VALUE_CONTENT_TYPE_SDP);
 }
-//MCPTT MBMS by Eduardo
+//MCPTT MBMS
 unsigned SipMessage::getSipContentMbms(void* output, unsigned maxsize)
 {
 	return getSipContentContetType(output, maxsize,VALUE_CONTENT_TYPE_MESSAGE_MBMS);
 }
-//MCPTT by Eduardo
+
+
+//MCPTT
 unsigned SipMessage::getSipContentContetType(void* output, unsigned maxsize,char* content_type)
 {
 	char* boundary = tsk_null;
@@ -398,11 +395,6 @@ unsigned SipMessage::getSipContentContetType(void* output, unsigned maxsize,char
 	}
 	return retsize;
 }
-
-
-
-
-
 
 const SdpMessage* SipMessage::getSdpMessage()
 {

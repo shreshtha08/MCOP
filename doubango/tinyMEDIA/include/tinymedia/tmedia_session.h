@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -88,7 +87,7 @@ typedef struct tmedia_session_bfcp_evt_xs {
 //MCPTT
 #define TMEDIA_SESSION_MCPTT(self)	((tmedia_session_mcptt_t*)(self))
 
-//MCPTT AFFILATION by eduardo
+//MCPTT AFFILATION
 #define TMEDIA_SESSION_MCPTT_AFFILATION(self)	((tmedia_session_mcptt_affiliation_t*)(self))
 
 
@@ -333,7 +332,7 @@ TINYMEDIA_API char* tmedia_session_mcptt_get_mbms_audio_port(tmedia_session_mcpt
 #define TMEDIA_DECLARE_SESSION_MCPTT tmedia_session_mcptt_t __session_mcptt__
 
 
-/** MCPTT AFFILATION Session */ //by eduardo
+/** MCPTT AFFILATION Session */ //
 struct tmedia_session_mcptt_affiliation_s;
 struct tmcptt_affiliation_event_s;
 typedef int (*tmedia_session_mcptt_affiliation_cb_f)(const struct tmcptt_affiliation_event_s* event);
@@ -655,13 +654,13 @@ TINYMEDIA_API int tmedia_session_mgr_set_bfcp_cbfn(tmedia_session_mgr_t* self, c
 TINYMEDIA_API int tmedia_session_mgr_set_mcptt_cbfn(tmedia_session_mgr_t* self, const void* context, tmedia_session_mcptt_cb_f fun);
 TINYMEDIA_API int tmedia_session_mgr_request_mcptt_token(tmedia_session_mgr_t* self, ...);
 TINYMEDIA_API int tmedia_session_mgr_release_mcptt_token(tmedia_session_mgr_t* self, ...);
-//MCPTT MBMS by Eduardo
+//MCPTT MBMS
 TINYMEDIA_API int tmedia_session_mgr_set_mcptt_mbms_cbfn(tmedia_session_mgr_t* self, const void* context, tmedia_session_mcptt_mbms_cb_f fun);
 TINYMEDIA_API int tmedia_session_mgr_start_mbms_manager(tmedia_session_mgr_t* self,const char* remote_ip,const int remote_port, const char* local_iface, const int local_iface_index, ...);
 TINYMEDIA_API int tmedia_session_mgr_stop_mbms_manager(tmedia_session_mgr_t* self, ...);
 TINYMEDIA_API int tmedia_session_mgr_start_mbms_media(tmedia_session_mgr_t* self, const char* media_ip, const int media_port, const int media_ctrl_port, ...);
 
-//MCPTT AFFILATION by eduardo
+//MCPTT AFFILATION
 TINYMEDIA_API int tmedia_session_mgr_set_mcptt_affiliation_cbfn(tmedia_session_mgr_t* self, const void* context, tmedia_session_mcptt_affiliation_cb_f fun);
 
 

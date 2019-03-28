@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -90,18 +90,18 @@ class LocationUtils{
         if(location==null)return null;
         double latitude=location.getLatitude();
 
-        double dataLatitude=((TWO_ELEVATED_TO_TWENTY_THREE/90)*latitude);
+        double dataLatitude=latitude*TWO_ELEVATED_TO_TWENTY_THREE/90;
         if(latitude<0){
             dataLatitude=(dataLatitude*(-1))+(TWO_ELEVATED_TO_TWENTY_THREE-1);
         }
-        int dataLatitudeInteger=(int)dataLatitude;
+        int dataLatitudeInteger=(int) (dataLatitude + 0.5);
         //Log.d(TAG,"Latitude:"+Integer.toBinaryString(dataLatitudeInteger));
 
         double longitude=location.getLongitude();
         if(longitude<0)longitude+=360;
-        double dataLongitude=(TWO_ELEVATED_TO_TWENTY_FOUR/360)*longitude;
+        double dataLongitude=longitude*TWO_ELEVATED_TO_TWENTY_FOUR/360;
 
-        int dataLongitudeInteger=(int)dataLongitude;
+        int dataLongitudeInteger=(int)(dataLongitude + 0.5);
 
         if(oldVersion){
             return new org.doubango.ngn.datatype.mcpttlocOld.TPointCoordinate(dataLatitudeInteger,dataLongitudeInteger);
@@ -412,7 +412,8 @@ class LocationUtils{
     }
 
     protected static org.doubango.ngn.datatype.mcpttloc.LocationInfo getLocationInfo(byte[] bytes,Context context) {
-        org.doubango.ngn.datatype.mcpttloc.LocationInfo result= getLocationInfo(new ByteArrayInputStream(bytes),context);
+        org.doubango.ngn.datatype.mcpttloc.LocationInfo result= getLocationInfo(new ByteArrayInputStream(bytes),false,context);
+        if(result==null)result= getLocationInfo(new ByteArrayInputStream(bytes),true,context);
         if(result==null && bytes!=null && bytes.length>0){
             String data = new String(bytes);
             Log.e(TAG,"Error parsing data: "+data);
@@ -435,19 +436,12 @@ class LocationUtils{
                      Log.d(TAG,"Translate new version:\n"+locationInfoString);
                  }
              }catch (Exception e){
-                 try{
-                     locationInfo=serializer.read(org.doubango.ngn.datatype.mcpttloc.LocationInfo.class,stream);
-                 }catch (Exception ex){
-                     Log.e(TAG,"Error in: "+ex.toString());
-
-                 }
              }
          }else{
              try{
                  locationInfo=serializer.read(org.doubango.ngn.datatype.mcpttloc.LocationInfo.class,stream);
              }catch (Exception ex){
                  Log.e(TAG,"Error in: "+ex.toString());
-
              }
 
          }
@@ -457,9 +451,7 @@ class LocationUtils{
          return locationInfo;
      }
 
-    protected static org.doubango.ngn.datatype.mcpttloc.LocationInfo getLocationInfo(InputStream stream,Context context)  {
-        return getLocationInfo(stream,true,context);
-    }
+
 
     private static org.doubango.ngn.datatype.mcpttloc.LocationInfo locationInfoOldToLocationInfo(org.doubango.ngn.datatype.mcpttlocOld.LocationInfo locationInfoOld, Context context){
         if(locationInfoOld==null)return null;

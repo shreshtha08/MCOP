@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *  Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -26,25 +25,43 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.view.SurfaceView;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewParent;
+import android.widget.FrameLayout;
 
 import org.doubango.ngn.BuildConfig;
 import org.doubango.ngn.events.NgnInviteEventArgs;
+import org.doubango.ngn.media.NgnMediaType;
 import org.doubango.ngn.sip.NgnAVSession;
-import org.mcopenplatform.muoapi.utils.Utils;
 import org.mcopenplatform.muoapi.ConstantsMCOP;
 import org.mcopenplatform.muoapi.datatype.error.Constants;
+import org.mcopenplatform.muoapi.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.mcopenplatform.muoapi.datatype.error.Constants.CallEvent.CallTypeValidEnum.AudioWithFloorCtrlChatGroup;
+import static org.mcopenplatform.muoapi.datatype.error.Constants.CallEvent.CallTypeValidEnum.AudioWithFloorCtrlPrearrangedGroup;
+import static org.mcopenplatform.muoapi.datatype.error.Constants.CallEvent.CallTypeValidEnum.AudioWithFloorCtrlPrearrangedGroupEmergency;
+import static org.mcopenplatform.muoapi.datatype.error.Constants.CallEvent.CallTypeValidEnum.AudioWithFloorCtrlPrearrangedGroupImminentPeril;
+import static org.mcopenplatform.muoapi.datatype.error.Constants.CallEvent.CallTypeValidEnum.AudioWithFloorCtrlPrivate;
+import static org.mcopenplatform.muoapi.datatype.error.Constants.CallEvent.CallTypeValidEnum.AudioWithFloorCtrlPrivateEmergency;
+import static org.mcopenplatform.muoapi.datatype.error.Constants.CallEvent.CallTypeValidEnum.AudioWithoutFloorCtrlPrivate;
+import static org.mcopenplatform.muoapi.datatype.error.Constants.CallEvent.CallTypeValidEnum.NONE;
+import static org.mcopenplatform.muoapi.datatype.error.Constants.CallEvent.CallTypeValidEnum.VideoAudioWithFloorCtrlPrearrangedGroup;
+import static org.mcopenplatform.muoapi.datatype.error.Constants.CallEvent.CallTypeValidEnum.VideoAudioWithFloorCtrlPrivate;
+
 public class Session implements NgnAVSession.OnEventMCPTTListener {
     private final static String TAG = Utils.getTAG(Session.class.getCanonicalName());
+    private boolean isPrepare=false;
 
     private NgnAVSession session;
     private OnSessionListener onSessionListener;
     private Context context;
-
     public Session(NgnAVSession session,Context context) {
+        this.isPrepare=false;
         this.context=context;
         this.session = session;
         if(session!=null){
@@ -75,6 +92,7 @@ public class Session implements NgnAVSession.OnEventMCPTTListener {
             case MCPTT_Release:
                 session.releaseMCPTTToken();
                 break;
+
                 //TODO: Define the rest of floor control actions for MCVideo
             case TRANSMISION_Request:
                 break;
@@ -88,18 +106,97 @@ public class Session implements NgnAVSession.OnEventMCPTTListener {
         return false;
     }
 
+    private Constants.CallEvent.CallTypeValidEnum eventSIPToMCOPType(NgnMediaType mediaType){
+        Constants.CallEvent.CallTypeValidEnum result=NONE;
+        if(mediaType!=null){
+            switch (mediaType) {
+                case SessionMCPTT:
+                    break;
+                case SessionGroup:
+                    break;
+                case SessionAudioMCPTT:
+                    result=AudioWithoutFloorCtrlPrivate;
+                    break;
+                case SessionAudioMCPTTWithFloorControl:
+                    result=AudioWithFloorCtrlPrivate;
+                    break;
+                case SessionAudioGroupMCPTT:
+                    break;
+                case SessionAudioGroupMCPTTWithFloorControl:
+                    result=AudioWithFloorCtrlPrearrangedGroup;
+                    break;
+
+                case SessionEmergencyAudioMCPTT:
+                    break;
+                case SessionEmergencyAudioMCPTTWithFloorControl:
+                    result=AudioWithFloorCtrlPrivateEmergency;
+                    break;
+                case SessionEmergencyAudioGroupMCPTT:
+                    break;
+                case SessionEmergencyAudioGroupMCPTTWithFloorControl:
+                    result=AudioWithFloorCtrlPrearrangedGroupEmergency;
+                    break;
+                case SessionAlertAudioMCPTT:
+                    break;
+                case SessionAlertAudioMCPTTWithFloorControl:
+                    break;
+                case SessionAlertAudioGroupMCPTT:
+                    break;
+                case SessionAlertAudioGroupMCPTTWithFloorControl:
+                    break;
+                case SessionImminentperilAudioMCPTT:
+                    break;
+                case SessionImminentperilAudioMCPTTWithFloorControl:
+                    break;
+                case SessionImminentperilAudioGroupMCPTT:
+                    break;
+                case SessionImminentperilAudioGroupMCPTTWithFloorControl:
+                    result=AudioWithFloorCtrlPrearrangedGroupImminentPeril;
+                    break;
+                case SessionAudioChatMCPTT:
+                    break;
+                case SessionAudioChatGroupMCPTT:
+                    break;
+                case SessionAudioChatGroupMCPTTWithFloorControl:
+                    result=AudioWithFloorCtrlChatGroup;
+                    break;
+
+
+                case All:
+                    break;
+                default:
+                    if(BuildConfig.DEBUG)Log.e(TAG,"Event Type isn´t logic :"+mediaType.name()+" "+mediaType.getValue());
+                    break;
+            }
+        }
+        return result;
+    }
+
+    private void prepareSession(){
+        if(!isPrepare){
+            if(BuildConfig.DEBUG)Log.d(TAG,"prepareSession()");
+        }
+        isPrepare=true;
+    }
+
     //START CALL EVENT
     protected void newInviteEvent(NgnInviteEventArgs args){
+        String userID=null;
+        String groupID=null;
+        Constants.CallEvent.CallTypeValidEnum typeCall=null;
         switch (args.getEventType()) {
             case INCOMING:
                 if(BuildConfig.DEBUG) Log.d(TAG,"Session INCOMING: "+args.getCode());
-                String userID=session.getRemotePartyUri();
-                sendCallEvent(ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum.INCOMING,userID);
-
+                userID=session.getRemotePartyUri();
+                groupID=session.getPTTMcpttGroupIdentity();
+                typeCall =eventSIPToMCOPType(session.getMediaType());
+                sendCallEvent(ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum.INCOMING,typeCall,userID,groupID);
+                prepareSession();
                 break;
             case INPROGRESS:
                 if(BuildConfig.DEBUG) Log.d(TAG,"Session INPROGRESS: "+args.getCode());
                 sendCallEvent(ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum.INPROGRESS);
+                //prepareSession();
                 break;
             case RINGING:
                 if(BuildConfig.DEBUG) Log.d(TAG,"Session RINGING: "+args.getCode());
@@ -110,7 +207,11 @@ public class Session implements NgnAVSession.OnEventMCPTTListener {
                 break;
             case CONNECTED:
                 if(BuildConfig.DEBUG) Log.d(TAG,"Session CONNECTED: "+args.getCode());
-                sendCallEvent(ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum.CONNECTED);
+                userID=session.getRemotePartyUri();
+                groupID=session.getPTTMcpttGroupIdentity();
+                typeCall =eventSIPToMCOPType(session.getMediaType());
+                sendCallEvent(ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum.CONNECTED,typeCall,userID,groupID);
+                prepareSession();
                 break;
             case TERMWAIT:
                 if(BuildConfig.DEBUG) Log.d(TAG,"Session TERMWAIT: "+args.getCode());
@@ -238,7 +339,6 @@ public class Session implements NgnAVSession.OnEventMCPTTListener {
                 if(BuildConfig.DEBUG) Log.d(TAG,"onEventMCPTT: GRANTED");
                 sendFloorControlEvent(ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum.granted,(int)session.getGrantedTimeSecMCPTT());
                 break;
-            //TODO: Define the rest of the floor control events for MCVideo
         }
     }
 
@@ -320,17 +420,22 @@ public class Session implements NgnAVSession.OnEventMCPTTListener {
 
     //END CALL EVENT
     private void sendCallEvent(ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum eventType){
-        sendCallEvent(eventType,null,null);
+        sendCallEvent(eventType,(List<ConstantsMCOP.CallEventExtras.CallTypeEnum>)null,null,null);
     }
 
     private void sendCallEvent(ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum eventType,List<ConstantsMCOP.CallEventExtras.CallTypeEnum> callTypeEnums){
-        sendCallEvent(eventType,callTypeEnums,null);
-    }
-    private void sendCallEvent(ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum eventType,String userID){
-        sendCallEvent(eventType,null,userID);
+        sendCallEvent(eventType,callTypeEnums,null,null);
     }
 
-    private void sendCallEvent(ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum eventType, List<ConstantsMCOP.CallEventExtras.CallTypeEnum> callTypeEnums, String userID){
+
+    private void sendCallEvent(ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum eventType,Constants.CallEvent.CallTypeValidEnum callTypeEnum,String userID,String groupID){
+
+        sendCallEvent(eventType,
+                (callTypeEnum!=null && callTypeEnum!=NONE)?ConstantsMCOP.CallEventExtras.CallTypeEnum.getListCallType(callTypeEnum.getValue()):null,
+                userID,groupID);
+    }
+
+    private void sendCallEvent(ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum eventType, List<ConstantsMCOP.CallEventExtras.CallTypeEnum> callTypeEnums, String userID,String groupID){
         if(eventType==null)return;
         Intent event=new Intent(ConstantsMCOP.ActionsCallBack.callEvent.toString());
         //eventType
@@ -341,6 +446,10 @@ public class Session implements NgnAVSession.OnEventMCPTTListener {
         //UserID String
         if(userID!=null && !userID.trim().isEmpty()){
             event.putExtra(ConstantsMCOP.CallEventExtras.CALLER_USERID,userID);
+        }
+        //GroupID String
+        if(groupID!=null && !groupID.trim().isEmpty()){
+            event.putExtra(ConstantsMCOP.CallEventExtras.CALLER_GROUPID,groupID);
         }
         try{
             String sessionID=String.valueOf(session.getId());
@@ -384,4 +493,7 @@ public class Session implements NgnAVSession.OnEventMCPTTListener {
     public void setOnSessionListener(OnSessionListener onSessionListener){
         this.onSessionListener=onSessionListener;
     }
+
+
+
 }

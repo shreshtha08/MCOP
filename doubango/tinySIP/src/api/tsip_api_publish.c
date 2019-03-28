@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -132,7 +131,7 @@ int tsip_api_publish_send_unpublish(const tsip_ssession_handle_t *ss, ...)
 	return 0;
 }
 
-//MCPTT Affiliation by Eduardo
+//MCPTT Affiliation
 int tsip_api_publish_send_publish_affiliation(const tsip_ssession_handle_t *ss, ...)
 {
 	const tsip_ssession_t* _ss;
@@ -171,7 +170,7 @@ int tsip_api_publish_send_publish_affiliation(const tsip_ssession_handle_t *ss, 
 	return ret;
 }
 
-//MCPTT Affiliation by Eduardo
+//MCPTT Affiliation
 int tsip_api_publish_send_unpublish_affiliation(const tsip_ssession_handle_t *ss, ...)
 {
 	const tsip_ssession_t* _ss;
@@ -210,6 +209,84 @@ int tsip_api_publish_send_unpublish_affiliation(const tsip_ssession_handle_t *ss
 	return ret;
 }
 
+//MCPTT Idms send token in publish
+int tsip_api_publish_send_publish_authentication(const char* mcptt_info,const char* poc_settings,const tsip_ssession_handle_t *ss, ...)
+{
+	const tsip_ssession_t* _ss;
+	va_list ap;
+	tsip_action_t* action;
+	tsip_dialog_t* dialog;
+	int ret = -1;
+
+	if(!(_ss = ss) || !_ss->stack){
+		TSK_DEBUG_ERROR("Invalid parameter.");
+		return ret;
+	}
+
+	//Session is authentication mcptt
+	((tsip_ssession_t*)ss)->media.type=tmedia_mcptt_authentication;
+
+	/* Checks if the stack has been started */
+	if(!TSK_RUNNABLE(_ss->stack)->started){
+		TSK_DEBUG_ERROR("Stack not started.");
+		return -2;
+	}
+	
+	va_start(ap, ss);
+	if((action = _tsip_action_create(tsip_atype_publish, &ap))){
+		if(!(dialog = tsip_dialog_layer_find_by_ss(_ss->stack->layer_dialog, ss))){
+			dialog = tsip_dialog_layer_new(_ss->stack->layer_dialog, tsip_dialog_PUBLISH, ss);
+		}
+		TSIP_DIALOG_PUBLISH(dialog)->unpublishingAffiliationAndAuthentication=tsk_false;//Uso on publish authentication
+		TSIP_DIALOG_PUBLISH(dialog)->mcptt_info_authentication=strdup(mcptt_info);
+		TSIP_DIALOG_PUBLISH(dialog)->poc_settings_authentication=strdup(poc_settings);
+		ret = tsip_dialog_fsm_act(dialog, action->type, tsk_null, action);
+		
+		tsk_object_unref(dialog);
+		TSK_OBJECT_SAFE_FREE(action);
+	}
+	va_end(ap);
+
+	return ret;
+}
+//MCPTT Idms send token in publish
+int tsip_api_publish_send_unpublish_authentication(const tsip_ssession_handle_t *ss, ...)
+{
+	const tsip_ssession_t* _ss;
+	va_list ap;
+	tsip_action_t* action;
+	tsip_dialog_t* dialog;
+	int ret = -1;
+
+	if(!(_ss = ss) || !_ss->stack){
+		TSK_DEBUG_ERROR("Invalid parameter.");
+		return ret;
+	}
+
+	//Session is authentication mcptt
+	((tsip_ssession_t*)ss)->media.type=tmedia_mcptt_authentication;
+	
+	// Checks if the stack has been started 
+	if(!TSK_RUNNABLE(_ss->stack)->started){
+		TSK_DEBUG_ERROR("Stack not started.");
+		return -2;
+	}
+	
+	va_start(ap, ss);
+
+	if((action = _tsip_action_create(tsip_atype_publish, &ap))){
+		if(!(dialog = tsip_dialog_layer_find_by_ss(_ss->stack->layer_dialog, ss))){
+			dialog = tsip_dialog_layer_new(_ss->stack->layer_dialog, tsip_dialog_PUBLISH, ss);
+		}
+		TSIP_DIALOG_PUBLISH(dialog)->unpublishingAffiliationAndAuthentication=tsk_true;//Uso on publish authentication
+		ret = tsip_dialog_fsm_act(dialog, action->type, tsk_null, action);
+		tsk_object_unref(dialog);
+		TSK_OBJECT_SAFE_FREE(action);
+	}
+	va_end(ap);
+
+	return ret;
+}
 
 
 

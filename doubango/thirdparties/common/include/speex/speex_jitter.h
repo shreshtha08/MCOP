@@ -113,6 +113,13 @@ struct _JitterBufferPacket {
 #define JITTER_BUFFER_SET_LATE_COST 12
 #define JITTER_BUFFER_GET_LATE_COST 13
 
+#define JITTER_BUFFER_SET_AUTO_ADJUST 14
+#define JITTER_BUFFER_GET_AUTO_ADJUST 15
+#define JITTER_BUFFER_SET_BUFFER_SIZE 16
+#define JITTER_BUFFER_GET_BUFFER_SIZE 17
+#define JITTER_BUFFER_SET_LOG_ACTIVATED 18
+#define JITTER_BUFFER_GET_LOG_ACTIVATED 19
+
 
 /** Initialises jitter buffer 
  * 
@@ -121,7 +128,7 @@ struct _JitterBufferPacket {
        and JITTER_BUFFER_GET_CONCEALMENT_SIZE.
  * @return Newly created jitter buffer state
  */
-JitterBuffer *jitter_buffer_init(int step_size);
+JitterBuffer *jitter_buffer_init(int step_size, int auto_adjust/*,int buffer_size*/);
 
 /** Restores jitter buffer to its original state 
  * 

@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -56,7 +56,7 @@ public class MyAffiliationService implements IMyAffiliationService {
     private final static String TAG = Utils.getTAG(MyAffiliationService.class.getCanonicalName());
 
     private static boolean isStart;
-    private final BroadcastReceiver broadcastReceiverAffiliationMessage;
+    private BroadcastReceiver broadcastReceiverAffiliationMessage;
     private MySubscriptionAffiliationSession mSessionSuscription=null;
 
    private static final boolean USE_VERSION_OLD_AFFILIATION= false;
@@ -88,6 +88,117 @@ public class MyAffiliationService implements IMyAffiliationService {
         stringPresenceMap=new HashMap<>();
         isStart=true;
         isSubscribed=false;
+        broadcastReceiverAffiliationMessage=new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+
+                if (intent.getAction().equals(AFFILIATION_ACTION_MESSAGE)) {
+                    Log.d(TAG,"New message received");
+                    byte[] messageAffiliation=intent.getByteArrayExtra(AFFILIATION_NEWAFFILIATION_MESSAGE);
+                    if(messageAffiliation==null || messageAffiliation.length==0){
+                        Log.e(TAG,"Affiliation message not valid.");
+                    }else{
+                        Log.d(TAG,"Received new affiliation message.");
+                        try {
+                            CommandList commandList=AffiliationUtils.getCommandList(messageAffiliation);
+                            receiveNewSelfAffiliation(commandList);
+                        } catch (Exception e) {
+                            Log.e(TAG,"Error parsing new message: "+e.toString()+" "+e.getMessage());
+                        }
+
+                    }
+                }else if (intent.getAction().equals(AFFILIATION_ACTION_NOTIFY)) {
+                    Log.d(TAG,"New notify received.");
+                    boolean sendAccound=false;
+                    byte[] messageAffiliation=intent.getByteArrayExtra(AFFILIATION_NEWAFFILIATION_NOTIFY);
+                    Log.d(TAG,"New notify affiliation received.");
+                    //try {
+                    Presence presence=null;
+                    if(messageAffiliation==null || messageAffiliation.length==0){
+                        Log.w(TAG,"Affiliation notify not valid or empty.");
+                        presence=new Presence();
+                    }else{
+                        Log.d(TAG,"Valid affiliation notify.");
+                        try {
+                            if(BuildConfig.DEBUG)Log.d(TAG,"new notify: "+new String(messageAffiliation));
+                            presence=AffiliationUtils.getPresence(messageAffiliation);
+                        } catch (Exception e) {
+                            Log.e(TAG,"Error proccess new affiliation:"+e.getMessage());
+                        }
+                    }
+                    String mcpttID=null;
+                    NgnSipPrefrences profile=NgnEngine.getInstance().getProfilesService().getProfileNow(context);
+                    if(profile!=null)mcpttID=profile.getMcpttId();
+                    if((presence!=null) && (mcpttID!=null) &&
+                            (presence.getEntity()!=null) &&
+                            (presence.getEntity().trim().compareTo(mcpttID.trim())==0)){
+                        setPresenceNow(presence);
+                        if(presence.getTuple()!=null && profile!=null){
+                            if(!sendAccound){
+                                if(presence.getPId()!=null &&
+                                        !presence.getPId().isEmpty() &&
+                                        stringPresenceMap!=null &&
+                                        stringPresenceMap.get(presence.getPId())!=null){
+
+                                    receiveNewPresenceResponse(presence,presence.getPId());
+                                }else{
+                                    receiveNewPresence(presence);
+                                }
+                            }else{
+                                Log.d(TAG,"No listeners.");
+                            }
+                        }else{
+                            Log.e(TAG,"Error processing affiliation data.");
+                        }
+
+
+
+                    }else if(presence!=null && mcpttID!=null &&
+                            presence.getEntity()==null){
+                        setPresenceNow(presence);
+                        receiveNewPresence(presence);
+                    }else{
+                        Log.e(TAG,"Invalid new notify.");
+                    }
+                    /*
+                    } catch (Exception e) {
+                        Log.e(TAG,"it isn´t possible to parse the info on sip notify "+e.toString());
+                    }
+                    */
+
+                }else if (intent.getAction().equals(AFFILIATION_ACTION_SUBSCRIBE)) {
+                    Log.d(TAG,"Receive response subscribe");
+                    String error=intent.getStringExtra(AFFILIATION_RESPONSE_SUBSCRIBE_ERROR);
+                    String responseOk=intent.getStringExtra(AFFILIATION_RESPONSE_SUBSCRIBE_OK);
+                    if(error!=null){
+                        //Error
+                        Log.e(TAG,"Error in subscribe for affiliation "+error);
+                        isSubscribed=false;
+                    }else if(responseOk!=null){
+                        //Ok
+                        Log.d(TAG,"Correct subscribe for affiliation");
+                        isSubscribed=true;
+                        if(affiliationGroupDelay!=null){
+                            Log.d(TAG,"Affiliation now to groups");
+                            affiliationGroups(context,affiliationGroupDelay);
+                            affiliationGroupDelay=null;
+                        }
+
+                    }else
+                        Log.w(TAG,"This situation isn´t logic");
+                }else if (intent.getAction().equals(AFFILIATION_ACTION_UNSUBSCRIBE)) {
+                    Log.d(TAG,"UnSubscribe");
+                    isSubscribed=false;
+                }
+            }
+
+        };
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(AFFILIATION_ACTION_MESSAGE);
+        intentFilter.addAction(AFFILIATION_ACTION_NOTIFY);
+        intentFilter.addAction(AFFILIATION_ACTION_SUBSCRIBE);
+        intentFilter.addAction(AFFILIATION_ACTION_UNSUBSCRIBE);
+        NgnApplication.getContext().registerReceiver(broadcastReceiverAffiliationMessage,intentFilter);
         return true;
     }
 
@@ -117,116 +228,7 @@ public class MyAffiliationService implements IMyAffiliationService {
     }
 
     public MyAffiliationService() {
-        broadcastReceiverAffiliationMessage=new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
 
-                if (intent.getAction().equals(AFFILIATION_ACTION_MESSAGE)) {
-                    Log.d(TAG,"New message received");
-                    byte[] messageAffiliation=intent.getByteArrayExtra(AFFILIATION_NEWAFFILIATION_MESSAGE);
-                    if(messageAffiliation==null || messageAffiliation.length==0){
-                        Log.e(TAG,"Affiliation message not valid.");
-                    }else{
-                        Log.d(TAG,"Received new affiliation message.");
-                        try {
-                            CommandList commandList=AffiliationUtils.getCommandList(messageAffiliation);
-                            receiveNewSelfAffiliation(commandList);
-                        } catch (Exception e) {
-                            Log.e(TAG,"Error parsing new message: "+e.toString()+" "+e.getMessage());
-                        }
-
-                    }
-                }else if (intent.getAction().equals(AFFILIATION_ACTION_NOTIFY)) {
-                    Log.d(TAG,"New notify received.");
-                    boolean sendAccound=false;
-                    byte[] messageAffiliation=intent.getByteArrayExtra(AFFILIATION_NEWAFFILIATION_NOTIFY);
-                    Log.d(TAG,"New notify affiliation received.");
-                    //try {
-                        Presence presence=null;
-                        if(messageAffiliation==null || messageAffiliation.length==0){
-                            Log.w(TAG,"Affiliation notify not valid or empty.");
-                            presence=new Presence();
-                        }else{
-                            Log.d(TAG,"Valid affiliation notify.");
-                            try {
-                                presence=AffiliationUtils.getPresence(messageAffiliation);
-                            } catch (Exception e) {
-                                Log.e(TAG,"Error proccess new affiliation:"+e.getMessage());
-                            }
-                        }
-                        String mcpttID=null;
-                        NgnSipPrefrences profile=NgnEngine.getInstance().getProfilesService().getProfileNow(context);
-                        if(profile!=null)mcpttID=profile.getMcpttId();
-                        if((presence!=null) && (mcpttID!=null) &&
-                                (presence.getEntity()!=null) &&
-                                (presence.getEntity().trim().equals(mcpttID.trim()))){
-                            setPresenceNow(presence);
-                            if(presence.getTuple()!=null && profile!=null){
-                                if(!sendAccound){
-                                    if(presence.getPId()!=null &&
-                                            !presence.getPId().isEmpty() &&
-                                            stringPresenceMap!=null &&
-                                            stringPresenceMap.get(presence.getPId())!=null){
-
-                                        receiveNewPresenceResponse(presence,presence.getPId());
-                                    }else{
-                                        receiveNewPresence(presence);
-                                    }
-                                }else{
-                                    Log.d(TAG,"No listeners.");
-                                }
-                            }else{
-                                Log.e(TAG,"Error processing affiliation data.");
-                            }
-
-
-
-                        }else if(presence!=null && mcpttID!=null &&
-                                presence.getEntity()==null){
-                            setPresenceNow(presence);
-                            receiveNewPresence(presence);
-                        }else{
-                            Log.e(TAG,"Invalid new notify.");
-                        }
-                    /*
-                    } catch (Exception e) {
-                        Log.e(TAG,"it isn´t possible to parse the info on sip notify "+e.toString());
-                    }
-                    */
-
-                }else if (intent.getAction().equals(AFFILIATION_ACTION_SUBSCRIBE)) {
-                    Log.d(TAG,"Receive response subscribe");
-                    String error=intent.getStringExtra(AFFILIATION_RESPONSE_SUBSCRIBE_ERROR);
-                    String responseOk=intent.getStringExtra(AFFILIATION_RESPONSE_SUBSCRIBE_OK);
-                    if(error!=null){
-                        //Error
-                        Log.e(TAG,"Error in subscribe for affiliation");
-                        isSubscribed=false;
-                    }else if(responseOk!=null){
-                        //Ok
-                        Log.d(TAG,"Correct subscribe for affiliation");
-                        isSubscribed=true;
-                        if(affiliationGroupDelay!=null){
-                            Log.d(TAG,"Affiliation now to groups");
-                            affiliationGroups(context,affiliationGroupDelay);
-                            affiliationGroupDelay=null;
-                        }
-
-                    }else
-                        Log.w(TAG,"This situation isn´t logic");
-                }else if (intent.getAction().equals(AFFILIATION_ACTION_UNSUBSCRIBE)) {
-                    Log.d(TAG,"UnSubscribe");
-                    isSubscribed=false;
-                }
-            }
-
-        };
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(AFFILIATION_ACTION_MESSAGE);
-        intentFilter.addAction(AFFILIATION_ACTION_NOTIFY);
-        intentFilter.addAction(AFFILIATION_ACTION_SUBSCRIBE);
-        intentFilter.addAction(AFFILIATION_ACTION_UNSUBSCRIBE);
-        NgnApplication.getContext().registerReceiver(broadcastReceiverAffiliationMessage,intentFilter);
     }
 
     private void affilitionChange(boolean isRegister){
@@ -267,6 +269,7 @@ public class MyAffiliationService implements IMyAffiliationService {
         }else{
             presence=generatePif(groupsSusbcribe,context);
         }
+        if(presence!=null)
         try {
             bytes=AffiliationUtils.getBytesOfPresenceForAffiliation(context,presence);
         } catch (Exception e) {
@@ -375,7 +378,7 @@ public class MyAffiliationService implements IMyAffiliationService {
                 presence.getTuple().size()>0 &&
                 (tuple=presence.getTuple().get(0))!=null &&
                 (status=tuple.getStatus())!=null &&
-                (new ArrayList<>(status.getAffiliations()))!=null
+                (status.getAffiliations()!=null) && (new ArrayList<>(status.getAffiliations()))!=null
                 ){
             Log.d(TAG,"Using the old presence.");
         }else{
@@ -405,20 +408,26 @@ public class MyAffiliationService implements IMyAffiliationService {
         String pid=mcpttID+Calendar.getInstance().getTimeInMillis();
         presence2.setPId(pid);
         presence2.setTuple(tuples);
-
+        Tuple tupleRemote=null;
         if(affiliate){
             if(presence!=null && presence.getTuple()!=null &&
-                    presence.getTuple().size()>0 &&
-                    (tuple=presence.getTuple().get(0))!=null &&
-                    (status=tuple.getStatus())!=null
-                    ){
-                affiliationTypes=new ArrayList<>(presence.getTuple().get(0).getStatus().getAffiliations());
+                    presence.getTuple().size()>0)
+            for(Tuple tupleRemote2:presence.getTuple()){
+                if(profileNow.getMcpttClientId()!=null && tupleRemote2.getId()!=null && tupleRemote2.getId().compareTo(profileNow.getMcpttClientId())==0){
+                    tupleRemote=tupleRemote2;
+                }
+            }
+            if((tupleRemote!=null &&
+                    (status=tupleRemote.getStatus())!=null
+                    && status.getAffiliations()!=null
+                    )){
+                affiliationTypes=new ArrayList<>(status.getAffiliations());
 
             }else{
                 affiliationTypes=new ArrayList<>();
             }
             for(String group:groupsSusbcribe){
-                if(AffiliationUtils.isValidURISIP(group) && checkGroupStatus(affiliationTypes,group)<0){
+                if(/*AffiliationUtils.isValidURISIP(group) &&*/ checkGroupStatus(affiliationTypes,group)<0){
                     AffiliationType affiliationType=new AffiliationType();
                     affiliationType.setGroup(group);
                     affiliationTypes.add(affiliationType);
@@ -427,7 +436,12 @@ public class MyAffiliationService implements IMyAffiliationService {
             presence2.getTuple().get(0).getStatus().setAffiliations(createListAffiliationType(affiliationTypes));
         }else{
             //unaffiliate
-            affiliationTypes=new ArrayList<>(presence.getTuple().get(0).getStatus().getAffiliations());
+
+            if(presence!=null){
+                affiliationTypes=new ArrayList<>(presence.getTuple().get(0).getStatus().getAffiliations());
+            }else{
+                affiliationTypes=new ArrayList<>();
+            }
             for(String group:groupsSusbcribe){
                 int index=-1;
                 if((index=checkGroupStatus(affiliationTypes,group))>=0 && affiliationTypes.size()>index){
@@ -522,7 +536,11 @@ public class MyAffiliationService implements IMyAffiliationService {
 
     private void unRegister(){
         try {
-            if(broadcastReceiverAffiliationMessage!=null)NgnApplication.getContext().unregisterReceiver(broadcastReceiverAffiliationMessage);
+            if(broadcastReceiverAffiliationMessage!=null){
+                NgnApplication.getContext().unregisterReceiver(broadcastReceiverAffiliationMessage);
+                broadcastReceiverAffiliationMessage=null;
+            }
+            if(BuildConfig.DEBUG)Log.d(TAG,"Unregisted: broadcastReceiverAffiliationMessage");
         }catch (Exception e){
             Log.e(TAG,"Error1:"+e.getMessage());
         }

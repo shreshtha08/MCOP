@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -22,7 +21,7 @@
 
 package org.mcopenplatform.muoapi.managerIapi;
 
-import android.content.Context;
+import android.net.Uri;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
@@ -47,11 +46,17 @@ public class ManagerSimService extends ManagerIapiBase{
 
     public static final int ERROR_CONFIGURATION=104;
 
-    protected final String PACKET_SERVICE="org.mcopenplatform.iapi.SimService";
+    protected String PACKET_SERVICE="org.mcopenplatform.iapi.SimService";
+    protected String PACKET_MAIN_SERVICE="org.mcopenplatform.iapi";
     private OnSimServiceListener onSimServiceListener;
 
     public ManagerSimService() {
         super();
+    }
+
+    @Override
+    protected void isServiceConnected() {
+        startConfigurate();
     }
 
     @Override
@@ -70,8 +75,10 @@ public class ManagerSimService extends ManagerIapiBase{
         Log.d(TAG,"Register notification in "+getPACKET_SERVICE());
         try {
             (serviceInterface).registerNotificationReceiver(mcopMessenger);
-        } catch (Exception e) {
-            Log.e(TAG,e.getLocalizedMessage());
+        } catch (RemoteException e) {
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error in registerInterface in ManagerSimService:"+e.getMessage());
+        }catch (Exception e) {
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error in registerInterface in ManagerSimService:"+e.getMessage());
         }
         return serviceInterface;
     }
@@ -80,6 +87,16 @@ public class ManagerSimService extends ManagerIapiBase{
     protected boolean receiveEvent(Message message) {
         if(BuildConfig.DEBUG)
             Log.d(TAG,"Execute receiveEvent in "+getPACKET_SERVICE()+": what: "+message.what);
+        try {
+            int error=((ISimService)mService).getErrorCode();
+            String errorString=((ISimService)mService).getErrorStr();
+            Log.e(TAG,"Error "+getPACKET_SERVICE()+": "+error+" \""+errorString+"\"");
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error in ISimService"+" code:"+error+" string:"+errorString);
+        }catch (RemoteException e) {
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error in getErrorStr in ManagerSimService:"+e.getMessage());
+        }catch (Exception e) {
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error in getErrorStr in ManagerSimService:"+e.getMessage());
+        }
         return false;
     }
 
@@ -97,7 +114,26 @@ public class ManagerSimService extends ManagerIapiBase{
         return PACKET_MAIN_SERVICE;
     }
 
-    protected boolean startConfigurate(Context context){
+
+    @Override
+    protected void setPACKET_SERVICE(String packetService) {
+        changedPacket=true;
+        PACKET_SERVICE = packetService;
+    }
+
+    @Override
+    protected void setPACKET_MAIN_SERVICE(String packetMainService) {
+        changedPacket=true;
+        PACKET_MAIN_SERVICE = packetMainService;
+    }
+    @Override
+    protected boolean checkChangedPacket(){
+        return changedPacket;
+    }
+
+
+
+    protected boolean startConfigurate(){
         if(mService!=null){
             try {
                 //TODO: Not sure if pcscf and impu should be used at all the times
@@ -116,11 +152,31 @@ public class ManagerSimService extends ManagerIapiBase{
                     if(imei!=null) Log.d(TAG,"imei: "+imei);
                     if(imsi!=null) Log.d(TAG,"imsi: "+imsi);
                 }
-                //TODO: Process all data and make the business logic
-                if(onSimServiceListener!=null)onSimServiceListener.onConfiguration(impu[0],impi,domain,pcscfSlot[0],4,imsi,imei);
-            } catch (RemoteException e) {
+                int length=pcscfSlot!=null?pcscfSlot.length:0;
+                String[] pcscfHosts=new String[length];
+                int[] pcscfPorts=new int[length];
+
+                for(int con=0;con<(length);con++){
+                    Uri pcscfUri;
+                    if(pcscfSlot[con]!=null && (pcscfUri=Uri.parse((pcscfSlot[con].compareToIgnoreCase("sip://")!=0)?("sip://"+pcscfSlot[con]):pcscfSlot[con]))!=null){
+                        pcscfHosts[con]=pcscfUri.getHost();
+                        pcscfPorts[con]=pcscfUri.getPort();
+                    }else{
+                        if(BuildConfig.DEBUG)Log.e(TAG,pcscfSlot[con]+ "does not have the correct format");
+                    }
+                }
+
+                //TODO: process pcscf to port
+                if(onSimServiceListener!=null)onSimServiceListener.onConfiguration(impu,impi,domain,pcscfHosts,pcscfPorts,imsi,imei);
+            }catch (RemoteException e) {
+                if(BuildConfig.DEBUG)Log.e(TAG,"Error in startConfigurate in ManagerSimService:"+e.getMessage());
                 if(onIapiListener!=null)onIapiListener.onIapiError(ERROR_CONFIGURATION,mContext.getString(R.string.Not_be_connected_with_the_service)+getPACKET_SERVICE());
+            }catch (Exception e) {
+                if(BuildConfig.DEBUG)Log.e(TAG,"Error in startConfigurate in ManagerSimService:"+e.getMessage());
+                if(onIapiListener!=null)onIapiListener.onIapiError(ERROR_CONFIGURATION,mContext.getString(R.string.Not_be_connected_with_the_service)+getPACKET_SERVICE());
+
             }
+
         }else{
             if(onIapiListener!=null)onIapiListener.onIapiError(ERROR_CONFIGURATION,mContext.getString(R.string.Error_when_accessing_service)+getPACKET_SERVICE());
             return false;
@@ -130,73 +186,112 @@ public class ManagerSimService extends ManagerIapiBase{
 
     //START METHOD
     private String[] getPcscf() throws RemoteException {
+        String[] pcscfs=null;
         if(mService==null){
             if(BuildConfig.DEBUG)Log.e(TAG,"getPcscf Error");
             return null;
+        }else{
+            pcscfs=((ISimService)mService).getPcscf(slotSIMCurrent);
+            String pcscfString=new String();
+            if(pcscfs!=null && pcscfs.length>0)
+                for(String pscrf:pcscfs){
+                    pcscfString+="\n"+pscrf;
+                }
+            if(BuildConfig.DEBUG)Log.i(TAG,"response getPcscf(): "+pcscfString);
         }
-        return ((ISimService)mService).getPcscf(slotSIMCurrent);
+        return pcscfs;
     }
 
     private String[] getImpu() throws RemoteException {
+        String[] impus=null;
         if(mService==null){
             if(BuildConfig.DEBUG)Log.e(TAG,"getImpu Error");
             return null;
+        }else{
+            impus=((ISimService)mService).getImpu(slotSIMCurrent);
+            String impusString=new String();
+            if(impus!=null && impus.length>0)
+            for(String impu:impus){
+                impusString+="\n"+impu;
+            }
+            if(BuildConfig.DEBUG)Log.i(TAG,"response getImpu(): "+impusString);
         }
+
         return ((ISimService)mService).getImpu(slotSIMCurrent);
     }
 
     private String getImsi() throws RemoteException {
+        String imsi=null;
         if(mService==null){
             if(BuildConfig.DEBUG)Log.e(TAG,"getImsi Error");
             return null;
+        }else{
+            imsi=((ISimService)mService).getSubscriberIdentity(slotSIMCurrent);
+            if(BuildConfig.DEBUG)Log.i(TAG,"response getSubscriberIdentity():"+imsi);
         }
-        return ((ISimService)mService).getSubscriberIdentity(slotSIMCurrent);
+        return imsi;
     }
 
     private String getImei() throws RemoteException {
+        String imei=null;
         if(mService==null){
             if(BuildConfig.DEBUG)Log.e(TAG,"getImei Error");
             return null;
+        }else{
+            imei=((ISimService)mService).getDeviceIdentity(slotSIMCurrent);
+            if(BuildConfig.DEBUG)Log.i(TAG,"response  getDeviceIdentity(): "+imei);
         }
-        return ((ISimService)mService).getDeviceIdentity(slotSIMCurrent);
+        return imei;
     }
 
     private String getImpi() throws RemoteException {
+        String impi=null;
         if(mService==null){
             if(BuildConfig.DEBUG)Log.e(TAG,"getImpi Error");
             return null;
         }
-        return ((ISimService)mService).getImpi(slotSIMCurrent);
+        else{
+            impi=((ISimService)mService).getImpi(slotSIMCurrent);
+            if(BuildConfig.DEBUG)Log.i(TAG,"response  getImpi(): "+impi);
+        }
+        return impi;
     }
 
     private String getDomain() throws RemoteException {
+        String domain=null;
         if(mService==null){
             if(BuildConfig.DEBUG)Log.e(TAG,"getDomain Error");
             return null;
+        }else{
+            domain=((ISimService)mService).getDomain(slotSIMCurrent);
+            if(BuildConfig.DEBUG)Log.i(TAG,"response  getDomain(): "+domain);
         }
-        return ((ISimService)mService).getDomain(slotSIMCurrent);
+        return domain;
     }
 
     public String getAuthentication(String data) throws RemoteException {
+        String response=null;
         if(mService==null){
             if(BuildConfig.DEBUG)Log.e(TAG,"getAuthentication Error");
             return null;
         }else{
             if(BuildConfig.DEBUG)Log.i(TAG,"Executing getAuthentication: "+data);
         }
-        return ((ISimService)mService).getAuthentication(slotSIMCurrent,simAppCurrent,simAuthCurrent,data);
+        response=((ISimService)mService).getAuthentication(slotSIMCurrent,simAppCurrent,simAuthCurrent,data);
+        if(BuildConfig.DEBUG)Log.i(TAG,"response getAuthentication(): "+response);
+        return response;
     }
     //END METHOD
 
-    interface OnSimServiceListener{
+    public interface OnSimServiceListener{
         void onConfiguration(
-                String impu,
-                String impi,
-                String domain,
-                String pcscf,
-                int pcscfPort,
-                String imsi,
-                String imei
+                final String[] impu,
+                final String impi,
+                final String domain,
+                final String pcscf[],
+                final int[] pcscfPort,
+                final String imsi,
+                final String imei
         );
     }
 

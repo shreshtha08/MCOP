@@ -195,8 +195,20 @@ public class SipStack extends SafeObject {
     return tinyWRAPJNI.SipStack_setMCPTTPSIPreestablished(swigCPtr, this, mcptt_psi_preestablished);
   }
 
+  public boolean setMCPTTPSICMS(String mcptt_psi_cms) {
+    return tinyWRAPJNI.SipStack_setMCPTTPSICMS(swigCPtr, this, mcptt_psi_cms);
+  }
+
+  public boolean setMCPTTPSIGMS(String mcptt_psi_gms) {
+    return tinyWRAPJNI.SipStack_setMCPTTPSIGMS(swigCPtr, this, mcptt_psi_gms);
+  }
+
   public boolean setMCPTTID(String mcptt_id) {
     return tinyWRAPJNI.SipStack_setMCPTTID(swigCPtr, this, mcptt_id);
+  }
+
+  public boolean setMCPTTClientID(String mcptt_client_id) {
+    return tinyWRAPJNI.SipStack_setMCPTTClientID(swigCPtr, this, mcptt_client_id);
   }
 
   public boolean setMCPTTPriority(int mcptt_priority) {
@@ -277,6 +289,10 @@ public class SipStack extends SafeObject {
 
   public boolean setMCPTTAffiliationGroupsDefualt(String mcptt_affiliation_groups_default) {
     return tinyWRAPJNI.SipStack_setMCPTTAffiliationGroupsDefualt(swigCPtr, this, mcptt_affiliation_groups_default);
+  }
+
+  public boolean setMCPTTPSIAuthentication(String mcptt_psi_authentication) {
+    return tinyWRAPJNI.SipStack_setMCPTTPSIAuthentication(swigCPtr, this, mcptt_psi_authentication);
   }
 
   public String dnsENUM(String service, String e164num, String domain) {

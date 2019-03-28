@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -37,6 +36,7 @@
 *
 * @date Created: Sat Nov 8 16:54:58 2009 mdiop
 */
+#include <tinysip.h>
 #include "tinysip/tsip_action.h"
 
 #include "tsk_string.h"
@@ -184,7 +184,17 @@ int _tsip_action_set(tsip_action_handle_t* self, va_list* app)
 						}
 						break;
 					}
-				
+				case aptype_payload2:
+				{	/* (const void*)PAY_PTR2, (tsk_size_t)PAY_SIZE2 */
+					const void* payload2 = va_arg(*app, const void *);
+					tsk_size_t size2 = va_arg(*app, tsk_size_t);
+					if(payload2 && size2){
+						TSK_OBJECT_SAFE_FREE(action->payload2);
+						action->payload2 = tsk_buffer_create(payload2, size2);
+					}
+					break;
+				}
+
 				case aptype_resp_line:
 					{	/* (int32_t)CODE_INT, (const char*)PHRASE_STR */
 						int32_t code = va_arg(*app, int32_t);
@@ -272,6 +282,8 @@ static tsk_object_t* tsip_action_dtor(tsk_object_t * self)
 	if(action){
 		TSK_OBJECT_SAFE_FREE(action->headers);
 		TSK_OBJECT_SAFE_FREE(action->payload);
+		TSK_OBJECT_SAFE_FREE(action->payload2);
+
 
 		TSK_OBJECT_SAFE_FREE(action->media.params);
 

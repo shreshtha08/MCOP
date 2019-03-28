@@ -22,6 +22,7 @@ package org.doubango.ngn.utils;
 
 import org.doubango.ngn.NgnApplication;
 import org.doubango.ngn.R;
+import org.doubango.ngn.datatype.mo.Bool;
 import org.doubango.ngn.sip.NgnPresenceStatus;
 import org.doubango.tinyWRAP.tdav_codec_id_t;
 import org.doubango.tinyWRAP.tmedia_bandwidth_level_t;
@@ -76,12 +77,22 @@ public class NgnConfigurationEntry {
 	public static final String NETWORK_USE_SIGCOMP=getDefaultString(R.string.NETWORK_USE_SIGCOMP);
 	public static final String NETWORK_TRANSPORT=getDefaultString(R.string.NETWORK_TRANSPORT);
 
+
+
 	//MCPTT
 	public static final String MCPTT_PSI_CALL_PRIVATE=getDefaultString(R.string.MCPTT_PSI_CALL_PRIVATE);
 	public static final String MCPTT_PSI_CALL_GROUP=getDefaultString(R.string.MCPTT_PSI_CALL_PRIVATE);
 	public static final String MCPTT_PSI_CALL_PREESTABLISHED=getDefaultString(R.string.MCPTT_PSI_CALL_PRIVATE);
 	public static final String MCPTT_PSI_AFFILIATION=getDefaultString(R.string.MCPTT_PSI_CALL_PRIVATE);
 	public static final String MCPTT_PSI_AUTHENTICATION=getDefaultString(R.string.MCPTT_PSI_CALL_PRIVATE);
+
+	public static final String MCPTT_PSI_CMS=getDefaultString(R.string.MCPTT_PSI_CMS);
+	public static final String MCPTT_ENABLE_SUBSCRIPTION_CMS=getDefaultString(R.string.MCPTT_ENABLE_SUBSCRIPTION_CMS);
+	public static final String CMS_XCAP_ROOT_URI=getDefaultString(R.string.CMS_XCAP_ROOT_URI);
+
+	public static final String MCPTT_PSI_GMS=getDefaultString(R.string.MCPTT_PSI_GMS);
+	public static final String MCPTT_ENABLE_SUBSCRIPTION_GMS=getDefaultString(R.string.MCPTT_ENABLE_SUBSCRIPTION_GMS);
+	public static final String GMS_XCAP_ROOT_URI=getDefaultString(R.string.GMS_XCAP_ROOT_URI);
 
 	public static final String MCPTT_ID=getDefaultString(R.string.MCPTT_ID);
 	public static final String MCPTT_CLIENT_ID=getDefaultString(R.string.MCPTT_CLIENT_ID);
@@ -93,6 +104,8 @@ public class NgnConfigurationEntry {
 	public static final String MCPTT_LOCATION_INFO_VERSION_OLD=getDefaultString(R.string.MCPTT_LOCATION_INFO_VERSION_OLD);
 
 
+
+
 	public static final String MCPTT_PRIV_ANSWER_MODE=getDefaultString(R.string.MCPTT_PRIV_ANSWER_MODE);
 	public static final String MCPTT_ANSWER_MODE=getDefaultString(R.string.MCPTT_ANSWER_MODE);
 	public static final String MCPTT_NAMESPACE=getDefaultString(R.string.MCPTT_NAMESPACE);
@@ -102,16 +115,30 @@ public class NgnConfigurationEntry {
 
 	//GUI
 	public static final String MCPTT_PLAY_SOUND_MCPTT_CALL=getDefaultString(R.string.MCPTT_PLAY_SOUND_MCPTT_CALL);;
+	//SELF CONFIGURE
+	public static final String SELF_CONFIGURE=getDefaultString(R.string.SELF_CONFIGURE);;
+	public static final String SELF_CONFIGURE_CLIENT_ID=getDefaultString(R.string.SELF_CONFIGURE_CLIENT_ID);;
+	public static final String SELF_CONFIGURE_ISSUER_URI=getDefaultString(R.string.SELF_CONFIGURE_ISSUER_URI);;
+	public static final String SELF_CONFIGURE_REDIRECT_URI=getDefaultString(R.string.SELF_CONFIGURE_REDIRECT_URI);;
+	public static final String MCPTT_USE_ISSUER_URI_IDMS=getDefaultString(R.string.MCPTT_USE_ISSUER_URI_IDMS);;
+	public static final String MCPTT_UE_ID=getDefaultString(R.string.MCPTT_UE_ID);;
+	public static final String IDMS_TOKEN_END_POINT=getDefaultString(R.string.IDMS_TOKEN_END_POINT);;
+	public static final String IDMS_AUTH_END_POINT=getDefaultString(R.string.IDMS_AUTH_END_POINT);;
+
+
 
 
 
 	public static final String RTCP_MUX=getDefaultString(R.string.RTCP_MUX);
 
 
+	//CMS
+	public static final String ENABLE_CMS=getDefaultString(R.string.ENABLE_CMS);
+
+	public static final String SELF_CONFIGURE_SEND_TOKEN_REGISTER=getDefaultString(R.string.SELF_CONFIGURE_SEND_TOKEN_REGISTER);;
+	public static final String SELF_CONFIGURE_SEND_TOKEN_FAIL=getDefaultString(R.string.SELF_CONFIGURE_SEND_TOKEN_FAIL);;
 
 	public static final String MCPTT_INSERT_X_FRAMER_IP=getDefaultString(R.string.MCPTT_INSERT_X_FRAMER_IP);;
-
-
 	//SSH
 	public static final String SSH_HOST=getDefaultString(R.string.SSH_HOST);
 	public static final String SSH_USER=getDefaultString(R.string.SSH_USER);
@@ -248,6 +275,17 @@ public class NgnConfigurationEntry {
 	public static final String DEFAULT_MCPTT_PSI_CALL_PREESTABLISHED=getDefaultString(R.string.DEFAULT_MCPTT_PSI_CALL_PREESTABLISHED);//= "sip:mcptt-server-orig-part@organization.org";//"sip:mcptt-server@organization.org";
 	public static final String DEFAULT_MCPTT_PSI_AFFILIATION=getDefaultString(R.string.DEFAULT_MCPTT_PSI_AFFILIATION);//= "sip:mcptt-server-orig-part@organization.org";//"sip:mcptt-server@organization.org";
 	public static final String DEFAULT_MCPTT_PSI_AUTHENTICATION=getDefaultString(R.string.DEFAULT_MCPTT_PSI_AUTHENTICATION);//= "sip:mcptt-server-orig-part@organization.org";//"sip:mcptt-server@organization.org";
+	public static final String DEFAULT_MCPTT_PSI_CMS=getDefaultString(R.string.DEFAULT_MCPTT_PSI_CMS);// = "sip:mcptt-server-orig-part@organization.org";//"sip:mcptt-server@organization.org";
+	public static final Boolean DEFAULT_MCPTT_ENABLE_SUBSCRIPTION_CMS=getDefaultBoolean(R.bool.DEFAULT_MCPTT_ENABLE_SUBSCRIPTION_CMS);
+	public static final String DEFAULT_CMS_XCAP_ROOT_URI=getDefaultString(R.string.DEFAULT_CMS_XCAP_ROOT_URI);
+
+
+
+	public static final String DEFAULT_MCPTT_PSI_GMS=getDefaultString(R.string.DEFAULT_MCPTT_PSI_GMS);// = "sip:mcptt-server-orig-part@organization.org";//"sip:mcptt-server@organization.org";
+	public static final Boolean DEFAULT_MCPTT_ENABLE_SUBSCRIPTION_GMS=getDefaultBoolean(R.bool.DEFAULT_MCPTT_ENABLE_SUBSCRIPTION_GMS);
+	public static final String DEFAULT_GMS_XCAP_ROOT_URI=getDefaultString(R.string.DEFAULT_GMS_XCAP_ROOT_URI);
+
+
 	public static final String DEFAULT_MCPTT_ID=getDefaultString(R.string.DEFAULT_MCPTT_ID);// = "sip:mcptt_id_test_A@organization.org";
 	public static final String DEFAULT_MCPTT_CLIENT_ID=getDefaultString(R.string.DEFAULT_MCPTT_CLIENT_ID);// = "sip:mcptt_id_test_A@organization.org";
 	public static final int DEFAULT_MCPTT_PRIORITY=getDefaultInt(R.integer.DEFAULT_MCPTT_PRIORITY);// = 7;
@@ -273,7 +311,24 @@ public class NgnConfigurationEntry {
 
 
 
+	//SELF CONFIGURE
 
+	public static final Boolean DEFAULT_SELF_CONFIGURE=getDefaultBoolean(R.bool.DEFAULT_SELF_CONFIGURE);// = false;
+	public static final Boolean DEFAULT_SELF_CONFIGURE_SEND_TOKEN_REGISTER=getDefaultBoolean(R.bool.DEFAULT_SELF_CONFIGURE_SEND_TOKEN_REGISTER);// = false;
+	public static final Boolean DEFAULT_SELF_CONFIGURE_SEND_TOKEN_FAIL=getDefaultBoolean(R.bool.DEFAULT_SELF_CONFIGURE_SEND_TOKEN_FAIL);// = false;
+	public static final String DEFAULT_SELF_CONFIGURE_CLIENT_ID=getDefaultString(R.string.DEFAULT_SELF_CONFIGURE_CLIENT_ID);// = "mcptt_client";
+	public static final String DEFAULT_SELF_CONFIGURE_ISSUER_URI=getDefaultString(R.string.DEFAULT_SELF_CONFIGURE_ISSUER_URI);// = "http://idms.organization.com/openid-connect-server-webapp/.well-known/openid-configuration";
+	public static final String DEFAULT_SELF_CONFIGURE_REDIRECT_URI=getDefaultString(R.string.DEFAULT_SELF_CONFIGURE_REDIRECT_URI);// = "mcptt://organization_mcptt/cb";//"http://httpbin.org/get";
+	public static final Boolean DEFAULT_MCPTT_USE_ISSUER_URI_IDMS=getDefaultBoolean(R.bool.DEFAULT_MCPTT_USE_ISSUER_URI_IDMS);// = false;
+	public static final String DEFAULT_IDMS_TOKEN_END_POINT=getDefaultString(R.string.DEFAULT_IDMS_TOKEN_END_POINT);// = "";
+	public static final String DEFAULT_MCPTT_UE_ID=getDefaultString(R.string.DEFAULT_MCPTT_UE_ID);// = "mcptt_UE_id";
+	public static final String DEFAULT_IDMS_AUTH_END_POINT=getDefaultString(R.string.DEFAULT_IDMS_AUTH_END_POINT);// = "";
+
+
+
+	//CMS
+	public static final String DEFAULT_CMS_URI=getDefaultString(R.string.DEFAULT_CMS_URI);// = "http://cms.organizatio.com";
+	public static final Boolean DEFAULT_ENABLE_CMS=getDefaultBoolean(R.bool.DEFAULT_ENABLE_CMS);// = false;
 
 
 
@@ -324,16 +379,18 @@ public class NgnConfigurationEntry {
 		//tdav_codec_id_t.tdav_codec_id_amr_nb_be.swigValue() |
 		//tdav_codec_id_t.tdav_codec_id_amr_nb_oa.swigValue() |
 		tdav_codec_id_t.tdav_codec_id_pcmu.swigValue() |//Only Codec Audio
-		//tdav_codec_id_t.tdav_codec_id_h264_bp.swigValue() |//All Codect Video
+		tdav_codec_id_t.tdav_codec_id_h264_bp.swigValue() |//All Codec Video
+		//tdav_codec_id_t.tdav_codec_id_h264_hp.swigValue() |
+		/*
 		tdav_codec_id_t.tdav_codec_id_vp8.swigValue() |
 		tdav_codec_id_t.tdav_codec_id_mp4ves_es.swigValue()|
 		tdav_codec_id_t.tdav_codec_id_theora.swigValue() |
-		//tdav_codec_id_t.tdav_codec_id_h264_mp.swigValue() |
 		tdav_codec_id_t.tdav_codec_id_h263.swigValue() |
 		tdav_codec_id_t.tdav_codec_id_h263p.swigValue() |
 		tdav_codec_id_t.tdav_codec_id_h263pp.swigValue() // |
 		//tdav_codec_id_t.tdav_codec_id_h263p.swigValue() |
-		/*tdav_codec_id_t.tdav_codec_id_h263.swigValue()*/;
+		/*tdav_codec_id_t.tdav_codec_id_h263.swigValue()*/
+		tdav_codec_id_t.tdav_codec_id_h264_mp.swigValue() ;
 	public static final int DEFAULT_MEDIA_AUDIO_RESAMPLER_QUALITY = 0;
 	public static final int DEFAULT_MEDIA_AUDIO_CONSUMER_GAIN = 0; // disabled
 	public static final int DEFAULT_MEDIA_AUDIO_PRODUCER_GAIN = 0; // disabled

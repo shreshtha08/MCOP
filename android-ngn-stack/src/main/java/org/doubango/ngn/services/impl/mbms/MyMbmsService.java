@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2017 Eduardo Zarate Lasurtegui
+
 *  Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -138,24 +138,31 @@ public class MyMbmsService implements
                     }
                 }else if(intent.getAction().equals(MBMS_MEDIA_ACTION)){{
                     Log.d(TAG,"MBMS media parameters received.");
-                    String ipMedia=intent.getStringExtra(MBMS_IP_MEDIA_MBMS);
-                    long tmgi=intent.getLongExtra(MBMS_TMGI_MBMS,MBMS_DEFAULT_INT);
-                    int portMedia=intent.getIntExtra(MBMS_PORT_MEDIA_MBMS,MBMS_DEFAULT_INT);
-                    int portControlMedia=intent.getIntExtra(MBMS_PORT_CONTROL_MEDIA_MBMS,MBMS_DEFAULT_INT);
-                    if(ipMedia!=null &&
-                            !ipMedia.isEmpty()&&
-                            tmgi!=MBMS_DEFAULT_INT &&
-                            portControlMedia!=MBMS_DEFAULT_INT &&
-                            portMedia!=MBMS_DEFAULT_INT){
-                        Log.d(TAG,"MBMS IP and Port configured.");
-                        MbmsData mbmsData=null;
-                        if((mbmsData=getMbmsDataOfTmgi(tmgi))!=null){
-                            mbmsData.setIpMulticastMedia(ipMedia);
-                            mbmsData.setPortMulticastMedia(portMedia);
-                            mbmsData.setPortControlMulticastMedia(portControlMedia);
-                            checkTMGItoListening(tmgi,context);
+                    if(intent.getBooleanExtra(MBMS_MAP_MBMS,true)){
+                        String groupID=intent.getStringExtra(MBMS_GROUP_ID_MBMS);
+                        String ipMedia=intent.getStringExtra(MBMS_IP_MEDIA_MBMS);
+                        long tmgi=intent.getLongExtra(MBMS_TMGI_MBMS,MBMS_DEFAULT_INT);
+                        int portMedia=intent.getIntExtra(MBMS_PORT_MEDIA_MBMS,MBMS_DEFAULT_INT);
+                        int portControlMedia=intent.getIntExtra(MBMS_PORT_CONTROL_MEDIA_MBMS,MBMS_DEFAULT_INT);
+                        if(ipMedia!=null &&
+                                !ipMedia.isEmpty()&&
+                                tmgi!=MBMS_DEFAULT_INT &&
+                                portControlMedia!=MBMS_DEFAULT_INT &&
+                                portMedia!=MBMS_DEFAULT_INT){
+                            Log.d(TAG,"MBMS IP and Port configured.");
+                            MbmsData mbmsData=null;
+                            if((mbmsData=getMbmsDataOfTmgi(tmgi))!=null){
+                                mbmsData.setIpMulticastMedia(ipMedia);
+                                mbmsData.setPortMulticastMedia(portMedia);
+                                mbmsData.setPortControlMulticastMedia(portControlMedia);
+                                mbmsData.setGroupID(groupID);
+                                checkTMGItoListening(tmgi,context);
+                            }
                         }
+                    }else{
+                        //TODO: for UNMAP
                     }
+
                 }}
             }
         };
@@ -169,11 +176,13 @@ public class MyMbmsService implements
             @Override
             public void onReceive(Context context, Intent intent) {
                 final String action = intent.getAction();
+
                 long tmgi;
                 String ipMedia;
+                String groupID;
                 int portMedia;
                 int portControlMedia;
-
+                Intent intentMediaAct=new Intent();
                 // Registration Event
                 if(NgnMcpttMbmsEventArgs.ACTION_MCPTT_MBMS_EVENT.equals(action)){
                     Log.d(TAG,"MBMS Control EVENT.");
@@ -189,13 +198,15 @@ public class MyMbmsService implements
                         case MAP_GROUP:
 
                             Log.d(TAG, "MBMS GROUP MAPPED");
-                            intent.getStringExtra(NgnMcpttMbmsEventArgs.EXTRA_GROUP);
+                            groupID=intent.getStringExtra(NgnMcpttMbmsEventArgs.EXTRA_GROUP);
                             tmgi = intent.getLongExtra(NgnMcpttMbmsEventArgs.EXTRA_TMGI,-1);
                             ipMedia = intent.getStringExtra(NgnMcpttMbmsEventArgs.EXTRA_MEDIA_IP);
                             portMedia = intent.getShortExtra(NgnMcpttMbmsEventArgs.EXTRA_MEDIA_PORT, new Short("-1"));
                             portControlMedia = intent.getShortExtra(NgnMcpttMbmsEventArgs.EXTRA_MEDIA_CTRL_PORT, new Short("-1"));
 
-                            Intent intentMediaAct=new Intent();
+
+                            intentMediaAct.putExtra(MBMS_GROUP_ID_MBMS,groupID);
+                            intentMediaAct.putExtra(MBMS_MAP_MBMS,true);
                             intentMediaAct.putExtra(MBMS_IP_MEDIA_MBMS,ipMedia);
                             intentMediaAct.putExtra(MBMS_PORT_CONTROL_MEDIA_MBMS,portControlMedia);
                             intentMediaAct.putExtra(MBMS_PORT_MEDIA_MBMS,portMedia);
@@ -206,7 +217,12 @@ public class MyMbmsService implements
                             break;
                         case UNMAP_GROUP:
                             Log.d(TAG, "MBMS GROUP UNMAPPED");
-                            intent.getStringExtra(NgnMcpttMbmsEventArgs.EXTRA_GROUP);
+                            groupID=intent.getStringExtra(NgnMcpttMbmsEventArgs.EXTRA_GROUP);
+                            intentMediaAct.putExtra(MBMS_MAP_MBMS,false);
+                            intentMediaAct.putExtra(MBMS_GROUP_ID_MBMS,groupID);
+                            intentMediaAct.setAction(MBMS_MEDIA_ACTION);
+
+                            NgnApplication.getContext().sendBroadcast(intentMediaAct);
 
                             break;
                        default:
@@ -283,6 +299,7 @@ public class MyMbmsService implements
         for(NgnAVSession session:sessions.values()){
             if(session.isActive() && session.isConnected() && session.startMbmsManager(mbmsData.getIpMBMSManager(),mbmsData.getPortMBMSManager(), mbmsData.getLocalInterface(),mbmsData.getLocalInterfaceIndex())){
                 if(BuildConfig.DEBUG)Log.i(TAG,"execute ok startMbmsManager in session id:"+session.getId());
+
             }else{
                 if(BuildConfig.DEBUG)Log.e(TAG,"No correct execute startMbmsManager in session id:"+session.getId());
             }
@@ -290,9 +307,31 @@ public class MyMbmsService implements
     }
 
     @Override
+    public void stopMbmsManagerListening(MbmsData mbmsData) {
+//TODO: start Listening MBMS manager
+        Log.d(TAG,"MyMbmsService. Stopping MBMS manager. IP=" + mbmsData.getIpMBMSManager() + " Port=" + mbmsData.getPortMBMSManager() + " Interface=" + mbmsData.getLocalInterface() + " Index=" + mbmsData.getLocalInterfaceIndex());
+        //TODO: it is necessary send for all sessions:
+        NgnObservableHashMap<Long, NgnAVSession> sessions = NgnAVSession.getSessions();
+        if(sessions!=null && !sessions.isEmpty())
+            for(NgnAVSession session:sessions.values()){
+                if(session.stopMbmsManager()){
+                    if(BuildConfig.DEBUG)Log.i(TAG,"execute ok stopMbmsManager in session id:"+session.getId());
+                }else{
+                    if(BuildConfig.DEBUG)Log.e(TAG,"No correct execute stopMbmsManager in session id:"+session.getId());
+                }
+            }
+    }
+
+    @Override
     public void startMbmsManager(String  interfaceNet,long tmgi){
         if(mbmsExtensionService!=null)mbmsExtensionService.startMbmsManager(interfaceNet,tmgi);
     }
+
+    @Override
+    public void stopMbmsManager(long tmgi){
+        if(mbmsExtensionService!=null)mbmsExtensionService.stopMbmsManager(tmgi);
+    }
+
 
     @Override
     public List<Long> getTMGIs(int serviceAreaID) {
@@ -434,6 +473,13 @@ public class MyMbmsService implements
         return null;
     }
 
+    private MbmsData getMbmsDataOfTmgi(String groupID){
+        if(mbmsExtensionService!=null)
+            return mbmsExtensionService.getMbmsDataOfTmgi(groupID);
+        return null;
+    }
+
+
     /**
      * If the device is in tmgi, it will return true
      *
@@ -447,7 +493,7 @@ public class MyMbmsService implements
         MbmsData mbmsData = getMbmsDataOfTmgi(tmgi);
         if (mbmsData != null || mbmsData.getMcpttMbmsUsageInfoType() != null) {
             Log.e(TAG, "Message as TMGI.");
-            if(listeningMulticast(mbmsData,true) && mbmsExtensionService!=null){
+            if(listeningMulticast(tmgi,mbmsData,true) && mbmsExtensionService!=null){
                 mbmsExtensionService.sendMbmsListeningServiceAreaCurrent(mbmsData,true,context);
                 return true;
             }
@@ -456,7 +502,7 @@ public class MyMbmsService implements
         return false;
     }
 
-    private boolean listeningMulticast(MbmsData mbmsData,boolean start){
+    private boolean listeningMulticast(long tmgi,MbmsData mbmsData,boolean start){
         //TODO: init listening media for MBMS audio in IP address Multicast
         boolean ret = true;
         if (start) {
@@ -469,22 +515,68 @@ public class MyMbmsService implements
             intent.setAction(MyMbmsService.MBMS_CALL_ACTION_MEDIA_START);
             NgnApplication.getContext().sendBroadcast(intent);
             */
-            //TODO: it is necessary send for all sessions:
+            //TODO: it is necessary send for only any session:
             NgnObservableHashMap<Long, NgnAVSession> sessions = NgnAVSession.getSessions();
             if(sessions!=null && !sessions.isEmpty())
+                if(BuildConfig.DEBUG && mbmsData.getGroupID()!=null)
+                    Log.d(TAG,"Start multicast Group ID: "+mbmsData.getGroupID());
+
                 for(NgnAVSession session:sessions.values()) {
-                    if (session.isActive() && session.isConnected() && session.startMbmsMedia( mbmsData.getIpMulticastMedia(), mbmsData.getPortMulticastMedia(), mbmsData.getPortControlMulticastMedia())) {
+                    String mcpttGroupIdentity=session.getPTTMcpttGroupIdentity();
+                    if (session.isActive() &&
+                            session.isConnected() &&
+                            mcpttGroupIdentity!=null &&
+                            mcpttGroupIdentity.trim().compareTo(mbmsData.getGroupID().trim())==0 &&
+                            session.startMbmsMedia( mbmsData.getIpMulticastMedia(), mbmsData.getPortMulticastMedia(), mbmsData.getPortControlMulticastMedia())) {
+                        if(mbmsExternalServiceListener!=null)mbmsExternalServiceListener.startMbmsMedia(session.getId(),tmgi);
                         if (BuildConfig.DEBUG)
-                            Log.i(TAG, "execute ok listeningMulticast in session id:" + session.getId());
+                            Log.i(TAG, "execute ok mbms listeningMulticast in session id:" + session.getId());
                     } else {
                         if (BuildConfig.DEBUG)
-                            Log.e(TAG, "No correct execute listeningMulticast in session id:" + session.getId());
+                            Log.e(TAG, "No correct execute mbms listeningMulticast in session id:" + session.getId());
                     }
                 }
 
+        }else{
+            //TODO: Is no Tried;
+            NgnObservableHashMap<Long, NgnAVSession> sessions = NgnAVSession.getSessions();
+            if(sessions!=null && !sessions.isEmpty())
+                for(NgnAVSession session:sessions.values()) {
+                    if (session.isActive() && session.isConnected() && session.stopMbmsManager()) {
+                        if(mbmsExternalServiceListener!=null)mbmsExternalServiceListener.stopMbmsMedia(session.getId(),tmgi);
+                        if (BuildConfig.DEBUG)
+                            Log.i(TAG, "execute ok stopMbmsManager in session id:" + session.getId());
+                    } else {
+                        if (BuildConfig.DEBUG)
+                            Log.e(TAG, "No correct execute stopMbmsManager in session id:" + session.getId());
+                    }
+                }
         }
         return ret;
     }
+
+
+    public void hangUpCallMbms(long sessionID){
+
+        NgnObservableHashMap<Long, NgnAVSession> sessions = NgnAVSession.getSessions();
+        NgnAVSession session=NgnAVSession.getSession(sessionID);
+        long tmgi=-1;
+        MbmsData mbmsData=null;
+        if(mbmsData!=null){
+            String groupID=session.getPTTMcpttGroupIdentity();
+            mbmsData=getMbmsDataOfTmgi(groupID);
+            if(mbmsData==null || (tmgi=mbmsData.getMcpttMbmsUsageInfoType().getAnnouncement().getTMGIBigInteger().longValue())<0){
+                if(BuildConfig.DEBUG){
+                    Log.w(TAG,"TMGI not found for session "+sessionID);
+                }
+            }
+        }
+
+        Log.d(TAG,"hangUpCallMbms MBMS");
+        if(mbmsExternalServiceListener!=null)
+            mbmsExternalServiceListener.stopMbmsMedia(sessionID,tmgi);
+    }
+
 
 
     public void stopServiceMbms(){

@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -69,6 +68,7 @@ TSIP_BEGIN_DECLS
 #define TSIP_REQUEST_IS_BYE(self)			((self) && TSIP_MESSAGE_IS_REQUEST((self)) &&((self)->line.request.request_type==tsip_BYE))
 #define TSIP_REQUEST_IS_CANCEL(self)		((self) && TSIP_MESSAGE_IS_REQUEST((self)) &&((self)->line.request.request_type==tsip_CANCEL))
 #define TSIP_REQUEST_IS_INVITE(self)		((self) && TSIP_MESSAGE_IS_REQUEST((self)) &&((self)->line.request.request_type==tsip_INVITE))
+
 #define TSIP_REQUEST_IS_OPTIONS(self)		((self) && TSIP_MESSAGE_IS_REQUEST((self)) &&((self)->line.request.request_type==tsip_OPTIONS))
 #define TSIP_REQUEST_IS_REGISTER(self)		((self) && TSIP_MESSAGE_IS_REQUEST((self)) &&((self)->line.request.request_type==tsip_REGISTER))
 #define TSIP_REQUEST_IS_SUBSCRIBE(self)		((self) && TSIP_MESSAGE_IS_REQUEST((self)) &&((self)->line.request.request_type==tsip_SUBSCRIBE))

@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -307,8 +306,7 @@ int tsdp_message_serialize(const tsdp_message_t *self, tsk_buffer_t *output)
 			// Abort?
 		}
 	}
-	
-	return 0;
+    return tsk_buffer_append(output, "\0", 1);
 }
 
 char* tsdp_message_tostring(const tsdp_message_t *self)
@@ -442,7 +440,7 @@ const tsdp_header_M_t* tsdp_message_find_media(const tsdp_message_t *self, const
 	return tsk_null;
 }
 
-const tsdp_header_M_t* tsdp_message_find_media_at_index(const tsdp_message_t *self, const char* media, tsk_size_t index) //Added by Mikel (multicast)
+const tsdp_header_M_t* tsdp_message_find_media_at_index(const tsdp_message_t *self, const char* media, tsk_size_t index)  //(multicast)
 {
 	const tsdp_header_M_t* M = tsk_null;
 	if(self && media)

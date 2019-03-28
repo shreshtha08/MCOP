@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -75,6 +74,7 @@ public class ManagerSessions implements
 
     public long newSession(NgnAVSession session){
         if(session==null || session.getId()<=0)return -1;
+        if(BuildConfig.DEBUG)Log.d(TAG,"newSession");
         Session newSession=new Session(session,context);
         newSession.setOnSessionListener(this);
         sessions.put(session.getId(),newSession);
@@ -164,6 +164,8 @@ public class ManagerSessions implements
         }
         return session.floorControlOperation(operationType,userID);
     }
+
+
 
 //START EVENT
 

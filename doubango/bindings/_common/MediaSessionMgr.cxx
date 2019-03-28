@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -198,6 +197,9 @@ int32_t MediaSessionMgr::sessionResume(twrap_media_type_t media)
 #include "tinydav/audio/tdav_session_audio.h"
 #include "tinydav/video/tdav_session_video.h"
 #include "ProxyPluginMgr.h"
+#include "../../plugins/audio_opensles/audio_opensles.h"
+#include "../../plugins/audio_opensles/audio_opensles_consumer.h"
+#include "../../plugins/audio_opensles/audio_opensles_producer.h"
 
 
 const ProxyPlugin* MediaSessionMgr::findProxyPlugin(twrap_media_type_t media, bool consumer)const
@@ -246,28 +248,45 @@ const ProxyPlugin* MediaSessionMgr::findProxyPlugin(twrap_media_type_t media, bo
 // FIXME: create generic function to register any kind and number of plugin from a file
 unsigned int MediaSessionMgr::registerAudioPluginFromFile(const char* path)
 {
-	static struct tsk_plugin_s* __plugin = tsk_null;
-	if(__plugin){
-		TSK_DEBUG_ERROR("Audio plugin already registered");
-		return 0;
-	}
-	if((__plugin = tsk_plugin_create(path))){
-		unsigned int count = 0;
-		tsk_plugin_def_ptr_const_t plugin_def_ptr_const;
-		if((plugin_def_ptr_const = tsk_plugin_get_def(__plugin, tsk_plugin_def_type_consumer, tsk_plugin_def_media_type_audio))){
-			if(tmedia_consumer_plugin_register((const tmedia_consumer_plugin_def_t*)plugin_def_ptr_const) == 0){
-				++count;
-			}
-		}
-		if((plugin_def_ptr_const = tsk_plugin_get_def(__plugin, tsk_plugin_def_type_producer, tsk_plugin_def_media_type_audio))){
-			if(tmedia_producer_plugin_register((const tmedia_producer_plugin_def_t*)plugin_def_ptr_const) == 0){
-				++count;
-			}
-		}
-		return count;
-	}
-	TSK_DEBUG_ERROR("Failed to create plugin with path=%s", path);
-	return 0;
+    static struct tsk_plugin_s* __plugin = tsk_null;
+    if(__plugin){
+        TSK_DEBUG_ERROR("Audio plugin already registered");
+        return 0;
+    }
+    if((__plugin = tsk_plugin_create(path))) {
+        unsigned int count = 0;
+        tsk_plugin_def_ptr_const_t plugin_def_ptr_const;
+        if ((plugin_def_ptr_const = tsk_plugin_get_def(__plugin, tsk_plugin_def_type_consumer,
+                                                       tsk_plugin_def_media_type_audio))) {
+            if (tmedia_consumer_plugin_register(
+                    (const tmedia_consumer_plugin_def_t *) plugin_def_ptr_const) == 0) {
+                ++count;
+            }
+        }
+        if ((plugin_def_ptr_const = tsk_plugin_get_def(__plugin, tsk_plugin_def_type_producer,
+                                                       tsk_plugin_def_media_type_audio))) {
+            if (tmedia_producer_plugin_register(
+                    (const tmedia_producer_plugin_def_t *) plugin_def_ptr_const) == 0) {
+                ++count;
+            }
+        }
+        return count;
+    }
+    TSK_DEBUG_ERROR("Failed to create plugin with path=%s", path);
+    return 0;
+}
+
+
+unsigned int MediaSessionMgr::registerAudioPluginOpenSLES()
+{
+    unsigned int count = 0;
+    /* HACK: Unregister all other audio plugins */
+    tmedia_consumer_plugin_unregister_by_type(tmedia_audio);
+    tmedia_producer_plugin_unregister_by_type(tmedia_audio);
+    /* Register our proxy plugin */
+    if(tmedia_consumer_plugin_register(audio_consumer_opensles_plugin_def_t) == 0)count++;
+    if(tmedia_producer_plugin_register(audio_producer_opensles_plugin_def_t) == 0)count++;
+    return count;
 }
 
 uint64_t MediaSessionMgr::getSessionId(twrap_media_type_t media)const

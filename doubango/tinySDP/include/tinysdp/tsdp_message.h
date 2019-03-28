@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -87,7 +86,7 @@ TINYSDP_API const tsdp_header_t *tsdp_message_get_header(const tsdp_message_t *s
 TINYSDP_API const tsdp_header_A_t* tsdp_message_get_headerA_at(const tsdp_message_t* self, const char* field, tsk_size_t index);
 TINYSDP_API const tsdp_header_A_t* tsdp_message_get_headerA(const tsdp_message_t* self, const char* field);
 TINYSDP_API const tsdp_header_t *tsdp_message_get_headerByName(const tsdp_message_t *self, char name);
-//MCPTT by Eduardo
+//MCPTT
 TINYSDP_API char* getAddrPortsFromSDP(const tsdp_message_t* sdp_lo);
 
 

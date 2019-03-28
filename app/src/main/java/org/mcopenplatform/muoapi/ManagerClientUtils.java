@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -22,11 +21,11 @@
 
 package org.mcopenplatform.muoapi;
 
-import org.doubango.ngn.datatype.gms.pocListService.ns.common_policy.ExtensibleType;
-import org.doubango.ngn.datatype.gms.pocListService.ns.common_policy.OneType;
-import org.doubango.ngn.datatype.gms.pocListService.ns.common_policy.RuleType;
-import org.doubango.ngn.datatype.gms.pocListService.ns.list_service.ListServiceType;
-import org.doubango.ngn.datatype.gms.pocListService.ns.resource_lists.EntryType;
+import org.doubango.ngn.datatype.ms.gms.ns.common_policy.ExtensibleType;
+import org.doubango.ngn.datatype.ms.gms.ns.common_policy.OneType;
+import org.doubango.ngn.datatype.ms.gms.ns.common_policy.RuleType;
+import org.doubango.ngn.datatype.ms.gms.ns.list_service.ListServiceType;
+import org.doubango.ngn.datatype.ms.gms.ns.resource_lists.EntryType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -35,6 +34,43 @@ import java.util.Set;
 
 class ManagerClientUtils {
 
+
+
+    protected enum TypeParticipant{
+        URI,
+        DISPLAY_NAME,
+        TYPE
+    }
+
+    protected static List<String> getParticipantGroupsWithTypes(ListServiceType serviceType,TypeParticipant type){
+        if(serviceType==null)return null;
+        List<String> participants=new ArrayList<>();
+        if(serviceType.getList()!=null && serviceType.getList().getEntry()!=null)
+            for(EntryType entryType:serviceType.getList().getEntry()){
+                if(entryType.getUri()!=null && !entryType.getUri().isEmpty()){
+                    String participant=new String();
+                    switch (type){
+                        case URI:
+                            participant=entryType.getUri();
+
+                            break;
+                        case TYPE:
+                            if(entryType.getParticipanttype()!=null && !entryType.getParticipanttype().trim().isEmpty()){
+                                participant=entryType.getParticipanttype();
+                            }
+                            break;
+                        case DISPLAY_NAME:
+                            if(entryType.getDisplayName()!=null && entryType.getDisplayName().getValue()!=null && !entryType.getDisplayName().getValue().trim().isEmpty())
+                                participant=entryType.getDisplayName().getValue();
+                            break;
+                    }
+                    participants.add(participant);
+                }
+            }
+
+        return participants;
+
+    }
 
     protected static List<String[]> getParticipantGroups(ListServiceType serviceType){
         if(serviceType==null)return null;
@@ -60,7 +96,12 @@ class ManagerClientUtils {
         if(serviceType==null)return null;
         List<ConstantsMCOP.GroupInfoEventExtras.AllowTypeEnum> allowsType=new ArrayList<>();
         Boolean iniviteMember=serviceType.getInviteMembers();
-        if(iniviteMember!=null && iniviteMember)allowsType.add(ConstantsMCOP.GroupInfoEventExtras.AllowTypeEnum.invite_members);
+        if(iniviteMember!=null && iniviteMember){
+            allowsType.add(ConstantsMCOP.GroupInfoEventExtras.AllowTypeEnum.invite_members);
+        }else{
+            Boolean onnetworkIniviteMember=serviceType.getOnnetworkinvitemembers();
+            if(onnetworkIniviteMember!=null && onnetworkIniviteMember)allowsType.add(ConstantsMCOP.GroupInfoEventExtras.AllowTypeEnum.invite_members);
+        }
         Boolean nonrealtimevideo=serviceType.getMcvideononrealtimevideomode();
         if(nonrealtimevideo!=null && nonrealtimevideo)allowsType.add(ConstantsMCOP.GroupInfoEventExtras.AllowTypeEnum.non_real_time_video_mode);
         Boolean nonurgentrealtime=serviceType.getMcvideononurgentrealtimevideomode();
@@ -92,7 +133,7 @@ class ManagerClientUtils {
                 if(rule.getActions()!=null &&
                         rule.getConditions()!=null
                         ){
-                    org.doubango.ngn.datatype.gms.pocListService.ns.common_policy.IdentityType identityType=null;
+                    org.doubango.ngn.datatype.ms.gms.ns.common_policy.IdentityType identityType=null;
                     if(rule.getConditions().getIdentity()!=null &&
                             !rule.getConditions().getIdentity().isEmpty() &&
                             (identityType=rule.getConditions().getIdentity().get(0))!=null){

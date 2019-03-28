@@ -17,16 +17,17 @@ public:
     void swig_connect_director(JNIEnv *jenv, jobject jself, jclass jcls, bool swig_mem_own, bool weak_global);
     SwigDirector_DDebugCallback(JNIEnv *jenv);
     virtual ~SwigDirector_DDebugCallback();
+    virtual int OnDebugTest(char const *message);
     virtual int OnDebugInfo(char const *message);
     virtual int OnDebugWarn(char const *message);
     virtual int OnDebugError(char const *message);
     virtual int OnDebugFatal(char const *message);
 public:
     bool swig_overrides(int n) {
-      return (n < 4 ? swig_override[n] : false);
+      return (n < 5 ? swig_override[n] : false);
     }
 protected:
-    bool swig_override[4];
+    bool swig_override[5];
 };
 
 class SwigDirector_DRegisterCallback : public DRegisterCallback, public Swig::Director {
@@ -167,16 +168,19 @@ public:
     virtual int OnOptionsEvent(OptionsEvent const *e);
     virtual int OnPublicationEvent(PublicationEvent const *e);
     virtual int OnPublicationAffiliationEvent(PublicationAffiliationEvent const *e);
+    virtual int OnPublicationAuthenticationEvent(PublicationAuthenticationEvent const *e);
     virtual int OnRegistrationAuthenticationEvent(RegistrationAuthenticationEvent const *e);
     virtual int OnRegistrationEvent(RegistrationEvent const *e);
     virtual int OnSubscriptionEvent(SubscriptionEvent const *e);
     virtual int OnSubscriptionAffiliationEvent(SubscriptionAffiliationEvent const *e);
+    virtual int OnSubscriptionCMSEvent(SubscriptionCMSEvent const *e);
+    virtual int OnSubscriptionGMSEvent(SubscriptionGMSEvent const *e);
 public:
     bool swig_overrides(int n) {
-      return (n < 15 ? swig_override[n] : false);
+      return (n < 18 ? swig_override[n] : false);
     }
 protected:
-    bool swig_override[15];
+    bool swig_override[18];
 };
 
 class SwigDirector_XcapCallback : public XcapCallback, public Swig::Director {

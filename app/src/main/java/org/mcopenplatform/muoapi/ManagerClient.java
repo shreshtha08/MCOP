@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -33,6 +32,8 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import org.doubango.ngn.BuildConfig;
@@ -42,7 +43,8 @@ import org.doubango.ngn.datatype.affiliation.pidf.AffiliationType;
 import org.doubango.ngn.datatype.affiliation.pidf.Presence;
 import org.doubango.ngn.datatype.affiliation.pidf.StatusType;
 import org.doubango.ngn.datatype.affiliation.pidf.Tuple;
-import org.doubango.ngn.datatype.gms.pocListService.ns.list_service.ListServiceType;
+import org.doubango.ngn.datatype.ms.cms.mcpttUserProfile.McpttUserProfile;
+import org.doubango.ngn.datatype.ms.gms.ns.list_service.ListServiceType;
 import org.doubango.ngn.events.NgnEventArgs;
 import org.doubango.ngn.events.NgnRegistrationEventArgs;
 import org.doubango.ngn.media.NgnMediaType;
@@ -51,20 +53,31 @@ import org.doubango.ngn.services.affiliation.IMyAffiliationService;
 import org.doubango.ngn.sip.NgnAVSession;
 import org.doubango.ngn.sip.NgnSipPrefrences;
 import org.doubango.ngn.utils.NgnUriUtils;
+import org.mcopenplatform.muoapi.datatype.Client;
+import org.mcopenplatform.muoapi.datatype.ClientSIM;
 import org.mcopenplatform.muoapi.datatype.error.Constants;
 import org.mcopenplatform.muoapi.datatype.group.GroupAffiliation;
 import org.mcopenplatform.muoapi.datatype.group.GroupInfo;
 import org.mcopenplatform.muoapi.managerIapi.EngineIapi;
+import org.mcopenplatform.muoapi.managerIapi.ManagerConfigurationService;
+import org.mcopenplatform.muoapi.managerIapi.ManagerMBMSGroupCom;
+import org.mcopenplatform.muoapi.managerIapi.ManagerSimService;
 import org.mcopenplatform.muoapi.session.ManagerSessions;
 import org.mcopenplatform.muoapi.utils.Utils;
 
+import java.io.Serializable;
+import java.net.InterfaceAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
+import static org.mcopenplatform.muoapi.ManagerClientUtils.TypeParticipant.DISPLAY_NAME;
+import static org.mcopenplatform.muoapi.ManagerClientUtils.TypeParticipant.TYPE;
+import static org.mcopenplatform.muoapi.ManagerClientUtils.TypeParticipant.URI;
 import static org.mcopenplatform.muoapi.utils.Utils.checkGroupIsExist;
 import static org.mcopenplatform.muoapi.utils.Utils.isAffiliatedGroup;
 import static org.mcopenplatform.muoapi.utils.Utils.isAffiliatingGroup;
@@ -75,145 +88,250 @@ import static org.mcopenplatform.muoapi.utils.Utils.validationCallType;
 public class ManagerClient implements
         IMyAffiliationService.OnAffiliationServiceListener
         , ManagerSessions.OnManagerSessionListener
+        , org.doubango.ngn.services.cms.IMyCMSService.OnAuthenticationListener
+        , org.doubango.ngn.services.cms.IMyCMSService.OnGetMcpttUserProfileListener
+        , org.doubango.ngn.services.cms.IMyCMSService.OnGetMcpttServiceConfListener
+        , org.doubango.ngn.services.cms.IMyCMSService.OnGetMcpttUEConfigurationListener
+        , org.doubango.ngn.services.cms.IMyCMSService.OnGetMcpttUEInitialConfigurationListener
+        , org.doubango.ngn.services.cms.IMyCMSService.OnStableListener
+        , org.doubango.ngn.services.gms.IMyGMSService.OnGMSListener
+        , org.doubango.ngn.services.cms.IMyCMSService.OnCMSPrivateContactsListener
         , INgnSipService.OnAuthenticationListener
 {
-
-
-
-
     private final static String TAG = org.mcopenplatform.muoapi.utils.Utils.getTAG(ManagerClient.class.getCanonicalName());
     private ArrayList<Long> sessionsID;
-
+    private Client client;
     private IBinder iBinder;
     private IMCOPCallback mMCOPCallback;
     private NgnEngine ngnEngine;
     private INgnSipService ngnSipService;
     private IMyAffiliationService myAffiliationService;
+    private org.doubango.ngn.services.cms.IMyCMSService myCMSService;
+    private org.doubango.ngn.services.gms.IMyGMSService myGMSService;
     private ManagerSessions managerSessions;
     private Context context;
     private ManagerClient thisInstance;
     private BroadcastReceiver mSipBroadcastRecvRegister;
     private ServiceConnection mConnectionSimService;
     private EngineIapi engineIapi;
+    private String connectivityPluginPackageService;
+    private String connectivityPluginPackageMain;
+    private String simPluginPackageService;
+    private String simPluginPackageMain;
+    private String configurationPluginPackageService;
+    private String configurationPluginPackageMain;
+    private String mbmsPluginPackageService;
+    private String mbmsPluginPackageMain;
 
-    public ManagerClient(Context context) {
+    public ManagerClient(Context context
+    ,String connectivityPluginPackageService
+    ,String connectivityPluginPackageMain
+    ,String simPluginPackageService
+    ,String simPluginPackageMain
+    ,String configurationPluginPackageService
+    ,String configurationPluginPackageMain
+    ,String mbmsPluginPackageService
+    ,String mbmsPluginPackageMain
+    ) {
         this.context=context;
+        this.connectivityPluginPackageService = connectivityPluginPackageService;
+        this.connectivityPluginPackageMain = connectivityPluginPackageMain;
+        this.simPluginPackageService = simPluginPackageService;
+        this.simPluginPackageMain = simPluginPackageMain;
+        this.configurationPluginPackageService = configurationPluginPackageService;
+        this.configurationPluginPackageMain = configurationPluginPackageMain;
+        this.mbmsPluginPackageService = mbmsPluginPackageService;
+        this.mbmsPluginPackageMain = mbmsPluginPackageMain;
         engineIapi=EngineIapi.getInstance();
         ngnEngine=NgnEngine.getInstance();
         thisInstance=this;
-
-
+    }
+    private ManagerClient getThisInstance(){
+        return this;
 
     }
 
+    private void selectActiveProfile(){
+           engineIapi.getConfigurationService().setOnConfigurationServiceListener(new ManagerConfigurationService.OnConfigurationServiceListener() {
+               @Override
+               public void onConfigurationProfile(String profile) {
+                   if(profile!=null && !profile.isEmpty()){
+                       if(getThisInstance().importProfileMCOP2(profile)){
+                           if(BuildConfig.DEBUG)Log.d(TAG,"Correct selectActiveProfile");
+                       }else{
+                           if(BuildConfig.DEBUG)Log.w(TAG,"No correct selectActiveProfile");
+                       }
+                   }
+               }
 
-    public IBinder startManagerClient(){
-        if(BuildConfig.DEBUG)Log.d(TAG,"startManagerClient");
-        //Start NgnEngine
-        if(!ngnEngine.isStarted()){
-            Log.d(TAG,"Initialize MCOP Service");
-            if(ngnEngine.start()){
-                Log.d(TAG,"MCOP Service: Started");
-                ngnSipService=ngnEngine.getSipService();
-                ngnSipService.setOnAuthenticationListener(this);
+               @Override
+               public void onErroConfigurationProfile(String error) {
+                if(BuildConfig.DEBUG)Log.e(TAG,"Error in Configuration Profile: "+error);
+               }
+           });
 
-                myAffiliationService=ngnEngine.getAffiliationService();
-                //Start Manager session
-                managerSessions=ManagerSessions.getInstance(context);
-                managerSessions.setOnManagerSessionListener(this);
-                sessionsID=new ArrayList<>();
-                //Affiliation
-                ngnEngine.getAffiliationService().setOnAffiliationServiceListener(thisInstance);
-            }else{
-                Log.e(TAG,"MCOP Service: Error");
+    }
+    private void initEngineService(){
+
+        Log.d(TAG,"Initialize MCOP Service");
+
+
+        selectActiveProfile();
+        initMBMSEvent();
+        configureGetParameterSIM();
+        if(ngnEngine.start()){
+            Log.d(TAG,"MCOP Service: Started");
+            ngnSipService=ngnEngine.getSipService();
+            ngnSipService.setOnAuthenticationListener(this);
+
+            myAffiliationService=ngnEngine.getAffiliationService();
+            myCMSService=ngnEngine.getCMSService();
+            if(myCMSService!=null){
+                myCMSService.setOnCMSPrivateContactsListener(this);
             }
-            if(mSipBroadcastRecvRegister==null){
-                mSipBroadcastRecvRegister = new BroadcastReceiver() {
-                    @Override
-                    public void onReceive(Context context, Intent intent) {
-                        final String action = intent.getAction();
+            myGMSService=ngnEngine.getGMSService();
+            if(myGMSService!=null){
+                myGMSService.setOnGMSListener(thisInstance);
+            }
+            //Start Manager session
+            managerSessions=ManagerSessions.getInstance(context);
+            managerSessions.setOnManagerSessionListener(this);
+            sessionsID=new ArrayList<>();
+            //Affiliation
+            ngnEngine.getAffiliationService().setOnAffiliationServiceListener(thisInstance);
+        }else{
+            Log.e(TAG,"MCOP Service: Error");
+        }
+        if(mSipBroadcastRecvRegister==null){
+            if(BuildConfig.DEBUG)Log.d(TAG,"SipBroadcastRecvRegister execute");
+            mSipBroadcastRecvRegister = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    final String action = intent.getAction();
 
-                        // Registration Event
-                        if(NgnRegistrationEventArgs.ACTION_REGISTRATION_EVENT.equals(action)){
-                            NgnRegistrationEventArgs args = intent.getParcelableExtra(NgnEventArgs.EXTRA_EMBEDDED);
-                            if(args == null){
-                                Log.e(TAG, "Invalid event arguments");
-                                return;
-                            }
-                            switch(args.getEventType()){
-                                case REGISTRATION_NOK:
-                                    if(BuildConfig.DEBUG)Log.d(TAG,"REGISTRATION_NOK");
-                                    sendErrorLoginEvent(Constants.ConstantsErrorMCOP.LoginEventError.CCVII);
-                                    sendLoginEvent(false);
-                                    break;
-                                case UNREGISTRATION_OK:
-                                    if(BuildConfig.DEBUG)Log.d(TAG,"UNREGISTRATION_OK");
-                                    sendUnLoginEvent(true);
-                                    break;
-                                case REGISTRATION_OK:
-                                    if(BuildConfig.DEBUG)Log.d(TAG,"REGISTRATION_OK");
-                                    //Send affiliation from groups implicit
-                                    affiliationImplicitGroups();
-                                    sendLoginEvent(true);
-                                    break;
-                                case REGISTRATION_INPROGRESS:
-                                    if(BuildConfig.DEBUG)Log.d(TAG,"REGISTRATION_INPROGRESS");
-                                    //TODO:Logical for register
-                                    break;
-                                case UNREGISTRATION_INPROGRESS:
-                                    if(BuildConfig.DEBUG)Log.d(TAG,"UNREGISTRATION_INPROGRESS");
-                                    //TODO:Logical for register
-                                    break;
-                                case UNREGISTRATION_NOK:
-                                    if(BuildConfig.DEBUG)Log.d(TAG,"UNREGISTRATION_NOK");
-                                    sendErrorUnLoginEvent(Constants.ConstantsErrorMCOP.UnLoginEventError.CCVII);
-                                    sendUnLoginEvent(false);
-                                    break;
-                            }
+                    // Registration Event
+                    if(NgnRegistrationEventArgs.ACTION_REGISTRATION_EVENT.equals(action)){
+                        NgnRegistrationEventArgs args = intent.getParcelableExtra(NgnEventArgs.EXTRA_EMBEDDED);
+                        if(args == null){
+                            Log.e(TAG, "Invalid event arguments");
+                            return;
+                        }
+                        switch(args.getEventType()){
+                            case REGISTRATION_NOK:
+                                if(BuildConfig.DEBUG)Log.d(TAG,"REGISTRATION_NOK");
+                                sendErrorLoginEvent(Constants.ConstantsErrorMCOP.LoginEventError.CCVII);
+                                sendLoginEvent(false);
+                                break;
+                            case UNREGISTRATION_OK:
+                                if(BuildConfig.DEBUG)Log.d(TAG,"UNREGISTRATION_OK");
+                                sendUnLoginEvent(true);
+                                break;
+                            case REGISTRATION_OK:
+                                if(BuildConfig.DEBUG)Log.d(TAG,"REGISTRATION_OK");
+                                //Send affiliation from groups implicit
+                                affiliationImplicitGroups();
+                                sendLoginEvent(true);
+                                break;
+                            case REGISTRATION_INPROGRESS:
+                                if(BuildConfig.DEBUG)Log.d(TAG,"REGISTRATION_INPROGRESS");
+                                //TODO:Logical for register
+                                break;
+                            case UNREGISTRATION_INPROGRESS:
+                                if(BuildConfig.DEBUG)Log.d(TAG,"UNREGISTRATION_INPROGRESS");
+                                //TODO:Logical for register
+                                break;
+                            case UNREGISTRATION_NOK:
+                                if(BuildConfig.DEBUG)Log.d(TAG,"UNREGISTRATION_NOK");
+                                sendErrorUnLoginEvent(Constants.ConstantsErrorMCOP.UnLoginEventError.CCVII);
+                                sendUnLoginEvent(false);
+                                break;
                         }
                     }
-                };
-                final IntentFilter intentFilter = new IntentFilter();
-                intentFilter.addAction(NgnRegistrationEventArgs.ACTION_REGISTRATION_EVENT);
-                context.registerReceiver(mSipBroadcastRecvRegister, intentFilter);
-            }
+                }
+            };
+            final IntentFilter intentFilter = new IntentFilter();
+            intentFilter.addAction(NgnRegistrationEventArgs.ACTION_REGISTRATION_EVENT);
+            context.registerReceiver(mSipBroadcastRecvRegister, intentFilter);
         }else{
-            if(BuildConfig.DEBUG)Log.e(TAG,"Engine started");
+            if(BuildConfig.DEBUG)Log.e(TAG,"SipBroadcastRecvRegister isn´t null");
         }
+    }
+
+    private void showInfoPackageName(){
+        String callingApp = context.getPackageManager().getNameForUid(Binder.getCallingUid());
+        if(BuildConfig.DEBUG)Log.d(TAG,"callingApp: "+callingApp+"\nuid: "+Binder.getCallingUid() );
+    }
+
+
+    protected IBinder startManagerClient(boolean reBind){
+        if(BuildConfig.DEBUG)Log.d(TAG,"startManagerClient");
         //Start and Binder to services
         if(!engineIapi.isStarted()){
-           engineIapi.start(context);
+            engineIapi.start(context
+            ,connectivityPluginPackageService
+            ,connectivityPluginPackageMain
+            ,simPluginPackageService
+            ,simPluginPackageMain
+            ,configurationPluginPackageService
+            ,configurationPluginPackageMain
+            ,mbmsPluginPackageService
+            ,mbmsPluginPackageMain
+            );
         }else{
-            if(BuildConfig.DEBUG)Log.e(TAG,"EngineIapi started");
+            if(BuildConfig.DEBUG)Log.w(TAG,"EngineIapi started");
         }
+        //Start NgnEngine
+        if(!ngnEngine.isStarted()){
+            if(BuildConfig.DEBUG)Log.d(TAG,"Engine is no started");
+        }else{
+            if(BuildConfig.DEBUG)Log.e(TAG,"Engine started");
+            ngnEngine.stop();
+        }
+        initEngineService();
 
+
+
+        if(!reBind)
         iBinder=new IMCOPsdk.Stub() {
             @Override
             public String getMCOPCapabilities() throws RemoteException {
+                showInfoPackageName();
                 return null;
             }
 
 
+
             @Override
             public boolean loginMCOP() throws RemoteException {
+                showInfoPackageName();
                 boolean result=false;
-                if(ngnEngine.isStarted() && ngnSipService.isRegistered()){
+                if(ngnEngine.isStarted() && ngnSipService!=null && ngnSipService.isRegistered()){
                     sendErrorLoginEvent(Constants.ConstantsErrorMCOP.LoginEventError.CCV);
                     result=false;
                 }else{
-
+                    if(myCMSService!=null){
+                        myCMSService.setOnAuthenticationListener(thisInstance);
+                        myCMSService.setOnGetMcpttUserProfileListener(thisInstance);
+                        myCMSService.setOnGetMcpttServiceConfListener(thisInstance);
+                        myCMSService.setOnStableListener(thisInstance);
+                        myCMSService.setOnGetMcpttUEConfigurationListener(thisInstance);
+                        myCMSService.setOnGetMcpttUEInitConfigurationListener(thisInstance);
+                        result=myCMSService.initConfiguration(context);
+                    }
                 }
+
                 return result;
             }
 
             @Override
             public boolean unLoginMCOP() throws RemoteException {
-                Log.d(TAG,"Initialize unLogin Process");
-                if(ngnSipService.isRegistered()){
+                showInfoPackageName();
+                if(BuildConfig.DEBUG)Log.d(TAG,"Initialize unLogin Process");
+                if(ngnSipService!=null && ngnSipService.isRegistered()){
                     ngnSipService.unRegister();
                     return true;
                 }else{
-                    Log.e(TAG,"Device unregistered");
+                    if(BuildConfig.DEBUG)Log.e(TAG,"Device unregistered");
                     sendErrorUnLoginEvent(Constants.ConstantsErrorMCOP.UnLoginEventError.CCV);
                 }
                 return false;
@@ -221,6 +339,7 @@ public class ManagerClient implements
 
             @Override
             public boolean authorizeUser(String url) throws RemoteException {
+                showInfoPackageName();
                 boolean result=false;
                 Uri uri=null;
                 try {
@@ -234,63 +353,79 @@ public class ManagerClient implements
                             sendErrorLoginEvent(Constants.ConstantsErrorMCOP.LoginEventError.CCVI);
                         }
                     }else{
+                        if(BuildConfig.DEBUG && uri!=null && !url.trim().isEmpty())Log.d(TAG,"Authentication Token uri: "+url);
+                        myCMSService.getAuthenticationToken(uri);
+                        result=true;
                     }
                 }catch (Exception e){
                     if(BuildConfig.DEBUG)Log.e(TAG,Constants.ConstantsErrorMCOP.LoginEventError.CCVI.getString());
                     sendErrorLoginEvent(Constants.ConstantsErrorMCOP.LoginEventError.CCVI);
                 }
+
+
                 return result;
             }
 
             @Override
             public boolean makeCall(String userID, int callType) throws RemoteException {
+                showInfoPackageName();
                 return makeCallMCOP(userID,callType,context);
             }
 
             @Override
             public boolean hangUpCall(String sessionID) throws RemoteException {
+                showInfoPackageName();
                 return hangUpCallMCOP( sessionID);
             }
 
             @Override
             public boolean acceptCall(String sessionID) throws RemoteException {
+                showInfoPackageName();
                 return acceptCallMCOP(sessionID);
             }
 
             @Override
             public boolean updateEmergencyState(String sessionID, int callType) throws RemoteException {
+                showInfoPackageName();
+                //TODO: NOW NO IMPLEMENT
                 return false;
             }
 
             @Override
             public boolean floorControlOperation(String sessionID, int requestType, String UserID) throws RemoteException {
+                showInfoPackageName();
                 return floorControlOperationMCOP(sessionID,requestType,UserID);
             }
 
             @Override
             public boolean updateGroupsInfo() throws RemoteException {
+                showInfoPackageName();
+                //TODO: NOW NO IMPLEMENT
                 return false;
             }
 
             @Override
             public boolean updateGroupsAffiliation() throws RemoteException {
+                showInfoPackageName();
                 if(BuildConfig.DEBUG)Log.d(TAG,"Execute updateGroupsAffiliation");
                 return newPresence();
             }
 
             @Override
             public boolean groupAffiliationOperation(String groupMcpttId, int affiliationOperation) throws RemoteException {
+                showInfoPackageName();
                 return newOperationAffiliation(groupMcpttId,ConstantsMCOP.GroupAffiliationEventExtras.AffiliationOperationTypeEnum.fromInt(affiliationOperation));
             }
 
             @Override
             public boolean changeSelectedContact(String groupID) throws RemoteException {
+                showInfoPackageName();
                 return false;
             }
 
             @Override
             public boolean registerCallback(IMCOPCallback mcopCallBack) throws RemoteException {
-                if(BuildConfig.DEBUG)Log.d(TAG,"Execute registerCallback");
+                showInfoPackageName();
                 boolean result=false;
                 if(mcopCallBack!=null){
                     mMCOPCallback=mcopCallBack;
@@ -298,21 +433,40 @@ public class ManagerClient implements
                 }else{
                     Log.e(TAG,"CallBack Error");
                 }
+                if(BuildConfig.DEBUG)Log.d(TAG,"Execute registerCallback "+result);
                 return result;
             }
+
+
+
         };
 
-        String callingApp = context.getPackageManager().getNameForUid(Binder.getCallingUid());
-        if(BuildConfig.DEBUG)Log.d(TAG,"callingApp: "+callingApp+"\nuid: "+Binder.getCallingUid() );
+
 
         return iBinder;
     }
 
     private void affiliationImplicitGroups(){
+        //Affiliating to group from CMS
+        NgnSipPrefrences profile= NgnEngine.getInstance().getProfilesService().getProfileNow(context);
+        if(profile!=null &&
+                profile.isMcpttEnableCMS()!=null &&
+                profile.isMcpttEnableCMS() &&
+                profile.getMCPTTGroupInfo()!=null){
+            List<String> stringsAffiliationGroup=org.doubango.utils.Utils.parseAccountToEntry(profile.getImplicitCheckedAffiliations());
+            if(stringsAffiliationGroup!=null && !stringsAffiliationGroup.isEmpty()){
+                Log.w(TAG,"Available groups for affiliation. Size: "+stringsAffiliationGroup.size());
+                newOperationAffiliation(stringsAffiliationGroup, ConstantsMCOP.GroupAffiliationEventExtras.AffiliationOperationTypeEnum.Affiliate);
+            }else{
+                Log.w(TAG,"No groups available for affiliation.");
+            }
+        }
     }
+
 
     public boolean stopManagerClient(){
         if(BuildConfig.DEBUG)Log.d(TAG, "stopManagerClient");
+        System.exit(0);
         engineIapi.stop();
         if(managerSessions!=null)
         managerSessions.stopManagerSessions();
@@ -321,10 +475,19 @@ public class ManagerClient implements
             context.unregisterReceiver(mSipBroadcastRecvRegister);
             mSipBroadcastRecvRegister=null;
         }
-        if(ngnSipService!=null && ngnSipService.isRegistered())
-        return ngnSipService.unRegister();
+
+        if(ngnSipService!=null && ngnSipService.isRegistered()){
+
+            ngnSipService.unRegister();
+            if(ngnEngine.isStarted()){
+                ngnEngine.stop();
+            }
+        }
+
         return true;
     }
+
+
 
     public boolean onDestroyClient(){
         if(BuildConfig.DEBUG)Log.d(TAG, "onDestroyClient");
@@ -346,15 +509,23 @@ public class ManagerClient implements
     //Only for testing purposes
     public boolean selectProfileMCOP2(String data){
         if(ngnEngine.getProfilesService()==null || ngnEngine.getProfilesService().getProfilesNames(context)==null){
-            Log.e(TAG,"Error in load profiles from MCOP SDK");
+            if(BuildConfig.DEBUG) Log.e(TAG,"Error in load profiles from MCOP SDK");
             return false;
         }
         for(String names:ngnEngine.getProfilesService().getProfilesNames(context)){
-            Log.d(TAG,"User Profile \""+names+"\"");
+            if(BuildConfig.DEBUG) Log.d(TAG,"User Profile \""+names+"\"");
         }
 
         boolean result=ngnEngine.getProfilesService().setProfileNow(context,data);
-        Log.d(TAG,"Configure Profile \""+data+"\""+" result: "+result);
+        if(BuildConfig.DEBUG)Log.d(TAG,"Configure Profile \""+data+"\""+" result: "+result);
+        return result;
+    }
+
+    //Only for testing purposes
+    public boolean importProfileMCOP2(String profile){
+        boolean result=false;
+        if(ngnEngine!=null)
+            result=ngnEngine.getProfilesService().importProfiles(profile,context);
         return result;
     }
 
@@ -368,7 +539,10 @@ public class ManagerClient implements
     }
 
     private boolean sendErrorAuthorizationEvent(Constants.ConstantsErrorMCOP.AuthorizationRequestEventError authorizationRequestEventError){
-        if(authorizationRequestEventError==null || mMCOPCallback==null)return false;
+        if(authorizationRequestEventError==null || mMCOPCallback==null){
+            if(BuildConfig.DEBUG) Log.e(TAG,"mMCOPCallback or AuthorizationEvent is null");
+            return false;
+        }
         Intent event=new Intent(ConstantsMCOP.ActionsCallBack.authorizationRequestEvent.toString());
         Log.e(TAG, "LoginEvent Error "+ authorizationRequestEventError.getCode()+": "+ authorizationRequestEventError.getString());
 
@@ -388,13 +562,17 @@ public class ManagerClient implements
             String mcpttID=ngnEngine.getProfilesService().getProfileNow(context).getMcpttId();
             event.putExtra(ConstantsMCOP.LoginEventExtras.MCPTT_ID,mcpttID);
             String displayName=mcpttID;
+            displayName=ngnEngine.getProfilesService().getProfileNow(context).getDisplayName();
             event.putExtra(ConstantsMCOP.LoginEventExtras.DISPLAY_NAME,displayName);
         }
         return sendEvent(event);
     }
 
     private boolean sendErrorLoginEvent(Constants.ConstantsErrorMCOP.LoginEventError loginEventError){
-        if(loginEventError==null || mMCOPCallback==null)return false;
+        if(loginEventError==null || mMCOPCallback==null){
+            if(BuildConfig.DEBUG) Log.e(TAG,"mMCOPCallback or LoginEvent is null");
+            return false;
+        };
         Intent event=new Intent(ConstantsMCOP.ActionsCallBack.loginEvent.toString());
         Log.e(TAG, "LoginEvent Error "+ loginEventError.getCode()+": "+ loginEventError.getString());
 
@@ -415,7 +593,7 @@ public class ManagerClient implements
 
     private boolean sendErrorUnLoginEvent(Constants.ConstantsErrorMCOP.UnLoginEventError unLoginEventError){
         if(unLoginEventError==null || mMCOPCallback==null){
-            Log.e(TAG,"mMCOPCallback or unLoginEventError is null");
+            if(BuildConfig.DEBUG) Log.e(TAG,"mMCOPCallback or unLoginEventError is null");
             return false;
         }
         Intent event=new Intent(ConstantsMCOP.ActionsCallBack.unLoginEvent.toString());
@@ -429,20 +607,40 @@ public class ManagerClient implements
     //END LOGOUT EVENT
 
     //START CALL EVENT
-    protected boolean makeCallMCOP(String userID, int type, Context context){
+    protected boolean makeCallMCOP(String userID, int type, Context context
+
+                                   ){
         //TODO: Create priority logic for emergency calls
         if(!ngnEngine.isStarted() || !ngnSipService.isRegistered()){
             sendErrorCallEvent(Constants.ConstantsErrorMCOP.CallEventError.CDVII);
             return false;
         }
+
+        boolean answerMode=false;
+        Boolean aBoolean=ngnEngine.getAuthenticationService().isAllowAutomaticCommencement(context);
+        answerMode=((aBoolean==null || !aBoolean)?false:true);
+
+        int priority=-1;
+        Constants.CallEvent.CallTypeValidEnum typeCall=null;
+        if((typeCall= validationCallType(type))!=null &&
+                ((typeCall.getValue() & ConstantsMCOP.CallEventExtras.CallTypeEnum.Emergency.getValue())== ConstantsMCOP.CallEventExtras.CallTypeEnum.Emergency.getValue() ||
+                (typeCall.getValue() & ConstantsMCOP.CallEventExtras.CallTypeEnum.ImminentPeril.getValue())== ConstantsMCOP.CallEventExtras.CallTypeEnum.ImminentPeril.getValue())
+            )//TODO: now the SDK doesn´t have priority default.
+            priority=9;
         return  makeCallMCOPStart( userID,  type
+                , answerMode
+                ,priority
                 ,  context);
     }
 
     protected boolean makeCallMCOPStart(String userID, int type
+            ,boolean answerMode
+            , int priority
             , Context context){
         //TODO: Verify that the client has permission to perform the particular call type
         //With type select if valid call type
+        boolean result=false;
+        if(BuildConfig.DEBUG)Log.d(TAG,"makeCallMCOPStart");
         Constants.CallEvent.CallTypeValidEnum typeCall=null;
         if(userID==null || userID.trim().isEmpty() || !NgnUriUtils.isValidSipUri(userID)){
             sendErrorCallEvent(Constants.ConstantsErrorMCOP.CallEventError.CDIIII);
@@ -454,28 +652,40 @@ public class ManagerClient implements
             NgnMediaType typeCallNgn=NgnMediaType.None;
             switch (typeCall) {
                 case AudioWithoutFloorCtrlPrivate:
-                    break;
-                case AudioWithoutFloorCtrlPrivateEmergency:
-                    break;
-                case AudioWithFloorCtrlPrivate:
                     typeCallNgn=NgnMediaType.SessionAudioMCPTT;
                     break;
+                case AudioWithFloorCtrlPrivate:
+                    typeCallNgn=NgnMediaType.SessionAudioMCPTTWithFloorControl;
+                    break;
                 case AudioWithFloorCtrlPrivateEmergency:
+                    typeCallNgn=NgnMediaType.SessionEmergencyAudioMCPTTWithFloorControl;
+                    if(BuildConfig.DEBUG)Log.d(TAG,"Type call:"+"AudioWithFloorCtrlPrivateEmergency  " + typeCallNgn.getValue());
+
                     break;
                 case AudioWithFloorCtrlPrearrangedGroupEmergency:
+                    typeCallNgn=NgnMediaType.SessionEmergencyAudioGroupMCPTTWithFloorControl;
+                    if(BuildConfig.DEBUG)Log.d(TAG,"Type call:"+"AudioWithFloorCtrlPrearrangedGroupEmergency  " + typeCallNgn.getValue());
+
                     break;
                 case AudioWithFloorCtrlPrearrangedGroupImminentPeril:
+
+                    typeCallNgn=NgnMediaType.SessionImminentperilAudioGroupMCPTTWithFloorControl;
+                    if(BuildConfig.DEBUG)Log.d(TAG,"Type call:"+"AudioWithFloorCtrlPrearrangedGroupImminentPeril  " + typeCallNgn.getValue());
                     break;
                 case AudioWithFloorCtrlPrearrangedGroup:
-                    typeCallNgn=NgnMediaType.SessionAudioGroupMCPTT;
+                    typeCallNgn=NgnMediaType.SessionAudioGroupMCPTTWithFloorControl;
                     if(BuildConfig.DEBUG)Log.d(TAG,"Type call:"+"AudioWithFloorCtrlPrearrangedGroup   " + typeCallNgn.getValue());
 
                     break;
                 case AudioWithFloorCtrlChatGroupEmergency:
+                    typeCallNgn=NgnMediaType.SessionEmergencyAudioWithFloorCtrlChatGroup;
+                    if(BuildConfig.DEBUG)Log.d(TAG,"Type call:"+"AudioWithFloorCtrlChatGroupEmergency   " + typeCallNgn.getValue());
                     break;
                 case AudioWithFloorCtrlChatGroupImminentPeril:
                     break;
                 case AudioWithFloorCtrlChatGroup:
+                    typeCallNgn=NgnMediaType.SessionAudioChatGroupMCPTTWithFloorControl;
+                    if(BuildConfig.DEBUG)Log.d(TAG,"Type call:"+"SessionAudioChatGroupMCPTTWithFloorControl   " + typeCallNgn.getValue());
                     break;
                 case AudioWithFloorCtrlBroadcastpEmergency:
                     break;
@@ -534,20 +744,25 @@ public class ManagerClient implements
                         typeCallNgn
                 );
                 newID=managerSessions.newSession(session);
+                if(BuildConfig.DEBUG)Log.d(TAG,"Create new session ID: "+newID);
+
                 if(newID<=0){
                     Log.e(TAG,"Session create error");
                     sendErrorCallEvent(Constants.ConstantsErrorMCOP.CallEventError.CDVI);
                 }else{
                     Log.d(TAG,"Init session");
-                    session.makeCallMCPTT(
+                    result=session.makeCallMCPTT(
                             NgnUriUtils.makeValidSipUri(userID,context)
                             ,context
+                            , answerMode
+                            ,NgnAVSession.EmergencyCallType.MCPTT_P
+                            ,priority
                     );
                 }
             }
 
         }
-        return false;
+        return result;
     }
 
     private boolean hangUpCallMCOP(String sessionID){
@@ -582,7 +797,10 @@ public class ManagerClient implements
     }
 
     private boolean sendErrorCallEvent(Constants.ConstantsErrorMCOP.CallEventError callEventError,String sessionID){
-        if(callEventError==null || mMCOPCallback==null)return false;
+        if(callEventError==null || mMCOPCallback==null){
+            if(BuildConfig.DEBUG) Log.e(TAG,"mMCOPCallback or CallEvent is null");
+            return false;
+        }
         Intent event=new Intent(ConstantsMCOP.ActionsCallBack.callEvent.toString());
         Log.e(TAG, "CallEvent Error "+ callEventError.getCode()+": "+ callEventError.getString());
         if(sessionID!=null && !sessionID.trim().isEmpty())
@@ -596,16 +814,27 @@ public class ManagerClient implements
         return sendEvent(event);
     }
 
+
+
+
     @Override
     public void onEvents(List<Intent> events) {
         sendEvents(events);
     }
 
     private synchronized boolean sendEvents(final List<Intent> events){
-        if(events==null || events.isEmpty() || mMCOPCallback==null)return false;
+        if(events==null || events.isEmpty() ){
+            if(BuildConfig.DEBUG) Log.e(TAG,"Event is null");
+            return false;
+        }else if(mMCOPCallback==null){
+            if(BuildConfig.DEBUG) Log.e(TAG,"mMCOPCallback is null");
+
+        }
+
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             public void run() {
                 try {
+                    if(BuildConfig.DEBUG)Log.i(TAG,"Send event");
                     mMCOPCallback.handleOnEvent(events);
                 } catch (RemoteException e) {
                     Log.e(TAG,"Error sending event to client: "+e.getMessage());
@@ -618,7 +847,10 @@ public class ManagerClient implements
     }
 
     private boolean sendEvent(final Intent event){
-        if(event==null )return false;
+        if(event==null ){
+            if(BuildConfig.DEBUG)Log.e(TAG,"the event could not be sent");
+            return false;
+        }
         List<Intent> events=new ArrayList<>();
         events.add(event);
         return sendEvents(events);
@@ -627,12 +859,110 @@ public class ManagerClient implements
 
     private void registerNow(){
         Log.d(TAG,"Starting Registration Process");
-        if(ngnSipService.isRegistered() || !ngnSipService.register(context)){
+        if(ngnSipService==null || ngnSipService.isRegistered() || !ngnSipService.register(false,context)){
             sendErrorLoginEvent(Constants.ConstantsErrorMCOP.LoginEventError.CCVII);
+            if(BuildConfig.DEBUG)Log.e(TAG,"No Start register correct");
+        }else{
+            if(BuildConfig.DEBUG)Log.i(TAG,"Start register correct");
         }
     }
 
 
+    //START Authentication Event
+    @Override
+    public void onAuthentication(String dataURI, String redirectionURI) {
+        if(BuildConfig.DEBUG)Log.d(TAG,"onAuthentication dataURI:"+dataURI+" redirectionURI:"+redirectionURI);
+        if(dataURI!=null && redirectionURI!=null){
+            sendAuthorizationRequestDataEvent(dataURI,redirectionURI);
+        }else{
+            sendErrorAuthorizationEvent(Constants.ConstantsErrorMCOP.AuthorizationRequestEventError.CI);
+        }
+    }
+
+    @Override
+    public void onAuthenticationOk(String data) {
+        //If you use CMS and IDMS or IDMS only, it is necessary to register after being authenticated
+        registerNow();
+        //TODO: Define send info onAuthenticationOk
+    }
+
+    @Override
+    public void onAuthenticationError(String error) {
+        //TODO: Define send info onAuthenticationError
+        sendErrorLoginEvent(Constants.ConstantsErrorMCOP.LoginEventError.CCVIII);
+    }
+
+    @Override
+    public void onAuthenticationRefresh(String refresh) {
+        //TODO: Define send info onAuthenticationRefresh
+        if(BuildConfig.DEBUG)Log.d(TAG,"onAuthenticationRefresh");
+    }
+
+    @Override
+    public void onGetmcpttUEInitialConfiguration(org.doubango.ngn.datatype.ms.cms.mcpttUEInitConfig.McpttUEInitialConfiguration mcpttUEInitialConfiguration) {
+        //TODO: Define send info onGetmcpttUEInitialConfiguration
+        if(BuildConfig.DEBUG)Log.d(TAG,"onGetmcpttUEInitialConfiguration");
+    }
+
+    @Override
+    public void onGetmcpttUEInitialConfigurationError(String error) {
+        //TODO: Define send info onGetmcpttUEInitialConfigurationError
+        sendErrorLoginEvent(Constants.ConstantsErrorMCOP.LoginEventError.CV);
+    }
+
+    @Override
+    public void onGetMcpttUEConfiguration(org.doubango.ngn.datatype.ms.cms.mcpttUEConfig.McpttUEConfiguration mcpttUEConfiguration) {
+        //TODO: Define send info onGetMcpttUEConfiguration
+        if(BuildConfig.DEBUG)Log.d(TAG,"onGetMcpttUEConfiguration");
+    }
+
+    @Override
+    public void onGetMcpttUEConfigurationError(String error) {
+        //TODO: Define send info onGetMcpttUEConfigurationError
+        sendErrorLoginEvent(Constants.ConstantsErrorMCOP.LoginEventError.CV);
+    }
+
+    @Override
+    public void onGetMcpttServiceConf(org.doubango.ngn.datatype.ms.cms.mcpttServiceConfig.ServiceConfigurationInfoType mcpttServiceConf) {
+        //TODO: the Process CMS is FINISH
+        if(BuildConfig.DEBUG)Log.d(TAG,"onGetMcpttServiceConf");
+    }
+
+    @Override
+    public void onStable() {
+        registerNow();
+    }
+
+    @Override
+    public void onGetMcpttServiceConfError(String error) {
+        sendErrorLoginEvent(Constants.ConstantsErrorMCOP.LoginEventError.CVII);
+    }
+
+    @Override
+    public void onGetMcpttUserDefaultProfile(McpttUserProfile mcpttUserProfile) {
+        //TODO: Process CMS UserProfile default
+        if(BuildConfig.DEBUG)Log.d(TAG,"onGetMcpttUserDefaultProfile");
+
+    }
+
+    @Override
+    public void onGetMcpttUserProfile(org.doubango.ngn.datatype.ms.cms.mcpttUserProfile.McpttUserProfile mcpttUserProfile) {
+        //TODO: Process CMS UserProfile
+        if(BuildConfig.DEBUG)Log.d(TAG,"onGetMcpttUserProfile");
+    }
+
+    @Override
+    public void onGetMcpttUserProfileError(String error) {
+        if(BuildConfig.DEBUG)Log.d(TAG,"onGetMcpttUserProfileError");
+
+    }
+
+    @Override
+    public void onSelectMcpttUserProfile(List<String> mcpttUserProfiles) {
+        if(BuildConfig.DEBUG)Log.d(TAG,"onSelectMcpttUserProfile");
+
+    }
+    //END Authentication Event
 
     //START Affiliation Event
     @Override
@@ -705,7 +1035,8 @@ public class ManagerClient implements
                     case Affiliate:
                         //Verify that the group you want to AFFILIATE to is obtained from the CMS
                         presence=myAffiliationService.getPresenceNow();
-                        if(presence==null){
+                        if(presence==null
+                                ){
                             sendErrorGroupAffiliationEvent(Constants.ConstantsErrorMCOP.GroupAffiliationEventError.CVIII,groupID);
                             result=false;
                         }else if(!checkGroupIsExist(ngnEngine.getProfilesService().getProfileNow(context),groupID,context)
@@ -728,7 +1059,8 @@ public class ManagerClient implements
                     case Deaffiliate:
                         //Verify that the group to DEAFFILIATE from was obtained from the CMS
                         presence=myAffiliationService.getPresenceNow();
-                        if(presence==null){
+                        if(presence==null
+                                ){
                             sendErrorGroupAffiliationEvent(Constants.ConstantsErrorMCOP.GroupAffiliationEventError.CVIII,groupID);
                             result=false;
                         }else if(!checkGroupIsExist(ngnEngine.getProfilesService().getProfileNow(context),groupID,context)
@@ -767,14 +1099,13 @@ public class ManagerClient implements
         groupIDs.add(groupID);
         return newOperationAffiliation(groupIDs,operationTypeEnum);
     }
-
-    private boolean processNewGroup(org.doubango.ngn.datatype.gms.pocListService.ns.list_service.Group group){
+    private boolean processNewGroup(org.doubango.ngn.datatype.ms.gms.ns.list_service.Group group){
         NgnSipPrefrences profile= NgnEngine.getInstance().getProfilesService().getProfileNow(context);
-        if(group==null || profile==null || profile.getMcpttId()==null || !profile.getMcpttId().isEmpty()){
+        if(group==null || profile==null || profile.getMcpttId()==null || profile.getMcpttId().isEmpty()){
             sendErrorGroupInfoEvent(Constants.ConstantsErrorMCOP.GroupInfoEventError.CI);
             return false;
         }
-        Map<String,GroupInfo> groupsInfo=new HashMap<>();
+        ArrayList<GroupInfo> groupsInfo=new ArrayList<>();
         if(group.getListService()!=null)
         for(ListServiceType serviceType:group.getListService()){
             if(serviceType.getUri()!=null && !serviceType.getUri().trim().isEmpty()){
@@ -801,14 +1132,17 @@ public class ManagerClient implements
                         serviceType.getMcdataonnetworkmaxdatasizeforSDS(),
                         serviceType.getMcdataonnetworkmaxdatasizeforFD(),
                         serviceType.getMcdataonnetworkmaxdatasizeautorecv(),
-                        ManagerClientUtils.getParticipantGroups(serviceType)
+                        ManagerClientUtils.getParticipantGroupsWithTypes(serviceType,URI),
+                        ManagerClientUtils.getParticipantGroupsWithTypes(serviceType,DISPLAY_NAME),
+                        ManagerClientUtils.getParticipantGroupsWithTypes(serviceType,TYPE)
                 );
-                groupsInfo.put(serviceType.getUri(),groupInfo);
+                groupsInfo.add(groupInfo);
             }
+
         }
+        sendGroupInfoEvent(groupsInfo);
         return true;
     }
-
     private boolean sendGroupAffiliationEvent(List<GroupAffiliation> groupAffiliations){
         if(BuildConfig.DEBUG)Log.d(TAG,"sendGroupAffiliationEvent");
         Intent event=new Intent(ConstantsMCOP.ActionsCallBack.groupAffiliationEvent.toString());
@@ -820,7 +1154,10 @@ public class ManagerClient implements
     }
 
     private boolean sendErrorGroupAffiliationEvent(Constants.ConstantsErrorMCOP.GroupAffiliationEventError  groupAffiliationEventError ,String groupID){
-        if(groupAffiliationEventError==null || mMCOPCallback==null )return false;
+        if(groupAffiliationEventError==null || mMCOPCallback==null ){
+            if(BuildConfig.DEBUG) Log.e(TAG,"mMCOPCallback or GroupAffiliationEvent is null");
+            return false;
+        }
         Intent event=new Intent(ConstantsMCOP.ActionsCallBack.groupAffiliationEvent.toString());
         Log.e(TAG, "GroupAffiliationEvent Error "+ groupAffiliationEventError.getCode()+": "+ groupAffiliationEventError.getString());
         //Error Group ID
@@ -838,6 +1175,7 @@ public class ManagerClient implements
 
     //START Group Info Event
     private boolean sendGroupInfoEvent(List<GroupInfo> groupsInfo){
+        if(BuildConfig.DEBUG)Log.d(TAG,"sendGroupInfoEvent");
         boolean result=true;
         Intent event=new Intent(ConstantsMCOP.ActionsCallBack.groupInfoEvent.toString());
         for(GroupInfo groupInfo:groupsInfo)
@@ -854,16 +1192,36 @@ public class ManagerClient implements
                         groupInfo.getMaxDataSizeForFD());
                 event.putExtra(ConstantsMCOP.GroupInfoEventExtras.MAX_DATA_SIZE_AUTO_RECV,
                         groupInfo.getMaxDataSizeAutoRecv());
+                if(groupInfo.getActionRealTimeVideo()!=null)
                 event.putExtra(ConstantsMCOP.GroupInfoEventExtras.ACTIVE_REAL_TIME_VIDEO_MODE,
                         groupInfo.getActionRealTimeVideo().toString());
+                if(groupInfo.getActionRealTimeVideo()!=null)
+                    event.putExtra(ConstantsMCOP.GroupInfoEventExtras.ACTIVE_REAL_TIME_VIDEO_MODE,
+                            groupInfo.getActionRealTimeVideo().toString());
+                if(groupInfo.getParticipantsList()!=null){
+                    event.putExtra(ConstantsMCOP.GroupInfoEventExtras.PARTICIPANTS_LIST,
+                            new ArrayList<String>(groupInfo.getParticipantsList()));
+                }
+                if(groupInfo.getParticipantsList()!=null){
+                    event.putStringArrayListExtra(ConstantsMCOP.GroupInfoEventExtras.PARTICIPANTS_LIST_DISPLAY_NAME,
+                            new ArrayList<String>(groupInfo.getParticipantsListDisplay()));
+                }
+                if(groupInfo.getParticipantsList()!=null){
+                    event.putStringArrayListExtra(ConstantsMCOP.GroupInfoEventExtras.PARTICIPANTS_LIST_TYPE,
+                            new ArrayList<String>(groupInfo.getParticipantsListType()));
+                }
                 result&=sendEvent(event);
+
 
             }
         return result;
     }
 
     private boolean sendErrorGroupInfoEvent(Constants.ConstantsErrorMCOP.GroupInfoEventError  groupInfoEventError){
-        if(groupInfoEventError==null || mMCOPCallback==null )return false;
+        if(groupInfoEventError==null || mMCOPCallback==null ){
+            if(BuildConfig.DEBUG) Log.e(TAG,"mMCOPCallback or GroupInfoEvent is null");
+            return false;
+        }
         Intent event=new Intent(ConstantsMCOP.ActionsCallBack.groupInfoEvent.toString());
         Log.e(TAG, "GroupInfoEvent Error "+ groupInfoEventError.getCode()+": "+ groupInfoEventError.getString());
 
@@ -887,5 +1245,292 @@ public class ManagerClient implements
         }
         return null;
     }
+
+
+    private void configureGetParameterSIM(){
+        if(engineIapi!=null)
+            engineIapi.getSimService().setOnSimServiceListener(new ManagerSimService.OnSimServiceListener() {
+                @Override
+                public void onConfiguration(final String[] impu, String impi, String domain, String[] pcscf, int pcscfPort[], String imsi, String imei) {
+                    if(org.mcopenplatform.muoapi.BuildConfig.DEBUG){
+                        if(BuildConfig.DEBUG)Log.d(TAG,"Configuration client:");
+                        if(pcscf!=null && pcscf.length>0){
+                            if(BuildConfig.DEBUG)Log.d(TAG,"pcscf: "+pcscf[0]);
+                        }else
+                            if(BuildConfig.DEBUG)Log.w(TAG,"pcscf is null");
+                        if(pcscfPort!=null && pcscfPort.length>0){
+                            if(BuildConfig.DEBUG)Log.d(TAG,"pcscf port: "+pcscfPort[0]);
+                        }else
+                            if(BuildConfig.DEBUG)Log.w(TAG,"pcscf is null");
+                        if(impu!=null && impu.length>0){
+                            if(BuildConfig.DEBUG)Log.d(TAG,"impu: "+impu[0]);
+                        }else
+                            if(BuildConfig.DEBUG)Log.w(TAG,"impu is null");
+                        if(impi!=null){
+                            if(BuildConfig.DEBUG) Log.d(TAG,"impi: "+impi);
+                        }else
+                            if(BuildConfig.DEBUG)Log.w(TAG,"impi is null");
+                        if(domain!=null){
+                            if(BuildConfig.DEBUG)Log.d(TAG,"domain: "+domain);
+                        }else
+                            if(BuildConfig.DEBUG)Log.w(TAG,"domain is null");
+                        if(imei!=null) {
+                            if(BuildConfig.DEBUG)Log.d(TAG,"imei: "+imei);
+                        }else
+                            if(BuildConfig.DEBUG)Log.w(TAG,"imei is null");
+                        if(imsi!=null) Log.d(TAG,"imsi: "+imsi);
+                    }
+                    if(client==null)
+                    client=new Client();
+                    ClientSIM clientSIM=new ClientSIM(impu,impi,domain,pcscf,pcscfPort,imsi,imei);
+                    client.setClientSIM(clientSIM);
+                    configureParametersSIM();
+                }
+            });
+    }
+
+    private void configureParametersSIM(){
+        ClientSIM clientSIM=null;
+        if(client==null ||(clientSIM=client.getClientSIM())==null){
+            Log.e(TAG,"it is not possible to configure the SIM parameters");
+        }
+        if(ngnEngine!=null && context!=null){
+            NgnSipPrefrences ngnSipPrefrences=ngnEngine.getProfilesService().getProfileNow(context);
+            if(BuildConfig.DEBUG)Log.d(TAG,"configureParametersSIM execute");
+            //TODO: select the best impu and pcscf
+            String impu=null;
+            if(clientSIM.getImpu()!=null && clientSIM.getImpu().length!=0 && (impu=clientSIM.getImpu()[0])!=null){
+                ngnSipPrefrences.setIMPU(impu);
+            }else{
+                if(BuildConfig.DEBUG)Log.w(TAG,"No configure IMPU");
+            }
+
+            if(clientSIM.getImpi()!=null && !clientSIM.getImpi().trim().isEmpty()){
+                ngnSipPrefrences.setIMPI(clientSIM.getImpi().trim());
+            }else{
+                if(BuildConfig.DEBUG)Log.w(TAG,"No configure IMPI");
+            }
+
+            if(clientSIM.getDomain()!=null && !clientSIM.getDomain().trim().isEmpty()){
+                ngnSipPrefrences.setRealm(clientSIM.getDomain().trim());
+            }else{
+                if(BuildConfig.DEBUG)Log.w(TAG,"No configure Domain");
+            }
+
+
+            if(clientSIM.getImsi()!=null && !clientSIM.getImsi().trim().isEmpty()){
+                ngnSipPrefrences.setImsi(clientSIM.getImsi().trim());
+            }else{
+                if(BuildConfig.DEBUG)Log.w(TAG,"No configure IMSI");
+            }
+
+            if(clientSIM.getImei()!=null && !clientSIM.getImei().trim().isEmpty()){
+                ngnSipPrefrences.setImei(clientSIM.getImei().trim());
+            }
+            else{
+                if(BuildConfig.DEBUG)Log.w(TAG,"No configure IMEI");
+            }
+
+            String pcscf=null;
+            if(clientSIM.getPcscf()!=null && clientSIM.getPcscf().length!=0 && (pcscf=clientSIM.getPcscf()[0])!=null){
+                ngnSipPrefrences.setPcscfHost(pcscf);
+            }else{
+                if(BuildConfig.DEBUG)Log.w(TAG,"No configure PCSCR");
+            }
+
+            if(clientSIM.getPcscfPort()!=null && clientSIM.getPcscfPort().length!=0 && clientSIM.getPcscfPort()[0]>0){
+                ngnSipPrefrences.setPcscfPort(clientSIM.getPcscfPort()[0]);
+            }else{
+                if(BuildConfig.DEBUG)Log.w(TAG,"No configure PCSCR port");
+            }
+        }
+    }
+
+
+    //INIT GMS
+    @Override
+    public void onGMSErrorGroup(String error) {
+
+    }
+
+    @Override
+    public void onGMSGroup(org.doubango.ngn.datatype.ms.gms.ns.list_service.Group group) {
+        processNewGroup(group);
+    }
+    //END GMS
+
+
     //END SIM AUTH
+
+
+
+
+    //INIT MBMS event
+    private void initMBMSEvent(){
+        if(engineIapi!=null)
+        engineIapi.getMBMSGroupCom().setOnManagerMBMSGroupComListener(new ManagerMBMSGroupCom.OnManagerMBMSGroupComListener() {
+            @Override
+            public void startMbmsMedia(String sessionID, String tmgi) {
+                if(BuildConfig.DEBUG)Log.d(TAG,"startMbmsMedia tmgi:"+tmgi+" sessionID:"+sessionID);
+                sendMbmsInfoEvent(sessionID,tmgi,null, ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum.eMBMSBearerInUse);
+            }
+
+            @Override
+            public void stopMbmsMedia(String sessionID, String tmgi) {
+                if(BuildConfig.DEBUG)Log.d(TAG,"stopMbmsMedia tmgi:"+tmgi+" sessionID:"+sessionID);
+                sendMbmsInfoEvent(sessionID,tmgi,null, ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum.eMBMSBearerNotInUse);
+            }
+        });
+
+    }
+
+    private boolean sendMbmsInfoEvent(@Nullable String sessionID, @Nullable  String tmgi, @Nullable String[] areaList,@NonNull ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum embmsNotificationEventEventTypeEnum){
+        if(BuildConfig.DEBUG)Log.d(TAG,"sendMbmsInfoEvent");
+        boolean result=true;
+        Intent event=new Intent(ConstantsMCOP.ActionsCallBack.eMBMSNotificationEvent.toString());
+        event.putExtra(ConstantsMCOP.EMBMSNotificationEventExtras.EVENT_TYPE,embmsNotificationEventEventTypeEnum.getValue());
+        switch (embmsNotificationEventEventTypeEnum){
+            case none:
+
+                break;
+            case NoeMBMSCoverage:
+            case UndereMBMSCoverage:
+                if(BuildConfig.DEBUG)Log.d(TAG,"NoeMBMSCoverage or UndereMBMSCoverage");
+
+                //TODO
+                break;
+            case eMBMSBearerInUse:
+            case eMBMSBearerNotInUse:
+                if(BuildConfig.DEBUG)Log.d(TAG,"eMBMSBearerInUse or eMBMSBearerNotInUse");
+                if(sessionID!=null)
+                event.putExtra(ConstantsMCOP.EMBMSNotificationEventExtras.SESSION_ID,sessionID);
+                if(tmgi!=null)
+                event.putExtra(ConstantsMCOP.EMBMSNotificationEventExtras.TMGI,tmgi);
+                break;
+            case eMBMSAvailable:
+            case eMBMSNotAvailable:
+                if(BuildConfig.DEBUG)Log.d(TAG,"eMBMSAvailable or eMBMSNotAvailable");
+
+                //TODO
+                break;
+            default:
+                if(BuildConfig.DEBUG)Log.d(TAG,"event mbms default");
+                break;
+        }
+                result&=sendEvent(event);
+
+        return result;
+    }
+
+    private boolean sendErrorMbmsInfoEvent(Constants.ConstantsErrorMCOP.MbmsInfoEventError  mbmsInfoEventError){
+        if(mbmsInfoEventError==null || mMCOPCallback==null ){
+            if(BuildConfig.DEBUG) Log.e(TAG,"mMCOPCallback or mbmsInfoEventError is null");
+            return false;
+        }
+        Intent event=new Intent(ConstantsMCOP.ActionsCallBack.groupInfoEvent.toString());
+        Log.e(TAG, "MbmsInfoEventError Error "+ mbmsInfoEventError.getCode()+": "+ mbmsInfoEventError.getString());
+
+        //Error Code
+        event.putExtra(ConstantsMCOP.EMBMSNotificationEventExtras.ERROR_CODE, mbmsInfoEventError.getCode());
+        //Error String
+        event.putExtra(ConstantsMCOP.EMBMSNotificationEventExtras.ERROR_STRING, mbmsInfoEventError.getString());
+        return sendEvent(event);
+    }
+    //END MBMS event
+
+
+
+    @Override
+    public void onCMSPrivateContactsError() {
+        sendConfigurationInfoError(Constants.ConstantsErrorMCOP.ConfigurationUpdateEventError.CI);
+    }
+
+    @Override
+    public void onCMSPrivateContacts(McpttUserProfile mcpttUserProfile) {
+        boolean success = false;
+        if(mcpttUserProfile ==null || mMCOPCallback==null ){
+            if(BuildConfig.DEBUG) Log.e(TAG,"mMCOPCallback or mcpttUserConfiguration info is null");
+            //return false;
+        }
+        Intent event=new Intent(ConstantsMCOP.ActionsCallBack.configurationUpdateEvent.toString());
+
+        if (mcpttUserProfile!=null && mcpttUserProfile.getCommon() != null && mcpttUserProfile.getCommon().size() > 0 && mcpttUserProfile.getCommon().get(0) != null) {
+
+            org.doubango.ngn.datatype.ms.cms.mcpttUserProfile.CommonType commonType = mcpttUserProfile.getCommon().get(0);
+            if (commonType.getMissionCriticalOrganization() != null && commonType.getMissionCriticalOrganization().size() > 0 && commonType.getMissionCriticalOrganization().get(0) != null) {
+                event.putExtra(ConstantsMCOP.ConfigurationUpdateEventExtras.ORGANIZATION, commonType.getMissionCriticalOrganization().get(0));
+            }
+            //DEFAULT_EMERGENCY_CONTACT
+            if (commonType.getPrivateCall() != null && commonType.getPrivateCall().size() > 0 && commonType.getPrivateCall().get(0) != null &&
+                    commonType.getPrivateCall().get(0).getEmergencyCall() != null && commonType.getPrivateCall().get(0).getEmergencyCall().getMCPTTGroupInitiation() != null
+                    && commonType.getPrivateCall().get(0).getEmergencyCall().getMCPTTGroupInitiation().getEntry() != null
+                    && commonType.getPrivateCall().get(0).getEmergencyCall().getMCPTTGroupInitiation().getEntry().getUriEntry() != null) {
+                event.putExtra(ConstantsMCOP.ConfigurationUpdateEventExtras.DEFAULT_EMERGERCY_CONTACT, commonType.getPrivateCall().get(0).getEmergencyCall().getMCPTTGroupInitiation().getEntry().getUriEntry());
+            }
+
+            //PRIVATE CONTACTS
+            if (commonType.getPrivateCall() != null && commonType.getPrivateCall().size() > 0 && commonType.getPrivateCall().get(0) != null &&
+                    commonType.getPrivateCall().get(0).getPrivateCallList() != null && commonType.getPrivateCall().get(0).getPrivateCallList().getPrivateCallURI() != null) {
+                List<String> privateContactsSIPUri = new ArrayList<>();
+                List<String> privateContactsDisplayName = new ArrayList<>();
+                for (org.doubango.ngn.datatype.ms.cms.mcpttUserProfile.EntryType entryType : commonType.getPrivateCall().get(0).getPrivateCallList().getPrivateCallURI()) {
+                    if (entryType != null) {
+                        if (entryType.getUriEntry() != null) {
+                            privateContactsSIPUri.add(entryType.getUriEntry());
+                        }
+                        if (entryType.getDisplayName() != null && entryType.getDisplayName().getValue() != null) {
+                            privateContactsDisplayName.add(entryType.getDisplayName().getValue());
+                        }
+                    }
+                }
+                event.putExtra(ConstantsMCOP.ConfigurationUpdateEventExtras.PRIVATE_CONTACT_LIST,(Serializable) privateContactsSIPUri);
+                event.putExtra(ConstantsMCOP.ConfigurationUpdateEventExtras.PRIVATE_CONTACT_DISPLAY_NAME_LIST, (Serializable) privateContactsDisplayName);
+
+            }
+        }
+            //USER PERMISSIONS
+            //They are considered granted in case of missing (defined in the constructor)
+            List<ConstantsMCOP.ConfigurationUpdateEventExtras.AllowTypeEnum> allowTypeEnumList = new ArrayList<>();
+            if (mcpttUserProfile.getRuleset() != null && mcpttUserProfile.getRuleset().getRule() != null
+                    && mcpttUserProfile.getRuleset().getRule().size() > 0 && mcpttUserProfile.getRuleset().getRule().get(0) != null
+                    && mcpttUserProfile.getRuleset().getRule().get(0).getActions() != null) {
+
+                if (mcpttUserProfile.getRuleset().getRule().get(0).getActions().isAllowprivatecall()) {
+                    allowTypeEnumList.add(ConstantsMCOP.ConfigurationUpdateEventExtras.AllowTypeEnum.private_call);
+                }
+                if (mcpttUserProfile.getRuleset().getRule().get(0).getActions().isAllowemergencyprivatecall()) {
+                    allowTypeEnumList.add(ConstantsMCOP.ConfigurationUpdateEventExtras.AllowTypeEnum.emergency_private_call);
+                }
+                if (mcpttUserProfile.getRuleset().getRule().get(0).getActions().isAllowemergencygroupcall()) {
+                    allowTypeEnumList.add(ConstantsMCOP.ConfigurationUpdateEventExtras.AllowTypeEnum.emergency_group_call);
+                }
+                if (mcpttUserProfile.getRuleset().getRule().get(0).getActions().isAllowimminentperilcall()) {
+                    allowTypeEnumList.add(ConstantsMCOP.ConfigurationUpdateEventExtras.AllowTypeEnum.imminent_peril_call);
+                }
+                if (mcpttUserProfile.getRuleset().getRule().get(0).getActions().isAllowactivateemergencyalert()) {
+                    allowTypeEnumList.add(ConstantsMCOP.ConfigurationUpdateEventExtras.AllowTypeEnum.activate_emergency_alert);
+                }
+                event.putExtra(ConstantsMCOP.ConfigurationUpdateEventExtras.ALLOWS_LIST ,ConstantsMCOP.ConfigurationUpdateEventExtras.AllowTypeEnum.getValue(allowTypeEnumList));
+            }
+
+        success = sendEvent(event);
+    }
+
+    private boolean sendConfigurationInfoError(Constants.ConstantsErrorMCOP.ConfigurationUpdateEventError configurationUpdateError){
+        if(configurationUpdateError==null || mMCOPCallback==null ){
+            if(BuildConfig.DEBUG) Log.e(TAG,"mMCOPCallback or configurationUpdateError is null");
+            return false;
+        }
+        Intent event=new Intent(ConstantsMCOP.ActionsCallBack.configurationUpdateEvent.toString());
+        Log.e(TAG, "MbmsInfoEventError Error "+ configurationUpdateError.getCode()+": "+ configurationUpdateError.getString());
+
+        //Error Code
+        event.putExtra(ConstantsMCOP.EMBMSNotificationEventExtras.ERROR_CODE, configurationUpdateError.getCode());
+        //Error String
+        event.putExtra(ConstantsMCOP.EMBMSNotificationEventExtras.ERROR_STRING, configurationUpdateError.getString());
+        return sendEvent(event);
+    }
+
+
+
 }

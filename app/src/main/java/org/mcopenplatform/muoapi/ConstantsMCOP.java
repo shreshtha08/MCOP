@@ -1,24 +1,18 @@
 /*
- *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
- *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
- *
- *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
- *
- *  This file is part of MCOP MCPTT Client
- *
- *  This is free software: you can redistribute it and/or modify it under the terms of
- *  the GNU General Public License as published by the Free Software Foundation, either version 3
- *  of the License, or (at your option) any later version.
- *
- *  This is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *  See the GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- */
+  Copyright (C) 2019, University of the Basque Country (UPV/EHU)
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 
 package org.mcopenplatform.muoapi;
 
@@ -31,7 +25,6 @@ import java.util.Map;
 /**
  * MCOP MCPTT SDK
  * Constants used on AIDLs
- * @author Eduardo Zarate Lasurtegui
  * @version 0.1
  */
 public class ConstantsMCOP {
@@ -41,20 +34,34 @@ public class ConstantsMCOP {
 
 
     /**
+     * Key Access to the values of the packet names of Iapi plugins
+     * <p>This values are passed as Strings in SDK binding intent</p>
+     */
+    public static final String CONNECTIVITY_PLUGIN_PACKAGE_ID = "org.mcopenplatform.muoapi.ConstantsMCOP"+".CONNECTIVITY_PLUGIN_PACKAGE_ID";
+    public static final String CONNECTIVITY_PLUGIN_SERVICE_ID = "org.mcopenplatform.muoapi.ConstantsMCOP"+".CONNECTIVITY_PLUGIN_SERVICE_ID";
+    public static final String SIM_PLUGIN_PACKAGE_ID = "org.mcopenplatform.muoapi.ConstantsMCOP"+".SIM_PLUGIN_PACKAGE_ID";
+    public static final String SIM_PLUGIN_SERVICE_ID = "org.mcopenplatform.muoapi.ConstantsMCOP"+".SIM_PLUGIN_SERVICE_ID";
+    public static final String CONFIGURATION_PLUGIN_PACKAGE_ID = "org.mcopenplatform.muoapi.ConstantsMCOP"+".CONFIGURATION_PLUGIN_PACKAGE_ID";
+    public static final String CONFIGURATION_PLUGIN_SERVICE_ID = "org.mcopenplatform.muoapi.ConstantsMCOP"+".CONFIGURATION_PLUGIN_SERVICE_ID";
+    public static final String MBMS_PLUGIN_PACKAGE_ID = "org.mcopenplatform.muoapi.ConstantsMCOP"+".MBMS_PLUGIN_PACKAGE_ID";
+    public static final String MBMS_PLUGIN_SERVICE_ID = "org.mcopenplatform.muoapi.ConstantsMCOP"+".MBMS_PLUGIN_SERVICE_ID";
+
+
+    /**
      *
-     * Access keys to the values of event types {@link org.mcopenplatform.muoapi.ConstantsMCOP.ActionsCallBack#unLoginEvent}
-     * <p>This class contains all the answers to the actions of methods {@link IMCOPsdk#unLoginMCOP()} </p>
+     * Key Access to the values of event types {@link ConstantsMCOP.ActionsCallBack#unLoginEvent}
+     * <p>This class contains all the answers to the actions of methods {@link org.mcopenplatform.muoapi.IMCOPsdk#unLoginMCOP()} </p>
      *
      */
     public static class UnLoginEventExtras{
         /**
-         * <h2>Access key to the response to method {@link IMCOPsdk#unLoginMCOP()}}:</h2>
+         * <h2>Key Access to the response to method {@link org.mcopenplatform.muoapi.IMCOPsdk#unLoginMCOP()}}:</h2>
          * <p>Response: boolean, indicates whether the unlogin procedure was successful or not.</p>
          */
         public static final String SUCCESS="org.mcopenplatform.muoapi.ConstantsMCOP.UnLoginEventExtras"+".SUCCESS";
 
         /**
-         * <h2>Access key to the error codes of the login and authentication methods.</h2>
+         * <h2>Key Access to the error codes of the login and authentication methods.</h2>
          * <p>Response: Integer indicating the error code.</p>
          * <p>Values:</p>
          * <p>  205 It is not possible to unregister because the customer is not registered right now</p>
@@ -64,36 +71,36 @@ public class ConstantsMCOP {
          */
         public static final String ERROR_CODE="org.mcopenplatform.muoapi.ConstantsMCOP.UnLoginEventExtras"+".ERROR_CODE";
         /**
-         * <h2>Access key to error string for the login and authentication methods.</h2>
-         * <p>Resputa: String describing the error.</p>
+         * <h2>Key Access to error string for the login and authentication methods.</h2>
+         * <p>Response: String describing the error.</p>
          */
         public static final String ERROR_STRING="org.mcopenplatform.muoapi.ConstantsMCOP.UnLoginEventExtras"+".ERROR_STRING";
     }
 
     /**
      *
-     * Access keys to the values of event types {@link org.mcopenplatform.muoapi.ConstantsMCOP.ActionsCallBack#loginEvent}
-     * <p>This class contains all the answers to the actions of methods {@link IMCOPsdk#loginMCOP()} and {@link IMCOPsdk#authorizeUser(String)} ()}</p>
+     * Key Access to the values of event types {@link ConstantsMCOP.ActionsCallBack#loginEvent}
+     * <p>This class contains all the answers to the actions of methods {@link org.mcopenplatform.muoapi.IMCOPsdk#loginMCOP()} and {@link org.mcopenplatform.muoapi.IMCOPsdk#authorizeUser(String)} ()}</p>
      *
      */
     public static class LoginEventExtras{
         /**
-         * <h2>Access key to the response to method {@link IMCOPsdk#authorizeUser(String)}:</h2>
+         * <h2>Key Access to the response to method {@link org.mcopenplatform.muoapi.IMCOPsdk#authorizeUser(String)}:</h2>
          * <p>Response: boolean, indicates whether the login procedure was successful or not.</p>
          */
         public static final String SUCCESS="org.mcopenplatform.muoapi.ConstantsMCOP.LoginEventExtras"+".SUCCESS";
         /**
-         * <h2>Access key to the MCPTT ID of the client once authenticated.</h2>
+         * <h2>Key Access to the MCPTT ID of the client once authenticated.</h2>
          * <p>Response: String with URI format that unequivocally identifies the user in the MCPTT system.</p>
          */
         public static final String MCPTT_ID="org.mcopenplatform.muoapi.ConstantsMCOP.LoginEventExtras"+".MCPTT_ID";
         /**
-         * <h2>Access key to the DISPLAY NAME of the client once authenticated.</h2>
+         * <h2>Key Access to the DISPLAY NAME of the client once authenticated.</h2>
          * <p>Response: String that identifies the user with a human-readable alias, more pleasant than a MCPTT identifier.</p>
          */
         public static final String DISPLAY_NAME="org.mcopenplatform.muoapi.ConstantsMCOP.LoginEventExtras"+".DISPLAY_NAME";
         /**
-         * <h2>Access key to the error codes of the login and authentication methods.</h2>
+         * <h2>Key Access to the error codes of the login and authentication methods.</h2>
          * <p>Response: Integer indicating the error code.</p>
          * <p>Values:</p>
          * <p>0 means no errors.</p>
@@ -118,7 +125,7 @@ public class ConstantsMCOP {
          */
         public static final String ERROR_CODE="org.mcopenplatform.muoapi.ConstantsMCOP.LoginEventExtras"+".ERROR_CODE";
         /**
-         * <h2>Access key to error string for the login and authentication methods.</h2>
+         * <h2>Key Access to error string for the login and authentication methods.</h2>
          * <p>Resputa: String describing the error.</p>
          */
         public static final String ERROR_STRING="org.mcopenplatform.muoapi.ConstantsMCOP.LoginEventExtras"+".ERROR_STRING";
@@ -127,25 +134,25 @@ public class ConstantsMCOP {
     /**
      *
      * <h1>Keys to access the values of authentication events by methods:</h1>
-     * <h2>     {@link IMCOPsdk#loginMCOP()}</h2>
-     * <h2>     {@link IMCOPsdk#authorizeUser(String)}</h2>
+     * <h2>     {@link org.mcopenplatform.muoapi.IMCOPsdk#loginMCOP()}</h2>
+     * <h2>     {@link org.mcopenplatform.muoapi.IMCOPsdk#authorizeUser(String)}</h2>
      */
     public static class AuthorizationRequestExtras{
         /**
-         * <h2>Access key to the uri to request the user authentication to a third party.</h2>
-         * <p>This data is received once the call to the method {@link IMCOPsdk#loginMCOP()} is made.</p>
+         * <h2>Key Access to the uri to request the user authentication to a third party.</h2>
+         * <p>This data is received once the call to the method {@link org.mcopenplatform.muoapi.IMCOPsdk#loginMCOP()} is made.</p>
          * <p>Response: URI format string</p>
          */
         public static final String REQUEST_URI="org.mcopenplatform.muoapi.ConstantsMCOP.AuthorizationRequestActions"+".REQUEST_URI";
         /**
-         * <h2>Access key to the uri answered by the third party authentication agent.</h2>
-         * <h3>Indicates when the third party authentication ends, and the method {@link IMCOPsdk#authorizeUser(String)} can be called with the authentication response.</h3>
-         * <p>This data is received once the call to the method {@link IMCOPsdk#loginMCOP()} is made.</p>
+         * <h2>Key Access to the uri answered by the third party authentication agent.</h2>
+         * <h3>Indicates when the third party authentication ends, and the method {@link org.mcopenplatform.muoapi.IMCOPsdk#authorizeUser(String)} can be called with the authentication response.</h3>
+         * <p>This data is received once the call to the method {@link org.mcopenplatform.muoapi.IMCOPsdk#loginMCOP()} is made.</p>
          * <p>Response: URI format string</p>
          */
         public static final String REDIRECT_URI="org.mcopenplatform.muoapi.ConstantsMCOP.AuthorizationRequestActions"+".REDIRECT_URI";
         /**
-         * <h2>Access key to authentication error codes.</h2>
+         * <h2>Key Access to authentication error codes.</h2>
          * <p>Response: Integer indicating the error code.</p>
          * <p>Values:</p>
          * <p></p>
@@ -153,7 +160,7 @@ public class ConstantsMCOP {
          */
         public static final String ERROR_CODE="org.mcopenplatform.muoapi.ConstantsMCOP.AuthorizationRequestActions"+".ERROR_CODE";
         /**
-         * <h2>Access key to error codes string.</h2>
+         * <h2>Key Access to error codes string.</h2>
          */
         public static final String ERROR_STRING="org.mcopenplatform.muoapi.ConstantsMCOP.AuthorizationRequestActions"+".ERROR_STRING";
     }
@@ -161,34 +168,34 @@ public class ConstantsMCOP {
 
     /**
      *
-     * <h1>Access key to the values of all the configuration events of all the MCPTT services.</h1>
+     * <h1>Key Access to the values of all the configuration events of all the MCPTT services.</h1>
      *
      */
     public static class ConfigurationUpdateEventExtras{
 
         /**
-         * <h2>Access key to the organization that the user belongs to.</h2>
+         * <h2>Key Access to the organization that the user belongs to.</h2>
          * <p>This data will be received once logged into the system.</p>
          * <p>Response: String.</p>
          */
         public static final String ORGANIZATION="org.mcopenplatform.muoapi.ConstantsMCOP.LoginSuccessExtras"+".ORGANIZATION";
 
         /**
-         * <h2>Access key to default emergency contact identifier that must be called in case of an emergency call with no destination specified.</h2>
-         * <p>This data will be received once logged in and each time the system changes the value or the user manually changes it with the method {@link IMCOPsdk#changeSelectedContact}</p>
+         * <h2>Key Access to default emergency contact identifier that must be called in case of an emergency call with no destination specified.</h2>
+         * <p>This data will be received once logged in and each time the system changes the value or the user manually changes it with the method {@link org.mcopenplatform.muoapi.IMCOPsdk#changeSelectedContact}</p>
          * <p>Response: String with UserID format</p>
          */
         public static final String DEFAULT_EMERGERCY_CONTACT="org.mcopenplatform.muoapi.ConstantsMCOP.LoginSuccessExtras"+".DEFAULT_EMERGERCY_CONTACT";
 
         /**
-         * <h2>Access key to ParticipantType, indicating the position of the user in the organization. Not defined in the 3GPP.</h2>
+         * <h2>Key Access to ParticipantType, indicating the position of the user in the organization. Not defined in the 3GPP.</h2>
          * <p>This data will be received once logged into the system or whenever the user receives a new configuration.</p>
          * <p>Response: String.</p>
          */
         public static final String PARTICIPANT_TYPE="org.mcopenplatform.muoapi.ConstantsMCOP.LoginSuccessExtras"+".PARTICIPANT_TYPE";
 
         /**
-         * <h2>Access key to the list of user granted permissions.</h2>
+         * <h2>Key Access to the list of user granted permissions.</h2>
          * <p>This data will be received once logged into the system or whenever the user receives a new configuration.</p>
          * <p>Response: Integer with values of all the FLAGs that identify user allowed services</p>
          * <p>Values: Sum of {@link AllowTypeEnum}</p>
@@ -204,7 +211,26 @@ public class ConstantsMCOP {
 
 
         /**
-         * <h2>Access key to configuration error codes.</h2>
+         * <h2>Access Key to the Private contacts available for the user</h2>
+         * * <p>This data will be received once logged into the system or whenever the user receives a new configuration.</p>
+         * <p>Response: Array of strings with Sips URI  of the available contacts</p>
+         * <p>Values: List<String> </p>
+         */
+
+        public static final String PRIVATE_CONTACT_LIST="org.mcopenplatform.muoapi.ConstantsMCOP.ConfigurationUpdateEventExtras"+".PRIVATE_CONTACT_LIST";
+
+        /**
+         * <h2>Access Key to the display name of private contacts available for the user</h2>
+         * * <p>This data will be received once logged into the system or whenever the user receives a new configuration.</p>
+         * <p>Response: Array of strings with the display name of the available contacts</p>
+         * <p>Values: List<String> </p>
+         */
+
+        public static final String PRIVATE_CONTACT_DISPLAY_NAME_LIST="org.mcopenplatform.muoapi.ConstantsMCOP.ConfigurationUpdateEventExtras"+".PRIVATE_CONTACT_DISPLAY_NAME_LIST";
+
+
+        /**
+         * <h2>Key Access to configuration error codes.</h2>
          * <p>Response: Integer indicating the error code.</p>
          * <p>Values:</p>
          *<p>Code	Explanatory text	Description</p>
@@ -213,7 +239,7 @@ public class ConstantsMCOP {
          */
         public static final String ERROR_CODE="org.mcopenplatform.muoapi.ConstantsMCOP.ConfigurationUpdateEventExtras"+".ERROR_CODE";
         /**
-         * <h2>Access key to the string of error codes</h2>
+         * <h2>Key Access to the string of error codes</h2>
          */
         public static final String ERROR_STRING="org.mcopenplatform.muoapi.ConstantsMCOP.ConfigurationUpdateEventExtras"+".ERROR_STRING";
 
@@ -263,46 +289,54 @@ public class ConstantsMCOP {
 
     /**
      *
-     * Access keys to the values of type {@link org.mcopenplatform.muoapi.ConstantsMCOP.ActionsCallBack#callEvent} events.
+     * Key Access to the values of type {@link ConstantsMCOP.ActionsCallBack#callEvent} events.
      *
      */
     public static class CallEventExtras{
 
         /**
-         * <h2>Access key to event type:</h2>
+         * <h2>Key Access to event type:</h2>
          * <p>Integer type values</p>
          * <p>Possible event types:</p>
-         * <p>     INCOMING    (Incoming call of any MCPTT type) {@link org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#INCOMING}</p>
-         * <p>     RINGING     (Destination of the call is ringing) {@link org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#RINGING}</p>
-         * <p>     INPROGRESS  (MCPTT call in progress) {@link org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#INPROGRESS}</p>
-         * <p>     CONNECTED   (Established call) {@link org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#CONNECTED}</p>
-         * <p>     ERROR       (Any error in MCPTT calls) {@link org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#ERROR}</p>
-         * <p>     UPDATE       (Any Change in Call) {@link org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#UPDATE}</p>
+         * <p>     INCOMING    (Incoming call of any MCPTT type) {@link ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#INCOMING}</p>
+         * <p>     RINGING     (Destination of the call is ringing) {@link ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#RINGING}</p>
+         * <p>     INPROGRESS  (MCPTT call in progress) {@link ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#INPROGRESS}</p>
+         * <p>     CONNECTED   (Established call) {@link ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#CONNECTED}</p>
+         * <p>     ERROR       (Any error in MCPTT calls) {@link ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#ERROR}</p>
+         * <p>     UPDATE       (Any Change in Call) {@link ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#UPDATE}</p>
          */
         public static final String EVENT_TYPE="org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras"+".EVENT_TYPE";
 
 
         /**
-         *  <h2>Access key to MCPTT call session ID. This identifier is unique for each call.</h2>
-         *  <p>Present in all types of events {@link org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum}</p>
+         *  <h2>Key Access to MCPTT call session ID. This identifier is unique for each call.</h2>
+         *  <p>Present in all types of events {@link ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum}</p>
          */
         public static final String SESSION_ID="org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras"+".SESSION_ID";
 
         /**
-         *  <h2>Access key to MCPTT call type.</h2>
-         *  <p>Present in event type {@link org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#INCOMING} and {@link org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#UPDATE}</p>
+         *  <h2>Key Access to MCPTT call type.</h2>
+         *  <p>Present in event type {@link ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#INCOMING} and {@link ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#UPDATE}</p>
          */
         public static final String CALL_TYPE="org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras"+".CALL_TYPE";
 
 
         /**
-         *  Access key to the caller UserID
-         *  Present in event type {@link org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#INCOMING}
+         *  Key Access to the caller UserID
+         *  Present in event type {@link ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#INCOMING}
          */
         public static final String CALLER_USERID="org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras"+".CALLER_USERID";
 
+
         /**
-         *<p> Access key to Error Codes</p>
+         *  Key Access to the caller GroupID
+         *  Present in event type {@link ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#INCOMING}
+         */
+        public static final String CALLER_GROUPID="org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras"+".CALLER_GROUPID";
+
+
+        /**
+         *<p> Key Access to Error Codes</p>
          *<p> All error codes are integers:</p>
          *<p>Code	Explanatory text	Description</p>
          *<p>103	maximum simultaneous MCPTT group calls reached	The number of maximum simultaneous MCPTT group calls supported for the MCPTT user has been exceeded.</p>
@@ -348,7 +382,7 @@ public class ConstantsMCOP {
          */
         public static final String ERROR_CODE="org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras"+".ERROR_CODE";
         /**
-         * Access key to Error Codes string.
+         * Key Access to Error Codes string.
          */
         public static final String ERROR_STRING="org.mcopenplatform.muoapi.ConstantsMCOP.CallEventExtras"+".ERROR_STRING";
 
@@ -374,7 +408,6 @@ public class ConstantsMCOP {
                 return code;
             }
 
-
             private static Map map = new HashMap<>();
 
 
@@ -390,7 +423,7 @@ public class ConstantsMCOP {
 
         }
         /**
-         * <h2>Individual call types than can be combined and used in {@link IMCOPsdk#makeCall(String, int)} or received in type {@link ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#INCOMING} events</h2>
+         * <h2>Individual call types than can be combined and used in {@link org.mcopenplatform.muoapi.IMCOPsdk#makeCall(String, int)} or received in type {@link ConstantsMCOP.CallEventExtras.CallEventEventTypeEnum#INCOMING} events</h2>
          */
         public enum CallTypeEnum {
 
@@ -468,84 +501,86 @@ public class ConstantsMCOP {
 
     /**
      *
-     * <h1>Access keys to the values of the floor control events in any MCPTT session.</h1>
+     * <h1>Key Access to the values of the floor control events in any MCPTT session.</h1>
      *
      */
     public static class FloorControlEventExtras{
 
         /**
-         * <h2>Access key to the list of floor control events.</h2>
+         * <h2>Key Access to the list of floor control events.</h2>
          * <p>This event is received every time an action is generated on any floor control of any MCPTT session.</p>
          * <p>Response: String</p>
          * <p>Values:
-         * <p>     granted      (Session control granted) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#granted}</p>
-         * <p>     idle         (Nobody has control of the session) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#idle}</p>
-         * <p>     taken         (Other session participant has control) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#taken}</p>
-         * <p>     request_sent  (Session control request sent) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#request_sent}</p>
-         * <p>     release_sent   (Session control release sent) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#idle}</p>
-         * <p>     denied         (Session control denied) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#denied}</p>
-         * <p>     revoked         (Session control revoked) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#revoked}</p>
-         * <p>     queued         (Session control request queued) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#queued}</p>
-         * <p>     queued_timeout         (Queued request timed out) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#queued_timeout}</p>
-         * <p>     transmission_granted         (Transmission granted) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_granted}</p>
-         * <p>     reception_granted         (Reception granted) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#reception_granted}</p>
-         * <p>     transmission_rejection         (Transmission rejected) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_rejection}</p>
-         * <p>     reception_rejection         (Reception rejected) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#reception_rejection}</p>
-         * <p>     transmission_revoke         (Transmission revoked) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_revoke}</p>
-         * <p>     reception_revoke         (Reception revoked) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#reception_revoke}</p>
-         * <p>     transmission_notification         (Transmission notification) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_notification}</p>
-         * <p>     transmission_end_notification         (Transmission notification end) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_end_notification}</p>
-         * <p>     transmission_end_response         (Transmission end response) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_end_response}</p>
-         * <p>     reception_end_response         (Reception end response) {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#reception_end_response}</p>
+         * <p>     granted      (Session control granted) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#granted}</p>
+         * <p>     idle         (Nobody has control of the session) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#idle}</p>
+         * <p>     taken         (Other session participant has control) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#taken}</p>
+         * <p>     request_sent  (Session control request sent) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#request_sent}</p>
+         * <p>     release_sent   (Session control release sent) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#idle}</p>
+         * <p>     denied         (Session control denied) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#denied}</p>
+         * <p>     revoked         (Session control revoked) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#revoked}</p>
+         * <p>     queued         (Session control request queued) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#queued}</p>
+         * <p>     queued_timeout         (Queued request timed out) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#queued_timeout}</p>
+         * <p>     transmission_granted         (Transmission granted) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_granted}</p>
+         * <p>     reception_granted         (Reception granted) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#reception_granted}</p>
+         * <p>     transmission_rejection         (Transmission rejected) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_rejection}</p>
+         * <p>     reception_rejection         (Reception rejected) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#reception_rejection}</p>
+         * <p>     transmission_revoke         (Transmission revoked) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_revoke}</p>
+         * <p>     reception_revoke         (Reception revoked) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#reception_revoke}</p>
+         * <p>     transmission_notification         (Transmission notification) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_notification}</p>
+         * <p>     transmission_end_notification         (Transmission notification end) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_end_notification}</p>
+         * <p>     transmission_end_response         (Transmission end response) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_end_response}</p>
+         * <p>     reception_end_response         (Reception end response) {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#reception_end_response}</p>
          */
         public static final String FLOOR_CONTROL_EVENT="org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras"+".FLOOR_CONTROL_EVENT";
 
 
         /**
-         * <h2>Access key to DISPLAY NAME of the client linked to one of the events in {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum}</h2>
-         * <p>It is usually used with the event {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#taken} to know who is talking at each moment.</p>
+         * <h2>Key Access to DISPLAY NAME of the client linked to one of the events in {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum}</h2>
+         * <p>It is usually used with the event {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#taken} to know who is talking at each moment.</p>
          * <p>Response: String that identifies the user with a human-readable alias, more pleasant than a MCPTT identifier.</p>
          */
         public static final String DISPLAY_NAME="org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras"+".DISPLAY_NAME";
 
         /**
-         * <h2>Access key to DURATION TOKEN of Number of seconds that a client can speak {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum}</h2>
-         * <p>It is usually used with the event {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#granted} to know who is talking at each moment.</p>
+         * <h2>Key Access to DURATION TOKEN of Number of seconds that a client can speak {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum}</h2>
+         * <p>It is usually used with the event {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#granted} to know who is talking at each moment.</p>
          * <p>Response: Number of seconds that a client can speak.</p>
          */
         public static final String DURATION_TOKEN="org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras"+".DURATION_TOKEN";
 
         /**
-         * <h2>Access key to User ID that univocally distinguishes the MCPTT user causing the event {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum}</h2>
+         * <h2>Key Access to User ID that univocally distinguishes the MCPTT user causing the event {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum}</h2>
          * <p>Usually used with events:</p>
-         * <p>      {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#taken} to know who is talking at each moment.</p>
-         * <p>      {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#reception_granted}</p>
-         * <p>      {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_end_response}</p>
-         * <p>      {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#reception_end_response}</p>
+         * <p>      {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#taken} to know who is talking at each moment.</p>
+         * <p>      {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#reception_granted}</p>
+         * <p>      {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_end_response}</p>
+         * <p>      {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#reception_end_response}</p>
          * <p>Response: String with URI format that identifies the MCPTT user.</p>
          */
         public static final String USER_ID="org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras"+".USER_ID";
 
 
+
+
         /**
-         * <h2>Access key to ALLOW REQUEST that indicates whether a call can be made to {@link org.mcopenplatform.muoapi.IMCOPsdk#floorControlOperation(String, int, String)} to request the token despite being in a {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#taken} state</h2>
-         * <p>This data will be obtained every time a {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#taken} event is received.</p>
+         * <h2>Key Access to ALLOW REQUEST that indicates whether a call can be made to {@link org.mcopenplatform.muoapi.IMCOPsdk#floorControlOperation(String, int, String)} to request the token despite being in a {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#taken} state</h2>
+         * <p>This data will be obtained every time a {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#taken} event is received.</p>
          * <p>Response: boolean</p>
          */
         public static final String ALLOW_REQUEST="org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras"+".ALLOW_REQUEST";
 
         /**
-         *  Access key to MCPTT calls Session ID. This identifier is unique for each call.
-         *  It occurs in all types of {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum} events.
+         *  Key Access to MCPTT calls Session ID. This identifier is unique for each call.
+         *  It occurs in all types of {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum} events.
          */
         public static final String SESSION_ID="org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras"+".SESSION_ID";
 
 
         /**
-         * <h2>Access key to the numbering of a specific MCPTT session control denial or revocation event.</h2>
+         * <h2>Key Access to the numbering of a specific MCPTT session control denial or revocation event.</h2>
          * <p>Response: Integer indicating the code of the cause.</p>
          * <p>Values:</p>
-         * <p>  Event  {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#denied}:</p>
+         * <p>  Event  {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#denied}:</p>
          * <p> 101     Cause #1 - Another MCPTT client has permission The <Reject cause> value set to '1' indicates that another MCPTT user has permission to send a media.</p>
          * <p> 102     Cause #2 - Internal floor control server error The <Reject cause> value set to '2' indicates that the floor control server cannot grant the floor request due to an internal error.</p>
          * <p> 103     Cause #3 - Only one participant The <Reject cause> value set to '3' indicates that the floor control server cannot grant the floor request, because the requesting party is the only participant in the MCPTT session.</p>
@@ -554,14 +589,14 @@ public class ConstantsMCOP {
          * <p> 106     Cause #6 - No resources available The <Reject cause> value set to '6' indicates that the floor control server cannot grant the floor request due to congestion.</p>
          * <p> 107     Cause #7 – Queue full The <Reject cause> value set to 7 indicates that the floor control server cannot queue the floor request, because the queue is full.</p>
          * <p> 108     Cause #255 - Other reason The <Reject cause> value set to '255' indicates that the floor control server does not grant the floor request due to the floor control server local policy.</p>
-         * <p>  Event  {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#revoked}:</p>
+         * <p>  Event  {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#revoked}:</p>
          * <p> 201     Cause #1 – Only one MCPTT client The <Reject Cause> value set to '1' indicates that the MCPTT client is the only MCPTT client in the MCPTT session or the only participant connected to a floor control server. No additional information included.</p>
          * <p> 202     Cause #2 – Media burst too long The <Reject Cause> value set to '2' indicates that the MCPTT User has talked too long (e.g., the stop-talking timer has expired). No additional information included.</p>
          * <p> 203     Cause #3 - No permission to send a Media Burst The <Reject Cause> value set to '3' indicates that the MCPTT client does not have permission to send media. No additional information is included.</p>
          * <p> 204     Cause #4 - Media Burst pre-empted The <Reject Cause> value set to '4' indicates that the MCPTT client 's permission to send a media is being pre-empted. No additional information is included.</p>
          * <p> 205     Cause #6 - No resources available The <Reject Cause> value set to '6' indicates that the floor control server can no longer grant MCPTT client to send media due to congestion. No additional information is included.</p>
          * <p> 206     Cause #255 – Other reason The <Reject Cause> value set to '255' indicates that the floor control server can no longer grant MCPTT client to send media due to the floor control server local policy. No additional information is included.</p>
-         * <p>  Event  {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_rejection}:</p>
+         * <p>  Event  {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_rejection}:</p>
          * <p> 301     Cause #1 - Transmission limit reached The <Reject cause> value set to '1' indicates that the number of transmitters have reached maximum.</p>
          * <p> 302     Cause #2 - Internal transmission control server error The <Reject cause> value set to '2' indicates that the transmission control server cannot grant the transmission request due to an internal error.</p>
          * <p> 303     Cause #3 - Only one participant The <Reject cause> value set to '3' indicates that the transmission control server cannot grant the transmission request, because the requesting party is the only participant in the MCVideo session.</p>
@@ -569,14 +604,14 @@ public class ConstantsMCOP {
          * <p> 305     Cause #5 - Receive only The <Reject cause> value set to '5' indicates that the transmission control server cannot grant the transmission request, because the requesting party only has receive privilege.</p>
          * <p> 306     Cause #6 - No resources available The <Reject cause> value set to '6' indicates that the transmission control server cannot grant the transmission request due to congestion.</p>
          * <p> 307     Cause #255 - Other reason The <Reject cause> value set to '255' indicates that the transmission control server does not grant the transmission request due to the transmission control server local policy.</p>
-         * <p>  Event  {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_revoke}:</p>
+         * <p>  Event  {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#transmission_revoke}:</p>
          * <p> 401     Cause #1 – Only one MCVideo client The <Reject Cause> value set to '1' indicates that the MCVideo client is the only MCVideo client in the MCVideo session or the only participant connected to a transmission control server. No additional information included.</p>
          * <p> 402     Cause #2 – Media burst too long The <Reject Cause> value set to '2' indicates that the MCVideo User has transmitted too long (e.g., the stop-transmission timer has expired). No additional information included.</p>
          * <p> 403     Cause #3 - No permission to send a Media Burst The <Reject Cause> value set to '3' indicates that the MCVideo client does not have permission to send media. No additional information is included.</p>
          * <p> 404     Cause #4 - Media Burst pre-empted The <Reject Cause> value set to '4' indicates that the MCVideo client's permission to send a media is being pre-empted. No additional information is included.</p>
          * <p> 405     Cause #6 - No resources available The <Reject Cause> value set to '6' indicates that the transmission control server can no longer grant MCVideo client to send media due to congestion. No additional information is included.</p>
          * <p> 406     Cause #255 – Other reason The <Reject Cause> value set to '255' indicates that the transmission control server can no longer grant MCVideo client to send media due to the transmission control server local policy. No additional information is included.</p>
-         * <p>  Event  {@link org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#reception_rejection}:</p>
+         * <p>  Event  {@link ConstantsMCOP.FloorControlEventExtras.FloorControlEventTypeEnum#reception_rejection}:</p>
          * <p> 501     Cause #2 - Internal transmission control server error The <Reject cause> value set to '2' indicates that the transmission control server cannot grant the receive media request due to an internal error.</p>
          * <p> 502     Cause #4 - Retry-after timer has not expired The <Reject cause> value set to '4' indicates that the transmission control server cannot grant the receive media request, because timer T9 (Retry-after) has not expired after permission to send media has been revoked.</p>
          * <p> 503     Cause #5 - Send only The <Reject cause> value set to '5' indicates that the transmission control server cannot grant the receive media request, because the requesting party only has send privilege.</p>
@@ -585,19 +620,19 @@ public class ConstantsMCOP {
          */
         public static final String CAUSE_CODE="org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras"+".CAUSE_CODE";
         /**
-         * <h2>Access key to the string of the cause codes.</h2>
+         * <h2>Key Access to the string of the cause codes.</h2>
          */
         public static final String CAUSE_STRING="org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras"+".CAUSE_STRING";
         /**
-         *<p> Access key to Error Codes</p>
+         *<p> Key Access to Error Codes</p>
          *<p> All error codes are integers:</p>
          *<p>Code	Explanatory text	Description</p>
          *<p>103	maximum simultaneous MCPTT group calls reached	The number of maximum simultaneous MCPTT group calls supported for the MCPTT user has been exceeded.</p>
          *<p>104	isfocus not assigned	A controlling MCPTT function has not been assigned to the MCPTT session.</p>
 
 
-        /**
-         * <h2>Access key to the floor control error codes.</h2>
+         /**
+         * <h2>Key Access to the floor control error codes.</h2>
          * <p>Response: Integer indicating the error code.</p>
          * <p>Values:</p>
          * <p>0 means no error.</p>
@@ -607,13 +642,13 @@ public class ConstantsMCOP {
          */
         public static final String ERROR_CODE="org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras"+".ERROR_CODE";
         /**
-         * <h2>Access key to the Error codes string.</h2>
+         * <h2>Key Access to the Error codes string.</h2>
          */
         public static final String ERROR_STRING="org.mcopenplatform.muoapi.ConstantsMCOP.FloorControlEventExtras"+".ERROR_STRING";
 
 
         /**
-         * <h2>Operation types performed in method {@link IMCOPsdk#floorControlOperation(String, int, String)} for MCPTT session control management.</h2>
+         * <h2>Operation types performed in method {@link org.mcopenplatform.muoapi.IMCOPsdk#floorControlOperation(String, int, String)} for MCPTT session control management.</h2>
          */
         public enum FloorControlOperationTypeEnum{
             none(0x00),
@@ -703,7 +738,7 @@ public class ConstantsMCOP {
 
     /**
      *
-     * <h1>Access key to event {@link ActionsCallBack#groupInfoEvent} values.</h1>
+     * <h1>Key Access to event {@link ActionsCallBack#groupInfoEvent} values.</h1>
      * <h2>For each group the user belongs to, an event with the different data that defines the group will be sent.</h2>
      *
      */
@@ -712,20 +747,20 @@ public class ConstantsMCOP {
 
 
         /**
-         * <h2>Access key to the Group ID that allows to univocally distinguish the MCPTT group causing the event.</h2>
+         * <h2>Key Access to the Group ID that allows to univocally distinguish the MCPTT group causing the event.</h2>
          * <p>Response: String with URI format that identifies the MCPTT group.</p>
          */
         public static final String GROUP_ID="org.mcopenplatform.muoapi.ConstantsMCOP.GroupInfoEventExtras"+".GROUP_ID";
 
 
         /**
-         * <h2>Access key to the Display Name that allows to distinguish the MCPTT group causing the event.</h2>
+         * <h2>Key Access to the Display Name that allows to distinguish the MCPTT group causing the event.</h2>
          * <p>Response: String that identifies the MCPTT group in a human-readable format.</p>
          */
         public static final String DISPLAY_NAME="org.mcopenplatform.muoapi.ConstantsMCOP.GroupInfoEventExtras"+".DISPLAY_NAME";
 
         /**
-         * <h2>Access key to the permissions of the MCPTT group.</h2>
+         * <h2>Key Access to the permissions of the MCPTT group.</h2>
          * <p>Response: Integer containing the different FLAGs of the user's permissions on the group.</p>
          * <p>Values:</p>
          * <p>0 means no permission.</p>
@@ -749,14 +784,14 @@ public class ConstantsMCOP {
 
 
         /**
-         * <h2>Access key to maximum allowed size for SDS data transmission.</h2>
+         * <h2>Key Access to maximum allowed size for SDS data transmission.</h2>
          * <p>Indicates the maximum size of data (in bytes) that the originating MCData client is allowed to send to the MCData server for on-network SDS communications.</p>
          * <p>Response: Integer (in bytes)</p>
          */
         public static final String MAX_DATA_SIZE_FOR_SDS="org.mcopenplatform.muoapi.ConstantsMCOP.GroupInfoEventExtras"+".MAX_DATA_SIZE_FOR_SDS";
 
         /**
-         * <h2>Access key to maximum allowed file size for FD data transmission.</h2>
+         * <h2>Key Access to maximum allowed file size for FD data transmission.</h2>
          * <p>Indicates the maximum size of data (in bytes) that the originating MCData client is allowed to send to the MCData server for on-network FD communications.</p>
          * <p>Response: Integer (in bytes)</p>
          */
@@ -764,14 +799,14 @@ public class ConstantsMCOP {
 
 
         /**
-         * <h2>Access key to maximum allowed file size for FD data transmission using HTTP.</h2>
+         * <h2>Key Access to maximum allowed file size for FD data transmission using HTTP.</h2>
          * <p>Indicates the maximum size of data (in bytes) which the MCData server always requests the terminating MCData client to automatically download for on-network FD communications using HTTP.</p>
          * <p>Response: Integer (in bytes)</p>
          */
         public static final String MAX_DATA_SIZE_AUTO_RECV="org.mcopenplatform.muoapi.ConstantsMCOP.GroupInfoEventExtras"+".MAX_DATA_SIZE_AUTO_RECV";
 
         /**
-         * <h2>Access key to real-time video mode.</h2>
+         * <h2>Key Access to real-time video mode.</h2>
          * <p>Response: String</p>
          * <p>Values {@link ActionRealTimeVideoType}:</p>
          * <p>      urgent_real_time                                ()   {@link ActionRealTimeVideoType#urgent_real_time}</p>
@@ -811,16 +846,29 @@ public class ConstantsMCOP {
         }
 
         /**
-         * <h2>Access key to the group participants list.</h2>
-         * <p>Response: Array with 3 Strings:.</p>
-         * <p>      Component 0: UserID unequivocally identifies the user.</p>
-         * <p>      Component 1: ParticipantType indicates the user position in the organization. Not defined by 3GPP.</p>
-         * <p>      Component 2: DisplayName identifies the user.</p>
+         * <h2>Key Access to the group participants data</h2>
+         * <p>      UserID unequivocally identifies the user.</p>
          */
         public static final String PARTICIPANTS_LIST="org.mcopenplatform.muoapi.ConstantsMCOP.GroupInfoEventExtras"+".PARTICIPANTS_LIST";
 
+
         /**
-         * <h2>Access key to group info error codes.</h2>
+         * <h2>Key Access to the group participants data.</h2>
+         * <p>Response: Array with 3 Strings:.</p>
+         * <p>      DisplayName identifies the user.</p>
+         */
+        public static final String PARTICIPANTS_LIST_DISPLAY_NAME="org.mcopenplatform.muoapi.ConstantsMCOP.GroupInfoEventExtras"+".PARTICIPANTS_LIST_DISPLAY_NAME";
+
+        /**
+         * <h2>Key Access to the group participants data.</h2>
+         * <p>      ParticipantType indicates the user position in the organization. Not defined by 3GPP.</p>
+         */
+        public static final String PARTICIPANTS_LIST_TYPE="org.mcopenplatform.muoapi.ConstantsMCOP.GroupInfoEventExtras"+".PARTICIPANTS_LIST_TYPE";
+
+
+
+        /**
+         * <h2>Key Access to group info error codes.</h2>
          * <p>Response: Integer indicating error codes.</p>
          * <p>Values:</p>
          * <p>0 means no errors.</p>
@@ -828,7 +876,7 @@ public class ConstantsMCOP {
          */
         public static final String ERROR_CODE="org.mcopenplatform.muoapi.ConstantsMCOP.GroupInfoEventExtras"+".ERROR_CODE";
         /**
-         * <h2>Access key to the Error codes string.</h2>
+         * <h2>Key Access to the Error codes string.</h2>
          */
         public static final String ERROR_STRING="org.mcopenplatform.muoapi.ConstantsMCOP.GroupInfoEventExtras"+".ERROR_STRING";
 
@@ -895,14 +943,14 @@ public class ConstantsMCOP {
 
     /**
      *
-     * <h1>Access key to values of {@link ActionsCallBack#groupAffiliationEvent} event.</h1>
+     * <h1>Key Access to values of {@link ActionsCallBack#groupAffiliationEvent} event.</h1>
      *
      */
     public static class GroupAffiliationEventExtras{
 
         /**
-         * <h2>Access key to MAP<String, Integer> of groups and the current group state.</h2>
-         * <p>This data is given in state {@link org.mcopenplatform.muoapi.ConstantsMCOP.GroupAffiliationEventExtras.GroupAffiliationEventTypeEnum#GROUP_AFFILIATION_UPDATE}</p>
+         * <h2>Key Access to MAP<String, Integer> of groups and the current group state.</h2>
+         * <p>This data is given in state {@link ConstantsMCOP.GroupAffiliationEventExtras.GroupAffiliationEventTypeEnum#GROUP_AFFILIATION_UPDATE}</p>
          * <p>Response: MAP<String,Integer> being Group ID the key, and the type of affiliation status the value.</p>
          * <p>      notaffiliated                                (Not affiliated, and therefore no action that requires being affiliated can be taken.)   {@link GroupAffiliationEventExtras.GroupAffiliationStateEnum#notaffiliated}</p>
          * <p>      affiliating                                  (Affiliation procedure initiated.)   {@link GroupAffiliationEventExtras.GroupAffiliationStateEnum#affiliating}</p>
@@ -912,42 +960,42 @@ public class ConstantsMCOP {
         public static final String GROUPS_LIST="org.mcopenplatform.muoapi.ConstantsMCOP.GroupAffiliationEventExtras"+".GROUPS_LIST";
 
         /**
-         * <h2>Access key to event type:</h2>
+         * <h2>Key Access to event type:</h2>
          * <p>Value: Integer.</p>
          * <p>Possible event types:</p>
-         * <p>     GROUP_AFFILIATION_UPDATE    (Event to update the status of the groups and user's affiliation to them.) {@link org.mcopenplatform.muoapi.ConstantsMCOP.GroupAffiliationEventExtras.GroupAffiliationEventTypeEnum#GROUP_AFFILIATION_UPDATE}</p>
-         * <p>     GROUP_AFFILIATION_ERROR     (Error event in some affiliation procedure.) {@link org.mcopenplatform.muoapi.ConstantsMCOP.GroupAffiliationEventExtras.GroupAffiliationEventTypeEnum#GROUP_AFFILIATION_ERROR}</p>
-         * <p>     REMOTE_AFFILIATION          (Remote affiliation request by another privileged user. It is mandatory to present the user the option to join or not. In case the user wants to be affiliated, the operation {@link IMCOPsdk#groupAffiliationOperation(String, String, int)} must be executed to affiliate the user to the group.) {@link org.mcopenplatform.muoapi.ConstantsMCOP.GroupAffiliationEventExtras.GroupAffiliationEventTypeEnum#REMOTE_AFFILIATION}</p>
+         * <p>     GROUP_AFFILIATION_UPDATE    (Event to update the status of the groups and user's affiliation to them.) {@link ConstantsMCOP.GroupAffiliationEventExtras.GroupAffiliationEventTypeEnum#GROUP_AFFILIATION_UPDATE}</p>
+         * <p>     GROUP_AFFILIATION_ERROR     (Error event in some affiliation procedure.) {@link ConstantsMCOP.GroupAffiliationEventExtras.GroupAffiliationEventTypeEnum#GROUP_AFFILIATION_ERROR}</p>
+         * <p>     REMOTE_AFFILIATION          (Remote affiliation request by another privileged user. It is mandatory to present the user the option to join or not. In case the user wants to be affiliated, the operation {@link org.mcopenplatform.muoapi.IMCOPsdk#groupAffiliationOperation(String, String, int)} must be executed to affiliate the user to the group.) {@link org.mcopenplatform.muoapi.ConstantsMCOP.GroupAffiliationEventExtras.GroupAffiliationEventTypeEnum#REMOTE_AFFILIATION}</p>
          */
         public static final String EVENT_TYPE="org.mcopenplatform.muoapi.ConstantsMCOP.GroupAffiliationEventExtras"+".EVENT_TYPE";
 
         /**
-         * <h2>Access key to the Group ID that univocally distinguishes the MCPTT group causing the event.</h2>
+         * <h2>Key Access to the Group ID that univocally distinguishes the MCPTT group causing the event.</h2>
          * <p>Response: String with URI format that identifies the MCPTT group.</p>
-         * <p>Event {@link org.mcopenplatform.muoapi.ConstantsMCOP.GroupAffiliationEventExtras.GroupAffiliationEventTypeEnum#REMOTE_AFFILIATION} is used to request the group.</p>
+         * <p>Event {@link ConstantsMCOP.GroupAffiliationEventExtras.GroupAffiliationEventTypeEnum#REMOTE_AFFILIATION} is used to request the group.</p>
          */
         public static final String REMOTE_GROUP_ID="org.mcopenplatform.muoapi.ConstantsMCOP.GroupAffiliationEventExtras"+".REMOTE_GROUP_ID";
 
 
         /**
-         * <h2>Access key to Group ID to know the group where the error occurred.</h2>
+         * <h2>Key Access to Group ID to know the group where the error occurred.</h2>
          * <p>Response: String with URI format that identifies the MCPTT group.</p>
-         * <p>Event {@link org.mcopenplatform.muoapi.ConstantsMCOP.GroupAffiliationEventExtras.GroupAffiliationEventTypeEnum#GROUP_AFFILIATION_ERROR} is used.</p>
+         * <p>Event {@link ConstantsMCOP.GroupAffiliationEventExtras.GroupAffiliationEventTypeEnum#GROUP_AFFILIATION_ERROR} is used.</p>
          */
         public static final String GROUP_ID="org.mcopenplatform.muoapi.ConstantsMCOP.GroupAffiliationEventExtras"+".GROUP_ID";
 
         /**
-         * <h2>Access key to the User ID that univocally distinguishes the privileged MCPTT user making the explicit affiliation.</h2>
+         * <h2>Key Access to the User ID that univocally distinguishes the privileged MCPTT user making the explicit affiliation.</h2>
          * <p>Response: String with URI format that identifies the MCPTT user.</p>
-         * <p>Event {@link org.mcopenplatform.muoapi.ConstantsMCOP.GroupAffiliationEventExtras.GroupAffiliationEventTypeEnum#REMOTE_AFFILIATION} is used to know the remote user requesting the explicit affiliation.</p>
+         * <p>Event {@link ConstantsMCOP.GroupAffiliationEventExtras.GroupAffiliationEventTypeEnum#REMOTE_AFFILIATION} is used to know the remote user requesting the explicit affiliation.</p>
          *
          */
         public static final String REMOTE_USER_ID="org.mcopenplatform.muoapi.ConstantsMCOP.GroupAffiliationEventExtras"+".REMOTE_USER_ID";
 
         /**
-         * <h2>Access key to the type of action that is remotely requested to be performed.</h2>
+         * <h2>Key Access to the type of action that is remotely requested to be performed.</h2>
          * <p>Response: {@link GroupAffiliationStateEnum}.</p>
-         * <p>Event {@link org.mcopenplatform.muoapi.ConstantsMCOP.GroupAffiliationEventExtras.GroupAffiliationEventTypeEnum#REMOTE_AFFILIATION} is used to know the remote user requesting the explicit affiliation.</p>
+         * <p>Event {@link ConstantsMCOP.GroupAffiliationEventExtras.GroupAffiliationEventTypeEnum#REMOTE_AFFILIATION} is used to know the remote user requesting the explicit affiliation.</p>
          * <p>      affiliating                                  (It must be asked whether the user accepts the affiliation or not.)   {@link GroupAffiliationEventExtras.GroupAffiliationStateEnum#affiliating}</p>
          * <p>      deaffiliating                                (It must be asked whether the user accepts the de-affiliation or not.)   {@link GroupAffiliationEventExtras.GroupAffiliationStateEnum#deaffiliating}</p>
          */
@@ -955,7 +1003,7 @@ public class ConstantsMCOP {
 
 
         /**
-         * <h2>Access key to the affiliation error codes.</h2>
+         * <h2>Key Access to the affiliation error codes.</h2>
          * <p>Response: Integer indicating the error code.</p>
          * <p>Values:</p>
          * <p>0 means no errors.</p>
@@ -972,7 +1020,7 @@ public class ConstantsMCOP {
          */
         public static final String ERROR_CODE="org.mcopenplatform.muoapi.ConstantsMCOP.GroupAffiliationEventExtras"+".ERROR_CODE";
         /**
-         * <h2>Access key to the error string of the affiliation methods.</h2>
+         * <h2>Key Access to the error string of the affiliation methods.</h2>
          * <p>Response: String describing the error.</p>
          */
         public static final String ERROR_STRING="org.mcopenplatform.muoapi.ConstantsMCOP.GroupAffiliationEventExtras"+".ERROR_STRING";
@@ -1043,7 +1091,7 @@ public class ConstantsMCOP {
 
         /**
          *
-         * <h1>Event used to indicate the affiliation action that must be used in method {@link IMCOPsdk#groupAffiliationOperation(String, String, int)}.</h1>
+         * <h1>Event used to indicate the affiliation action that must be used in method {@link org.mcopenplatform.muoapi.IMCOPsdk#groupAffiliationOperation(String, String, int)}.</h1>
          * <p>Values:</p>
          * <p>Error Code 0 is not correct, and it will answer with an error.</p>
          * <p>     Affiliate            (Affiliation action over a groupID) {@link AffiliationOperationTypeEnum#Affiliate}</p>
@@ -1078,20 +1126,20 @@ public class ConstantsMCOP {
 
     /**
      *
-     * <h1>Access key to the values of event {@link ActionsCallBack#selectedContactChangeEvent}.</h1>
+     * <h1>Key Access to the values of event {@link ActionsCallBack#selectedContactChangeEvent}.</h1>
      *
      */
     public static class SelectedContactChangeEventExtras{
 
         /**
-         * <h2>Access key to Group ID to define the default call group.</h2>
+         * <h2>Key Access to Group ID to define the default call group.</h2>
          * <p>Response: String with URI format that identifies the MCPTT group.</p>
          * @See IMCOPsdk#makeCall
          */
         public static final String GROUP_ID="org.mcopenplatform.muoapi.ConstantsMCOP.SelectedContactChangeEventExtras"+".GROUP_ID";
 
         /**
-         * <h2>Access key to the error codes of default group selection.</h2>
+         * <h2>Key Access to the error codes of default group selection.</h2>
          * <p>Response: Integer indicating the error code.</p>
          * <p>Values:</p>
          * <p>0 means no errors.</p>
@@ -1102,7 +1150,7 @@ public class ConstantsMCOP {
          */
         public static final String ERROR_CODE="org.mcopenplatform.muoapi.ConstantsMCOP.SelectedContactChangeEventExtras"+".ERROR_CODE";
         /**
-         * <h2>Access key to the error strings.</h2>
+         * <h2>Key Access to the error strings.</h2>
          * <p>Response: String describing the error.</p>
          */
         public static final String ERROR_STRING="org.mcopenplatform.muoapi.ConstantsMCOP.SelectedContactChangeEventExtras"+".ERROR_STRING";
@@ -1112,13 +1160,13 @@ public class ConstantsMCOP {
 
     /**
      *
-     * <h1>Access key to the values of event {@link ActionsCallBack#eMBMSNotificationEvent}.</h1>
+     * <h1>Key Access to the values of event {@link ActionsCallBack#eMBMSNotificationEvent}.</h1>
      *
      */
     public static class EMBMSNotificationEventExtras{
 
         /**
-         * <h2>Access key to the Temporary Mobile Group Identity (TMGI) identifying the eMBMS bearer.</h2>
+         * <h2>Key Access to the Temporary Mobile Group Identity (TMGI) identifying the eMBMS bearer.</h2>
          * <p>Response: String</p>
          * <p>Used in events:</p>
          * <p>      {@link EMBMSNotificationEventEventTypeEnum#UndereMBMSCoverage}</p>
@@ -1130,7 +1178,7 @@ public class ConstantsMCOP {
 
 
         /**
-         *  <h2>Access key to the MCPTT session ID. This identifier is unique for each call.</h2>
+         *  <h2>Key Access to the MCPTT session ID. This identifier is unique for each call.</h2>
          *  <p>Response: String</p>
          * <p>Used in events:</p>
          * <p>      {@link EMBMSNotificationEventEventTypeEnum#UndereMBMSCoverage}</p>
@@ -1141,7 +1189,7 @@ public class ConstantsMCOP {
         public static final String SESSION_ID="org.mcopenplatform.muoapi.ConstantsMCOP.EMBMSNotificationEventExtras"+".SESSION_ID";
 
         /**
-         *  <h2>Access key to the list of eMBMS service areas.</h2>
+         *  <h2>Key Access to the list of eMBMS service areas.</h2>
          *  <p>Response: String containing all the eMBMS service area identifiers consecutively.</p>
          * <p>Used in events:</p>
          * <p>      {@link EMBMSNotificationEventEventTypeEnum#UndereMBMSCoverage}</p>
@@ -1153,28 +1201,28 @@ public class ConstantsMCOP {
 
 
         /**
-         * Access key to event type:
+         * Key Access to event type:
          * Value: Integer.
          * <p>Possible event types:</p>
-         * <p>     eMBMSAvailable           (eMBMS available) {@link org.mcopenplatform.muoapi.ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum#eMBMSAvailable}</p>
-         * <p>     UndereMBMSCoverage       (Under eMBMS coverage for a specific TMGI) {@link org.mcopenplatform.muoapi.ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum#UndereMBMSCoverage}</p>
-         * <p>     eMBMSBearerInUse         (Particular eMBMS bearer in use) {@link org.mcopenplatform.muoapi.ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum#eMBMSBearerInUse}</p>
-         * <p>     eMBMSBearerNotInUse      (Particular eMBMS bearer not in use) {@link org.mcopenplatform.muoapi.ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum#eMBMSBearerNotInUse}</p>
-         * <p>     NoeMBMSCoverage          (Not under eMBMS coverage for a specific TMGI) org.mcopenplatform.muoapi.ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum#NoeMBMSCoverage}</p>
-         * <p>     eMBMSNotAvailable        (eMBMS not available) {@link org.mcopenplatform.muoapi.ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum#eMBMSNotAvailable}</p>
+         * <p>     eMBMSAvailable           (eMBMS available) {@link ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum#eMBMSAvailable}</p>
+         * <p>     UndereMBMSCoverage       (Under eMBMS coverage for a specific TMGI) {@link ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum#UndereMBMSCoverage}</p>
+         * <p>     eMBMSBearerInUse         (Particular eMBMS bearer in use) {@link ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum#eMBMSBearerInUse}</p>
+         * <p>     eMBMSBearerNotInUse      (Particular eMBMS bearer not in use) {@link ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum#eMBMSBearerNotInUse}</p>
+         * <p>     NoeMBMSCoverage          (Not under eMBMS coverage for a specific TMGI) {@link ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum#NoeMBMSCoverage}</p>
+         * <p>     eMBMSNotAvailable        (eMBMS not available) {@link ConstantsMCOP.EMBMSNotificationEventExtras.EMBMSNotificationEventEventTypeEnum#eMBMSNotAvailable}</p>
          */
         public static final String EVENT_TYPE="org.mcopenplatform.muoapi.ConstantsMCOP.EMBMSNotificationEventExtras"+".EVENT_TYPE";
 
 
         /**
-         * <h2>Access key to eMBMS error codes.</h2>
+         * <h2>Key Access to eMBMS error codes.</h2>
          * <p>Response: Integer indicating the error code.</p>
          * <p>Values:</p>
          * <p>0 means no errors.</p>
          */
-        public static final String ERROR_CODE="org.mcopenplatform.muoapi.ConstantsMCOP.EMBMSNotificationEventExtras"+".ERROR_CODE";
+        public static final String ERROR_CODE="ConstantsMCOP.EMBMSNotificationEventExtras"+".ERROR_CODE";
         /**
-         * <h2>Access key to error string.</h2>
+         * <h2>Key Access to error string.</h2>
          * <p>Response: String describing the error.</p>
          */
         public static final String ERROR_STRING="org.mcopenplatform.muoapi.ConstantsMCOP.EMBMSNotificationEventExtras"+".ERROR_STRING";
@@ -1197,8 +1245,23 @@ public class ConstantsMCOP {
             public int getValue() {
                 return code;
             }
+
+
+            private static Map map = new HashMap<>();
+
+
+            static {
+                for (EMBMSNotificationEventEventTypeEnum pageType : EMBMSNotificationEventEventTypeEnum.values()) {
+                    map.put(pageType.code, pageType);
+                }
+            }
+
+            public static EMBMSNotificationEventEventTypeEnum fromInt(int pageType) {
+                return (EMBMSNotificationEventEventTypeEnum) map.get(pageType);
+            }
         }
     }
+
 
 
     /**
@@ -1247,7 +1310,7 @@ public class ConstantsMCOP {
     }
 
     /**
-     * <h1>Event types for method {@link IMCOPsdk#updateEmergencyState(String, int)}.</h1>
+     * <h1>Event types for method {@link org.mcopenplatform.muoapi.IMCOPsdk#updateEmergencyState(String, int)}.</h1>
      */
     public enum EmergencyTypeEnum{
         NONE (0x00),

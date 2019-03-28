@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -26,6 +25,8 @@
 #ifndef TINYWRAP_SIPCALLBACK_H
 #define TINYWRAP_SIPCALLBACK_H
 
+#include "SipEvent.h"
+
 class DialogEvent;
 class StackEvent;
 
@@ -46,6 +47,8 @@ class RegistrationEvent;
 class SubscriptionEvent;
 //MCPTT affiliation
 class SubscriptionAffiliationEvent;
+//MCPTT authentication
+class PublicationAuthenticationEvent;
 class SipCallback
 {
 public:
@@ -60,16 +63,23 @@ public:
 	//MCPTT MBMS
 	virtual int OnMessagingMbmsEvent(const MessagingMbmsEvent* e) { return -1; }
 	virtual int OnMessagingLocationEvent(const MessagingLocationEvent* e) { return -1; }
+
 	virtual int OnInfoEvent(const InfoEvent* e) { return -1; }
 	virtual int OnOptionsEvent(const OptionsEvent* e) { return -1; }
 	virtual int OnPublicationEvent(const PublicationEvent* e) { return -1; }
 	//MCPTT affiliation
 	virtual int OnPublicationAffiliationEvent(const PublicationAffiliationEvent* e) { return -1; }
+	//MCPTT authentication
+	virtual int OnPublicationAuthenticationEvent(const PublicationAuthenticationEvent* e) { return -1; }
 	virtual int OnRegistrationAuthenticationEvent(const RegistrationAuthenticationEvent* e) { return -1; }
 	virtual int OnRegistrationEvent(const RegistrationEvent* e) { return -1; }
 	virtual int OnSubscriptionEvent(const SubscriptionEvent* e) { return -1; }
 	//MCPTT affiliation
 	virtual int OnSubscriptionAffiliationEvent(const SubscriptionAffiliationEvent* e) { return -1; }
+	//MCPTT CMS
+	virtual int OnSubscriptionCMSEvent(const SubscriptionCMSEvent* e) { return -1; }
+	//MCPTT GMS
+	virtual int OnSubscriptionGMSEvent(const SubscriptionGMSEvent* e) { return -1; }
 
 	
 

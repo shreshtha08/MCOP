@@ -39,45 +39,27 @@ Three main modules define the architecture:
 * **1. Configure Manifest**: Indicate the necessary permissions for the application.
 
 		<uses-permission android:name="android.permission.INTERNET" />
-		<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-		<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-		<uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-		<uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
-		<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-		<uses-permission android:name="android.permission.CAMERA" />
-		<uses-permission android:name="android.permission.WAKE_LOCK" />
-		<uses-permission android:name="android.permission.RECORD_AUDIO" />
-		<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-		<uses-permission android:name="android.permission.VIBRATE" />
-		<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-		<uses-permission android:name="android.permission.WRITE_SETTINGS" />
-		<uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-		<uses-permission android:name="android.permission.READ_CONTACTS" />
-		<uses-permission android:name="android.permission.WRITE_CONTACTS" />
-		<uses-permission android:name="android.permission.READ_PHONE_STATE" />
-		<uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" />
-		<uses-permission android:name="android.permission.CALL_PHONE" />
-		<uses-permission android:name="android.permission.RAISED_THREAD_PRIORITY" />
-		<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-		<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
-	Define the activities to be used:
-
-		<application
-			android:allowBackup="true"
-			android:icon="@mipmap/ic_launcher"
-			android:label="@string/app_name"
-			android:roundIcon="@mipmap/ic_launcher_round"
-			android:supportsRtl="true"
-			android:theme="@style/AppTheme" >
-			<activity android:name=".MainActivity"
-				android:screenOrientation="portrait">
-				<intent-filter>
-					<action android:name="android.intent.action.MAIN" />
-					<category android:name="android.intent.category.LAUNCHER" />
-				</intent-filter>
-			</activity>
-		</application>
+    	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    	<uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    	<uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    	<uses-permission android:name="android.permission.CAMERA" />
+    	<uses-permission android:name="android.permission.WAKE_LOCK" />
+    	<uses-permission android:name="android.permission.RECORD_AUDIO" />
+    	<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    	<uses-permission android:name="android.permission.VIBRATE" />
+    	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    	<uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    	<uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    	<uses-permission android:name="android.permission.READ_CONTACTS" />
+    	<uses-permission android:name="android.permission.WRITE_CONTACTS" />
+    	<uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    	<uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" />
+    	<uses-permission android:name="android.permission.CALL_PHONE" />
+    	<uses-permission android:name="android.permission.RAISED_THREAD_PRIORITY" />
+    	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
 * **2. Require the explicit acceptance of some of the permissions.**
 
@@ -93,7 +75,7 @@ Three main modules define the architecture:
 
 	* Manifest.permission.RECORD\_AUDIO
 
-		![Allow audio](../images/allow_audio.png)
+		![Allow audio](../images/images_allow1RecordAudio.png)
 
 * **3. Bind to MCOP SDK**:
 
@@ -103,11 +85,27 @@ Three main modules define the architecture:
 			.setComponent(new ComponentName(
 				"org.mcopenplatform.muoapi",
 				"org.mcopenplatform.muoapi.MCOPsdk")); 
-		//This is only for tresting
 		serviceIntent.putExtra("PROFILE_SELECT",currentProfile);
 		
-		ComponentName componentName=startService(serviceIntent);
-		bindService(serviceIntent, mConnection, BIND_AUTO_CREATE);
+		try{
+                ComponentName componentName;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    componentName = this.startForegroundService(serviceIntent);
+                } else {
+                    componentName = this.startService(serviceIntent);
+                }
+                if(componentName==null){
+                    Log.e(TAG,"Starting Error: "+componentName.getPackageName());
+                }else if(serviceIntent==null){
+                    Log.e(TAG,"serviceIntent Error: "+componentName.getPackageName());
+                }else if(mConnection==null){
+                    Log.e(TAG,"mConnection Error: "+componentName.getPackageName());
+                }else{
+
+                }
+            }catch (Exception e){
+                if(BuildConfig.DEBUG)Log.w(TAG,"Error in start service: "+e.getMessage());
+            }
 
 	Wait for the service to bind:
 
@@ -118,29 +116,27 @@ Three main modules define the architecture:
 			mConnection = new ServiceConnection() {
 			
 			@Override
-			public void onServiceConnected(ComponentName className, IBinder service) {			
-				mService = IMCOPsdk.Stub.asInterface(service);
-				try {
-					mService.registerCallback(mMCOPCallback);
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-				isConnect=true;
-				
-				//AUTO Register
-				final Handler handler = new Handler();
-				handler.postDelayed(new Runnable() {
-					@Override
-					public void run() {
-						try {
-							if(mService!=null)
-						mService.authorizeUser(null);
-						} catch (RemoteException e) {
-							e.printStackTrace();
-						}
-					}
-				}, DEFAULT_REGISTER_DELAY);
-			}
+                public void onServiceConnected(ComponentName className, IBinder service) {
+                    mService = IMCOPsdk.Stub.asInterface(service);
+
+                    try {
+                        mService.registerCallback(mMCOPCallback);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    isConnect=true;
+
+                    // Auto Registration
+                    if (autoRegister) {
+                        final Handler handler = new Handler();
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                register();
+                            }
+                        }, DEFAULT_REGISTER_DELAY);
+                    }
+                }
 
 	* Definition of the registered callback:
 

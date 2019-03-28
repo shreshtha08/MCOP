@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2017 Eduardo Zarate Lasurtegui
+
  *   Copyright (C) 2017, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -42,6 +42,8 @@ public interface IMyMbmsService extends INgnBaseService {
     public static final String MBMS_MEDIA_ACTION = TAG + ".MBMS_MEDIA_ACTION";
     public static final String MBMS_NEWMESSAGE_MBMS = TAG + ".MBMS_NEWMESSAGE_MBMS";
     public static final String MBMS_SESSION_ID_MBMS = TAG + ".MBMS_SESSION_ID_MBMS";
+    public static final String MBMS_MAP_MBMS = TAG + ".MBMS_MAP_MBMS";
+    public static final String MBMS_GROUP_ID_MBMS = TAG + ".MBMS_GROUP_ID_MBMS";
     public static final String MBMS_PORT_MANAGER_MBMS = TAG + ".MBMS_PORT_MANAGER_MBMS";
     public static final String MBMS_LOCAL_IFACE = TAG + ".MBMS_LOCAL_IFACE";
     public static final String MBMS_LOCAL_IFACE_INDEX = TAG + ".MBMS_LOCAL_IFACE_INDEX";
@@ -80,7 +82,7 @@ public interface IMyMbmsService extends INgnBaseService {
      void onReceiveMCCP(String tmgi,String ipMedia,int portMedia,int portControlMedia,Context context);
 
 
-
+     void hangUpCallMbms(long sessionID);
 
      void stopServiceMbms();
 
@@ -89,6 +91,8 @@ public interface IMyMbmsService extends INgnBaseService {
     interface MbmsExternalServiceListener{
         void startedClient(boolean status);
         void startedServer(boolean status);
+        void startMbmsMedia(long sessionID,long tmgi);
+        void stopMbmsMedia(long sessionID,long tmgi);
         boolean mbmsListeningServiceAreaCurrent(long TMGI,  int[] sai,  int[] frequencies);
         void stopServiceMBMS();
     }
@@ -105,7 +109,10 @@ public interface IMyMbmsService extends INgnBaseService {
 
      void startMbmsManager(String  interfaceNet,long tmgi);
 
-     List<Long> getTMGIs(int serviceAreaID);
+    void stopMbmsManager(long tmgi);
+
+
+    List<Long> getTMGIs(int serviceAreaID);
 
      int[] getSais(long TMGI);
 

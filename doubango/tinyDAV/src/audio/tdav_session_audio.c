@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -36,6 +35,7 @@
 * @author Mamadou Diop <diopmamadou(at)doubango.org>
 * @contributors: See $(DOUBANGO_HOME)\contributors.txt
 */
+#include <tinydav.h>
 #include "tinydav/audio/tdav_session_audio.h"
 
 //#include "tinydav/codecs/dtmf/tdav_codec_dtmf.h"
@@ -88,7 +88,7 @@ static int tdav_session_audio_rtp_cb(const void* callback_data, const struct trt
 		goto bail;
 	}
 
-	//Added by Mikel
+
 	if (TMEDIA_SESSION(audio)->ro_held) {
 		return 0;
 	}
@@ -190,6 +190,7 @@ bail:
 static int tdav_session_audio_producer_enc_cb(const void* callback_data, const void* buffer, tsk_size_t size)
 {
 	int ret = 0;
+
 
 	tdav_session_audio_t* audio = (tdav_session_audio_t*)callback_data;
 	tdav_session_av_t* base = (tdav_session_av_t*)callback_data;
@@ -348,6 +349,8 @@ static int tdav_session_audio_set(tmedia_session_t* self, const tmedia_param_t* 
 			}else if (tsk_striequals(param->key, "speech")){
 				audio->speech=TSK_TO_UINT32(((uint8_t*)param->value));
 			}
+
+
 		}
 	}
 
@@ -417,18 +420,21 @@ static int tdav_session_audio_start(tmedia_session_t* self)
 	audio = (tdav_session_audio_t*)self;
 	base = (tdav_session_av_t*)self;
 
-	if (!(codec = tdav_session_av_get_best_neg_codec(base))){
+
+    if (!(codec = tdav_session_av_get_best_neg_codec(base))){
 		TSK_DEBUG_ERROR("No codec matched");
 		return -2;
 	}
 
+
 	TSK_OBJECT_SAFE_FREE(audio->encoder.codec);
 	audio->encoder.codec = tsk_object_ref((tsk_object_t*)codec);
-
 	if ((ret = tdav_session_av_start(base, codec))){
 		TSK_DEBUG_ERROR("tdav_session_av_start(audio) failed");
 		return ret;
 	}
+
+
 
 	if (base->rtp_manager){
 		/* Denoise (AEC, Noise Suppression, AGC)
@@ -665,7 +671,7 @@ static const tsdp_header_M_t* tdav_session_audio_get_lo(tmedia_session_t* self)
 	if (!(ret = tdav_session_av_get_lo(base, &updated))){
 		TSK_DEBUG_ERROR("tdav_session_av_get_lo(audio) failed");
 		return tsk_null;
-	}else if(TDAV_SESSION_AUDIO(self)->speech > 0){//MCPTT by Eduardo
+	}else if(TDAV_SESSION_AUDIO(self)->speech > 0){//MCPTT
 		tsdp_header_M_add_headers(base1->M.lo,
 				    TSDP_HEADER_I_VA_ARGS("speech"),
 					tsk_null);

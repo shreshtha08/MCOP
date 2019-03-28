@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -43,7 +42,9 @@ public class ManagerMBMSGroupCom extends ManagerIapiBase
         org.doubango.ngn.services.mbms.IMyMbmsService.OnMbmsListener
 {
     private final static String TAG = org.mcopenplatform.muoapi.utils.Utils.getTAG(ManagerMBMSGroupCom.class.getCanonicalName());
-    private final org.mcopenplatform.iapi.IMBMSGroupComListener.Stub mMBMSGroupComListener;
+    private final org.mcopenplatform.iapi.IMBMSGroupCommListener.Stub mMBMSGroupComListener;
+    private OnManagerMBMSGroupComListener onManagerMBMSGroupComListener;
+
     public enum StatusTMGI{
         NONE,
         AVAILABLE,
@@ -51,20 +52,53 @@ public class ManagerMBMSGroupCom extends ManagerIapiBase
     }
     private Map<Long,StatusTMGI> statusTMGIMap;
 
+
+    protected String ORIGIN_PACKET_MAIN_SERVICE=null;
+    protected String ORIGIN_PACKET_SERVICE=null;
+
+
+
     protected String PACKET_MAIN_SERVICE="com.expway.embmsserver";
-    protected final String PACKET_SERVICE="com.expway.embmsserver.MCOP";
+    protected String PACKET_SERVICE="com.expway.embmsserver.MCOP";
+
     private org.doubango.ngn.services.mbms.IMyMbmsService mbmsService;
 
     public ManagerMBMSGroupCom() {
         super();
-        mMBMSGroupComListener= new org.mcopenplatform.iapi.IMBMSGroupComListener.Stub() {
+        ORIGIN_PACKET_MAIN_SERVICE=String.valueOf(this.PACKET_MAIN_SERVICE);
+        ORIGIN_PACKET_SERVICE=String.valueOf(this.PACKET_SERVICE);
 
+
+        mMBMSGroupComListener= new org.mcopenplatform.iapi.IMBMSGroupCommListener.Stub() {
+    /*
+            @Override
+            public void notifySaiList(int[] sai) throws RemoteException {
+                if(BuildConfig.DEBUG){
+                    String stringData="";
+                    for(int saI:sai)stringData=stringData+";"+saI;
+                        Log.d(TAG,"notifySAIList: "+stringData);
+                }
+                //TODO: Should check if any available for this group of TMGI SAIs
+            }
+
+*/
+            /*
             @Override
             public void notifySAIList(int[] SAI) throws RemoteException {
                 if(BuildConfig.DEBUG){
                     String stringData="";
-                    for(int sai:SAI)stringData=stringData+";"+sai;
-                        Log.d(TAG,"notifySAIList: "+stringData);
+                    for(int saI:SAI)stringData=stringData+";"+saI;
+                    Log.d(TAG,"notifySAIList: "+stringData);
+                }
+                //TODO: Should check if any available for this group of TMGI SAIs
+            }
+            */
+            @Override
+            public void notifySaiList(int[] sai) throws RemoteException {
+                if(BuildConfig.DEBUG){
+                    String stringData="";
+                    for(int saI:sai)stringData=stringData+";"+saI;
+                    Log.d(TAG,"notifySAIList: "+stringData);
                 }
                 //TODO: Should check if any available for this group of TMGI SAIs
             }
@@ -86,7 +120,7 @@ public class ManagerMBMSGroupCom extends ManagerIapiBase
                 if(BuildConfig.DEBUG){
                     Log.d(TAG,"notifyOpenMBMSGroupCommResult: TMGI->"+TMGI+" result->"+result+" netInterfaceName->"+netInterfaceName);
                 }
-                if(result>0){
+                if(result>=0){
                     if(BuildConfig.DEBUG){
                         Log.d(TAG,"notifyOpenMBMSGroupCommResult: result is ok");
                     }
@@ -99,10 +133,21 @@ public class ManagerMBMSGroupCom extends ManagerIapiBase
             public void notifyCloseMBMSGroupCommResult(long TMGI, int result) throws RemoteException {
                 if(BuildConfig.DEBUG){
                     Log.d(TAG,"notifyCloseMBMSGroupCommResult: TMGI->"+TMGI+" result->"+result);
+                    if(result>0){
+                        if(BuildConfig.DEBUG){
+                            Log.d(TAG,"notifyCloseMBMSGroupCommResult: result is ok");
+                        }
+                        mbmsService.stopMbmsManager(TMGI);
+                    }
                 }
             }
         };
         statusTMGIMap=new HashMap<>();
+    }
+	
+	@Override
+    protected void isServiceConnected() {
+
     }
 
     private  void notifyMBMSGroupCommAvailabilityMCOP(long TMGI, int available, int goodQuality){
@@ -137,15 +182,18 @@ public class ManagerMBMSGroupCom extends ManagerIapiBase
                                 for(int fre:frequencies)freString=freString+" "+fre;
                                 Log.i(TAG,"AVAILABLE TMGI with SAIs: "+sais.length+" frequencies:"+freString );
                             }
-                            ((org.mcopenplatform.iapi.IMBMSGroupCom)mService).openGroupComm(TMGI,
-                                    sais,frequencies!=null?frequencies:new int[0]);
+                            ((org.mcopenplatform.iapi.IMBMSGroupComm)mService).openGroupComm(TMGI,
+                                    sais,frequencies);
                         }
                     } catch (RemoteException e) {
-                        e.printStackTrace();
+                        if(BuildConfig.DEBUG)Log.e(TAG,"Error in openGroupComm in ManagerMBMSGroupCom:"+e.getMessage());
+                    }catch (Exception e) {
+                        if(BuildConfig.DEBUG)Log.e(TAG,"Error in openGroupComm in ManagerMBMSGroupCom:"+e.getMessage());
                     }
                     break;
                 case UNAVAILABLE:
                     if(BuildConfig.DEBUG)Log.d(TAG,"notifyMBMSGroupCommAvailability status: UNAVAILABLE");
+
                 case NONE:
                     break;
             }
@@ -190,18 +238,19 @@ public class ManagerMBMSGroupCom extends ManagerIapiBase
             }
         } catch (Exception e) {
             Log.e(TAG, "Error stopping the eMBMS Service intent.");
-            e.printStackTrace();
         }
     }
 
     @Override
     protected Object registerInterface(IBinder service) {
-        org.mcopenplatform.iapi.IMBMSGroupCom imbmsGroupCom = org.mcopenplatform.iapi.IMBMSGroupCom.Stub.asInterface(service);
+        org.mcopenplatform.iapi.IMBMSGroupComm imbmsGroupCom = org.mcopenplatform.iapi.IMBMSGroupComm.Stub.asInterface(service);
         Log.d(TAG,"Register notification in "+getPACKET_SERVICE());
         try {
             (imbmsGroupCom).registerApplication(mMBMSGroupComListener);
-        } catch (Exception e) {
-            Log.e(TAG,e.getLocalizedMessage());
+        } catch (RemoteException e) {
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error in registerApplication in ManagerMBMSGroupCom:"+e.getMessage());
+        }catch (Exception e) {
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error in registerApplication in ManagerMBMSGroupCom:"+e.getMessage());
         }
         return imbmsGroupCom;
     }
@@ -227,6 +276,26 @@ public class ManagerMBMSGroupCom extends ManagerIapiBase
         return PACKET_MAIN_SERVICE;
     }
 
+
+    @Override
+    protected void setPACKET_SERVICE(String packetService) {
+        changedPacket=true;
+        PACKET_SERVICE = packetService;
+    }
+
+    @Override
+    protected void setPACKET_MAIN_SERVICE(String packetMainService) {
+        changedPacket=true;
+        PACKET_MAIN_SERVICE = packetMainService;
+    }
+    @Override
+    protected boolean checkChangedPacket(){
+        return changedPacket &&
+                (ORIGIN_PACKET_MAIN_SERVICE.compareTo(PACKET_MAIN_SERVICE)!=0 ||
+                        ORIGIN_PACKET_SERVICE.compareTo(PACKET_SERVICE)!=0) ;
+    }
+
+
     //START EXTERNAL MBMS
     @Override
     public void startedClient(boolean status) {
@@ -239,9 +308,39 @@ public class ManagerMBMSGroupCom extends ManagerIapiBase
     }
 
     @Override
+    public void startMbmsMedia(long sessionID,long tmgi){
+        if(sessionID<=0 || tmgi<=0){
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error in event startMbmsMedia");
+            return;
+        }
+            if(onManagerMBMSGroupComListener!=null)onManagerMBMSGroupComListener.startMbmsMedia(Long.toString(sessionID),Long.toString(tmgi));
+
+    }
+
+    @Override
     public boolean mbmsListeningServiceAreaCurrent(long TMGI, int[] sai, int[] frequencies) {
         //TODO:
         return false;
+    }
+
+    @Override
+    public void stopMbmsMedia(long sessionID,long tmgi){
+        if(sessionID<=0 || tmgi<=0){
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error in event stopMbmsMedia");
+            return;
+        }
+        if (mService != null){
+            try {
+                if(BuildConfig.DEBUG)
+                    Log.d(TAG,"closeGroupComm tmgi: "+tmgi);
+                ((org.mcopenplatform.iapi.IMBMSGroupComm)mService).closeGroupComm(tmgi);
+            } catch (RemoteException e) {
+                if(BuildConfig.DEBUG)Log.e(TAG,"Error in closeGroupComm in ManagerMBMSGroupCom:"+e.getMessage());
+            }catch (Exception e) {
+                if(BuildConfig.DEBUG)Log.e(TAG,"Error in closeGroupComm in ManagerMBMSGroupCom:"+e.getMessage());
+            }
+        }
+        if(onManagerMBMSGroupComListener!=null)onManagerMBMSGroupComListener.stopMbmsMedia(Long.toString(sessionID),Long.toString(tmgi));
     }
 
     @Override
@@ -250,12 +349,30 @@ public class ManagerMBMSGroupCom extends ManagerIapiBase
         //TODO: incorrect
         //Test
         for(long tmgi:statusTMGIMap.keySet()){
-            if(mService!=null)
+            if (mService != null) {
                 try {
-                    ((org.mcopenplatform.iapi.IMBMSGroupCom)mService).stopMBMSGroupCommMonitoring(tmgi);
+                    if(BuildConfig.DEBUG)
+                        Log.d(TAG,"closeGroupComm tmgi: "+tmgi);
+                    ((org.mcopenplatform.iapi.IMBMSGroupComm)mService).closeGroupComm(tmgi);
+                    if(onManagerMBMSGroupComListener!=null)onManagerMBMSGroupComListener.stopMbmsMedia(null,Long.toString(tmgi));
                 } catch (RemoteException e) {
-                    e.printStackTrace();
+                    if(BuildConfig.DEBUG)Log.e(TAG,"Error in closeGroupComm in ManagerMBMSGroupCom:"+e.getMessage());
+                }catch (Exception e) {
+                    if(BuildConfig.DEBUG)Log.e(TAG,"Error in closeGroupComm in ManagerMBMSGroupCom:"+e.getMessage());
                 }
+
+                try {
+                    if(BuildConfig.DEBUG)
+                        Log.d(TAG,"stopMBMSGroupCommMonitoring tmgi: "+tmgi);
+                    ((org.mcopenplatform.iapi.IMBMSGroupComm) mService).stopMBMSGroupCommMonitoring(tmgi);
+                } catch (RemoteException e) {
+                    if (BuildConfig.DEBUG)
+                        Log.e(TAG, "Error in stopMBMSGroupCommMonitoring in ManagerMBMSGroupCom:" + e.getMessage());
+                } catch (Exception e) {
+                    if (BuildConfig.DEBUG)
+                        Log.e(TAG, "Error in stopMBMSGroupCommMonitoring in ManagerMBMSGroupCom:" + e.getMessage());
+                }
+            }
         }
     }
 
@@ -264,21 +381,43 @@ public class ManagerMBMSGroupCom extends ManagerIapiBase
         if(BuildConfig.DEBUG){
             String sias="";
             for(int sai1:sai)sias=sias+" "+sai1;
-            Log.i(TAG,"onNewServiceArea TMGI: "+TMGI+" sias: "+sias);
+            Log.i(TAG,"onNewServiceArea TMGI: "+TMGI+" sais: "+sias);
         }
+        if(frequencies==null)frequencies=new int[0];
         if(statusTMGIMap!=null && statusTMGIMap.get(TMGI)==null)
             statusTMGIMap.put(TMGI,StatusTMGI.NONE);
         try {
-            if(mService!=null)
-            ((org.mcopenplatform.iapi.IMBMSGroupCom)mService).startMBMSGroupCommMonitoring(TMGI,
-                    sai,
-                    frequencies,
-                    (QCI>=Integer.MAX_VALUE || QCI<=Integer.MIN_VALUE)?Integer.MAX_VALUE:(int)QCI);
+            if(mService!=null){
+                if(QCI<=0)QCI=0;
+                ((org.mcopenplatform.iapi.IMBMSGroupComm)mService).startMBMSGroupCommMonitoring(TMGI,
+                        sai,
+                        frequencies,
+                        (((QCI>=Integer.MAX_VALUE || QCI<=Integer.MIN_VALUE))?Integer.MAX_VALUE:(int)QCI));
+            }else {
+                if(BuildConfig.DEBUG)Log.e(TAG,"Error in service MBMS");
+            }
+
         } catch (RemoteException e) {
-            e.printStackTrace();
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error in startMBMSGroupCommMonitoring in ManagerMBMSGroupCom:"+e.getMessage());
+        }catch (Exception e) {
+            if(BuildConfig.DEBUG)Log.e(TAG,"Error in startMBMSGroupCommMonitoring in ManagerMBMSGroupCom:"+e.getMessage());
         }
-        //TEST
-        notifyMBMSGroupCommAvailabilityMCOP(TMGI, 1,1);
+        if(checkChangedPacket()){
+            if(BuildConfig.DEBUG)Log.d(TAG,"The packet selection is changed");
+        }else{
+            notifyMBMSGroupCommAvailabilityMCOP(TMGI, 1,1);
+        }
+
         //TODO: receive new TMGI
+    }
+
+    public interface OnManagerMBMSGroupComListener{
+        void startMbmsMedia(String sessionID,String tmgi);
+        void stopMbmsMedia(String sessionID,String tmgi);
+
+    }
+
+    public void setOnManagerMBMSGroupComListener(OnManagerMBMSGroupComListener onManagerMBMSGroupComListener){
+        this.onManagerMBMSGroupComListener=onManagerMBMSGroupComListener;
     }
 }

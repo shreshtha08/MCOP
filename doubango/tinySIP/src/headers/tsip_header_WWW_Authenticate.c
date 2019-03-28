@@ -6,7 +6,6 @@
 
 /* #line 1 "tsip_parser_header_WWW_Authenticate.rl" */
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -85,7 +84,7 @@ int tsip_header_WWW_Authenticate_serialize(const tsip_header_t* header, tsk_buff
 
 				WWW_Authenticate->algorithm ? ",algorithm=" : "",
 				WWW_Authenticate->algorithm ? WWW_Authenticate->algorithm : "",
-				//By Eduardo
+				//
 				//This is for SQN with SIM
 				WWW_Authenticate->auts ? ",auts=" : "",
 				WWW_Authenticate->auts ? WWW_Authenticate->auts : "",
@@ -114,7 +113,7 @@ tsip_header_WWW_Authenticate_t *tsip_header_WWW_Authenticate_parse(const char *d
 		sip_hdr->nonce = tsk_strdup(http_hdr->nonce);
 		sip_hdr->opaque = tsk_strdup(http_hdr->opaque);
 		sip_hdr->algorithm = tsk_strdup(http_hdr->algorithm);
-		//By Eduardo
+		//
 		//This is for SQN with SIM
 		//sip_hdr->auts = tsk_strdup(http_hdr->auts);
 		//sip_hdr->auts_param = tsk_strdup(http_hdr->auts_param);
@@ -163,7 +162,7 @@ static tsk_object_t* tsip_header_WWW_Authenticate_dtor(tsk_object_t *self)
 		TSK_FREE(WWW_Authenticate->nonce);
 		TSK_FREE(WWW_Authenticate->opaque);
 		TSK_FREE(WWW_Authenticate->algorithm);
-		//By Eduardo
+		//
 		//This is for SQN with SIM
 		TSK_FREE(WWW_Authenticate->auts);
 		TSK_FREE(WWW_Authenticate->auts_param);

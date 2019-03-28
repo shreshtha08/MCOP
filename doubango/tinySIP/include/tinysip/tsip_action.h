@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -116,6 +115,7 @@ typedef enum tsip_action_param_type_e
 	aptype_header,
 	aptype_config,
 	aptype_payload,
+	aptype_payload2,
 	aptype_resp_line,
 	aptype_media_type,
 	aptype_media,
@@ -124,6 +124,8 @@ tsip_action_param_type_t;
 
 #define TSIP_ACTION_SET_HEADER(NAME_STR, VALUE_STR)			aptype_header, (const char*)NAME_STR, (const char*)VALUE_STR
 #define TSIP_ACTION_SET_PAYLOAD(PAY_PTR, PAY_SIZE)			aptype_payload, (const void*)PAY_PTR, (tsk_size_t)PAY_SIZE
+#define TSIP_ACTION_SET_PAYLOAD2(PAY_PTR2, PAY_SIZE2)			aptype_payload2, (const void*)PAY_PTR2, (tsk_size_t)PAY_SIZE2
+
 #define TSIP_ACTION_SET_RESP_LINE(CODE_INT, PHRASE_STR)		aptype_resp_line, (int32_t)CODE_INT, (const char*)PHRASE_STR
 #define TSIP_ACTION_SET_CONFIG(ACTION_CONFIG_HANDLE)		aptype_config, (const tsip_action_handle_t*)ACTION_CONFIG_HANDLE
 #define TSIP_ACTION_SET_MEDIA_TYPE(TYPE_ENUM)				aptype_media_type, (enum tmedia_type_e)TYPE_ENUM
@@ -138,6 +140,8 @@ typedef struct tsip_action_s
 	tsip_action_type_t type;
 	tsk_params_L_t *headers;
 	tsk_buffer_t* payload;
+
+	tsk_buffer_t* payload2;
 
 	struct{
 		short code;

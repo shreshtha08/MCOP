@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -153,7 +152,10 @@ char* tsip_uri_tostring(const tsip_uri_t *uri, tsk_bool_t with_params, tsk_bool_
 	char* ret = 0;
 
 	if(!tsip_uri_serialize(uri, with_params, quote, output)){
-		ret = tsk_strndup((const char*)output->data, output->size);
+            if ((ret = (char*)tsk_calloc((output->size + 1), sizeof(uint8_t)))) {
+                memset(ret, 0, (output->size + 1) * sizeof(uint8_t));
+                memcpy(ret, output->data, output->size);
+            }
 	}
 	else{
 		TSK_DEBUG_ERROR("Failed to serialize URI.");

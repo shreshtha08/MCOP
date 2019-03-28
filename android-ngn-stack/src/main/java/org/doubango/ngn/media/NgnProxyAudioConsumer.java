@@ -47,7 +47,7 @@ public class NgnProxyAudioConsumer extends NgnProxyPlugin{
 	private final ProxyAudioConsumer mConsumer;
 	private boolean mRoutingChanged;
 	private Thread mConsumerThread;
-	
+
 	private int mBufferSize;
 	private AudioTrack mAudioTrack;
 	private int mPtime, mInputRate, mChannels;
@@ -57,6 +57,8 @@ public class NgnProxyAudioConsumer extends NgnProxyPlugin{
 	private boolean mAec ;
 	private boolean mIsInit = false ;
 	private static final int BUFFER_SIZE_DEFAULT=100;
+
+
 	
 	public NgnProxyAudioConsumer(BigInteger id, ProxyAudioConsumer consumer){
 		super(id, consumer);
@@ -65,7 +67,7 @@ public class NgnProxyAudioConsumer extends NgnProxyPlugin{
         mConsumer.setCallback(mCallback);
         mConfigurationService = NgnEngine.getInstance().getConfigurationService();
 	}
-	
+
 	public void setSpeakerphoneOn(boolean speakerOn){
 		Log.d(TAG, "setSpeakerphoneOn("+speakerOn+")");
 		final AudioManager audiomanager = NgnApplication.getAudioManager();
@@ -171,8 +173,13 @@ public class NgnProxyAudioConsumer extends NgnProxyPlugin{
 		}
 		return 0;
 	}
+
+	public synchronized boolean setGain(long gain){
+		return mConsumer.setGain(gain);
+	}
 	
 	private synchronized int prepare(int ptime, int rate, int channels){
+		int bytesNseq=0;
 		if(super.mPrepared){
 			Log.e(TAG,"already prepared");
 			return -1;
@@ -195,7 +202,7 @@ public class NgnProxyAudioConsumer extends NgnProxyPlugin{
 		final int shortsPerNotif = (mOutputRate * mPtime)/1000;
 		mBufferSize = Math.max(minBufferSize, shortsPerNotif<<1);
 		mBufferSize=BUFFER_SIZE_DEFAULT;
-		mOutputBuffer = ByteBuffer.allocateDirect(shortsPerNotif<<1);
+		mOutputBuffer = ByteBuffer.allocateDirect((shortsPerNotif<<1)+bytesNseq);
 		mAec = mConfigurationService.getBoolean(NgnConfigurationEntry.GENERAL_AEC, NgnConfigurationEntry.DEFAULT_GENERAL_AEC) ;
 		
 		// setSpeakerphoneOn(false);
@@ -242,6 +249,9 @@ public class NgnProxyAudioConsumer extends NgnProxyPlugin{
 			long lSizeInBytes = 0 ;
 			boolean bPlaying = false;
 			int nWritten = 0;
+			int bytesNseq=0;
+			int seq=0;
+
 			
 			if(NgnProxyAudioConsumer.super.mValid){
 				mConsumer.setPullBuffer(mOutputBuffer, mOutputBuffer.capacity());
@@ -253,7 +263,7 @@ public class NgnProxyAudioConsumer extends NgnProxyPlugin{
 				if(mAudioTrack == null){
 					break;
 				}
-				
+
 				if(mRoutingChanged){
 					Log.d(TAG, "Routing changed: restart() player");
 					mRoutingChanged = false;
@@ -266,13 +276,13 @@ public class NgnProxyAudioConsumer extends NgnProxyPlugin{
 						nWritten = 0;
 					}
 				}
-				
+
 				for(i=0; i<nFramesCount; i++){
 					lSizeInBytes = mConsumer.pull();
 					if(lSizeInBytes>0){
-						mOutputBuffer.get(aAudioBytes, i*nFrameLength, (int)lSizeInBytes);
+						mOutputBuffer.get(aAudioBytes, i*nFrameLength, (int)lSizeInBytes+bytesNseq);
 						mOutputBuffer.rewind();
-						nGapSize = (nFrameLength - (int)lSizeInBytes);
+						nGapSize = (nFrameLength - (int)lSizeInBytes)-bytesNseq;
 						if(nGapSize != 0){
 							Arrays.fill(aAudioBytes, i*nFrameLength + (int)lSizeInBytes, (i*nFrameLength + (int)lSizeInBytes) + nGapSize, (byte)0);
 						}
@@ -282,14 +292,17 @@ public class NgnProxyAudioConsumer extends NgnProxyPlugin{
 					}
 					nWritten += nFrameLength;
 				}
-				
-				mAudioTrack.write(aAudioBytes, 0, aAudioBytes.length);
-				if(!bPlaying && nWritten>mBufferSize){
+
+
+					mAudioTrack.write(aAudioBytes, 0, aAudioBytes.length-bytesNseq);
+				if(
+
+								!bPlaying && nWritten>mBufferSize){
 					mAudioTrack.play();
 					bPlaying = true;
 				}
 			}
-			
+
 			unprepare();
 			Log.d(TAG, "===== Audio Player Thread (Stop) =====");
 		}

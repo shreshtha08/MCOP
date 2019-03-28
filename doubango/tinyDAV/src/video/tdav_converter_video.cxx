@@ -32,7 +32,7 @@
 
 #if HAVE_LIBYUV
 
-#include <libyuv/libyuv.h>
+#include <libyuv.h>
 
 using namespace libyuv;
 

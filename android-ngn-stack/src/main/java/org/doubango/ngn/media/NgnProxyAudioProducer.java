@@ -36,7 +36,6 @@ import org.doubango.utils.Utils;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
-
 public class NgnProxyAudioProducer extends NgnProxyPlugin {
 	private static final String TAG = Utils.getTAG(NgnProxyAudioProducer.class
 			.getCanonicalName());
@@ -168,6 +167,7 @@ public class NgnProxyAudioProducer extends NgnProxyPlugin {
 	}
 
 	private synchronized int prepare(int ptime, int rate, int channels) {
+		int bytesNseq=0;
 		if (super.mPrepared) {
 			Log.e(TAG, "already prepared");
 			return -1;
@@ -196,8 +196,7 @@ public class NgnProxyAudioProducer extends NgnProxyPlugin {
 		final int bufferSize = Math.max(
 				(int) ((float) minBufferSize * bufferFactor),
 				shortsPerNotif << 1);
-
-		mAudioFrame = ByteBuffer.allocateDirect(shortsPerNotif << 1);
+		mAudioFrame = ByteBuffer.allocateDirect((shortsPerNotif << 1)+bytesNseq);
 		mPtime = ptime;
 		mRate = rate;
 		mChannels = channels;
@@ -256,8 +255,11 @@ public class NgnProxyAudioProducer extends NgnProxyPlugin {
 			android.os.Process
 					.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
+			int bytesNseq=0;
+			long curretTime=0;
+
 			mAudioRecord.startRecording();
-			final int nSize = mAudioFrame.capacity();
+			final int nSize = mAudioFrame.capacity()-bytesNseq;
 			byte silenceBuffer[] = new byte[nSize];
 			int nRead;
 

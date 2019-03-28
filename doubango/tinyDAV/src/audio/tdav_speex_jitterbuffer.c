@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -80,13 +79,15 @@ static int tdav_speex_jitterbuffer_open(tmedia_jitterbuffer_t* self, uint32_t fr
 {
 	tdav_speex_jitterbuffer_t *jitterbuffer = (tdav_speex_jitterbuffer_t *)self;
 	spx_int32_t tmp;
-
+	int auto_adjust=1;
+	int buffer_size=200;
 	TSK_DEBUG_INFO("Open speex jb (ptime=%u, rate=%u)", frame_duration, rate);
 
-	if (!(jitterbuffer->state = jitter_buffer_init((int)frame_duration))) {
+	if (!(jitterbuffer->state = jitter_buffer_init((int)frame_duration,auto_adjust/*,buffer_size*/))) {
 		TSK_DEBUG_ERROR("jitter_buffer_init() failed");
 		return -2;
 	}
+
 	jitterbuffer->rate = rate;
 	jitterbuffer->frame_duration = frame_duration;
 	jitterbuffer->channels = channels;
@@ -109,6 +110,7 @@ static int tdav_speex_jitterbuffer_open(tmedia_jitterbuffer_t* self, uint32_t fr
 		jitter_buffer_ctl(jitterbuffer->state, JITTER_BUFFER_SET_MAX_LATE_RATE, &tmp);
 		TSK_DEBUG_INFO("New Jitter buffer max late rate=%d", tmp);
 	}
+
 
 	return 0;
 }
@@ -198,6 +200,7 @@ static tsk_size_t tdav_speex_jitterbuffer_get(tmedia_jitterbuffer_t* self, void*
 	int ret, miss = 0;
 	tsk_size_t ret_size = 0;
 
+
 	if (!out_data || !out_size) {
 		TSK_DEBUG_ERROR("Invalid parameter");
 		return 0;
@@ -213,8 +216,10 @@ static tsk_size_t tdav_speex_jitterbuffer_get(tmedia_jitterbuffer_t* self, void*
 
 	jb_packet.data = out_data;
 	jb_packet.len = (spx_uint32_t)out_size;
+	ret = jitter_buffer_get(jb->state, &jb_packet, jb->frame_duration/*(out_size * 500)/jb->rate*/, tsk_null);
 
-	if ((ret = jitter_buffer_get(jb->state, &jb_packet, jb->frame_duration/*(out_size * 500)/jb->rate*/, tsk_null)) != JITTER_BUFFER_OK) {
+
+	if (ret != JITTER_BUFFER_OK) {
 		++jb->num_pkt_miss;
 		switch (ret) {
 		case JITTER_BUFFER_MISSING:

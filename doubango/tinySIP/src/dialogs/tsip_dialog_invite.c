@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -40,6 +39,7 @@
  */
 #include "tinysip/dialogs/tsip_dialog_invite.h"
 
+//#include "tinysip/dialogs/tsip_dialog.h"
 #include "tinysip/dialogs/tsip_dialog_invite.common.h"
 
 #include "tinysip/transactions/tsip_transac_layer.h"
@@ -79,12 +79,11 @@
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
-
-
-
 #endif
 
 #include <tnet_endianness.h>
+#include <tsip.h>
+#include <tinysip/tsip_ssession.h>
 
 // http://cdnet.stpi.org.tw/techroom/market/_pdf/2009/eetelecomm_09_009_OneVoiceProfile.pdf
 // 3GPP TS 26.114 (MMTel): Media handling and interaction
@@ -464,7 +463,7 @@ int tsip_dialog_invite_start(tsip_dialog_invite_t *self)
 this function process the sdp in messages of 200 Ok and Invite received
 */
 int tsip_dialog_invite_process_ro(tsip_dialog_invite_t *self, const tsip_message_t* message)
-{//receive 200OK and Invite Destino. 
+{//receive 200OK and Invite Destino.
 	tsdp_message_t* sdp_ro = tsk_null;
 	tmedia_type_t old_media_type;
 	tmedia_type_t new_media_type;
@@ -475,7 +474,7 @@ int tsip_dialog_invite_process_ro(tsip_dialog_invite_t *self, const tsip_message
 		TSK_DEBUG_ERROR("Invalid parameter");
 		return -1;
 	}
-    
+
     if (self->is_cancelling) {
         TSK_DEBUG_INFO("Cancelling the INVITE...ignore the incoming SDP");
         return 0;
@@ -485,7 +484,7 @@ int tsip_dialog_invite_process_ro(tsip_dialog_invite_t *self, const tsip_message
 	if(TSIP_MESSAGE_HAS_CONTENT(message)){
 		if(tsk_striequals("application/sdp", TSIP_MESSAGE_CONTENT_TYPE(message))){
 			if(!(sdp_ro = tsdp_message_parse(TSIP_MESSAGE_CONTENT_DATA(message), TSIP_MESSAGE_CONTENT_DATA_LENGTH(message)))){
-				TSK_DEBUG_ERROR("Failed to parse remote sdp message:\n [%s]", (const char*)TSIP_MESSAGE_CONTENT_DATA(message));
+				TSK_DEBUG_ERROR("Failed to parse remote sdp message");
 				return -2;
 			}
 			// ICE processing
@@ -493,44 +492,44 @@ int tsip_dialog_invite_process_ro(tsip_dialog_invite_t *self, const tsip_message
 				tsip_dialog_invite_ice_process_ro(self, sdp_ro, TSIP_MESSAGE_IS_REQUEST(message));
 			}
 		}
-		else if(tsk_striequals("multipart/mixed", TSIP_MESSAGE_CONTENT_TYPE(message))){ //Added by Mikel
+		else if(tsk_striequals("multipart/mixed", TSIP_MESSAGE_CONTENT_TYPE(message))){
 			tmedia_multipart_body_t* mp_body = tsk_null;
 			tmedia_content_multipart_t* mp_content = tsk_null;
 			char* boundary = tsk_null;
-			
+
 			boundary = tsip_header_get_param_value((tsip_header_t*)message->Content_Type, "boundary");
-			if(boundary == tsk_null) {			
-				TSK_DEBUG_ERROR("[%s] content-type is not supportted", TSIP_MESSAGE_CONTENT_TYPE(message));
+			if(boundary == tsk_null) {
+				TSK_DEBUG_ERROR("content-type is not supportted");
 				return -3;
 			}
 
 			mp_body = tmedia_content_multipart_body_parse(TSIP_MESSAGE_CONTENT_DATA(message), TSIP_MESSAGE_CONTENT_DATA_LENGTH(message), "multipart/mixed", boundary);
 
 			if(mp_body == tsk_null){
-				TSK_DEBUG_ERROR("[%s] content-type is not supportted", TSIP_MESSAGE_CONTENT_TYPE(message));
+				TSK_DEBUG_ERROR("content-type is not supported or is not correct: multipart/mixed");
 				return -3;
 			}
 			//mp_content is the data in char* of SDP
 			mp_content = tmedia_content_multipart_body_get_content(mp_body, "application/sdp");
 
 			if(mp_content == tsk_null){
-				TSK_DEBUG_ERROR("[%s] content-type is not supportted", TSIP_MESSAGE_CONTENT_TYPE(message));
+				TSK_DEBUG_ERROR("content-type is not supportted application/sdp");
 				return -3;
 			}
 			//sdp_ro es the parse data in SDP. sdp_ro is a list
 			if(!(sdp_ro = tsdp_message_parse(mp_content->data, mp_content->data_size))){
-				TSK_DEBUG_ERROR("Failed to parse remote sdp message:\n [%.*s]",  mp_content->data_size, (const char*)mp_content->data);
+				TSK_DEBUG_ERROR("Failed to parse remote sdp message");
 				return -2;
 			}
 
 			TSK_OBJECT_SAFE_FREE(mp_body);
 		}
-		else if(tsk_striequals("application/vnd.3gpp.mcptt-info+xml", TSIP_MESSAGE_CONTENT_TYPE(message))) { //Added by MCPTT Eduardo
+		else if(tsk_striequals("application/vnd.3gpp.mcptt-info+xml", TSIP_MESSAGE_CONTENT_TYPE(message))) {
 			TSK_DEBUG_INFO("Ignoring incoming mcptt-info+xml content.");
 			return 0;
 		}
 		else{
-			TSK_DEBUG_ERROR("[%s] content-type is not supportted", TSIP_MESSAGE_CONTENT_TYPE(message));
+			TSK_DEBUG_ERROR("content-type is not supportted");
 			return -3;
 		}
 	}
@@ -542,7 +541,7 @@ int tsip_dialog_invite_process_ro(tsip_dialog_invite_t *self, const tsip_message
 			return 0;
 		}
 	}
-	
+
 	ro_type = (TSIP_REQUEST_IS_INVITE(message) || TSIP_REQUEST_IS_UPDATE(message) || TSIP_REQUEST_IS_INFO(message)) // ACK/PRACK can only contain a response if the initial INVITE was bodiless. Added INFO message (PTT multicast)
 			? tmedia_ro_type_offer
 			:(TSIP_RESPONSE_IS_1XX(message) ? tmedia_ro_type_provisional : tmedia_ro_type_answer);
@@ -550,6 +549,32 @@ int tsip_dialog_invite_process_ro(tsip_dialog_invite_t *self, const tsip_message
 	//old_media_type is Type session old
 	old_media_type = TSIP_DIALOG_GET_SS(self)->media.type;
 	new_media_type = sdp_ro ? tmedia_type_from_sdp(sdp_ro) : old_media_type;
+
+
+
+    //TEST:
+	// Check for mcpttinfo tag to see if it is a MCPTT call (for non Floor Control MCPTT calls)
+	if ((new_media_type & tmedia_mcptt) != tmedia_mcptt) { // or tmedia_audio_ptt_mcptt?
+		if (tsk_striequals("multipart/mixed", TSIP_MESSAGE_CONTENT_TYPE(message))) {
+			tmedia_multipart_body_t *mp_body = tsk_null;
+			tmedia_content_multipart_t *mp_content = tsk_null;
+			char *boundary = tsk_null;
+
+			boundary = tsip_header_get_param_value((tsip_header_t *) message->Content_Type, "boundary");
+			if (boundary != tsk_null) {
+				mp_body = tmedia_content_multipart_body_parse(TSIP_MESSAGE_CONTENT_DATA(message), TSIP_MESSAGE_CONTENT_DATA_LENGTH(message), "multipart/mixed", boundary);
+				if (mp_body != tsk_null) {
+					mp_content = tmedia_content_multipart_body_get_content(mp_body, "application/vnd.3gpp.mcptt-info+xml");
+					if (mp_content != tsk_null) {
+                        old_media_type |= tmedia_mcptt; // or tmedia_audio_ptt_mcptt?
+					}
+				}
+			}
+		}
+	}
+
+
+
 
 	/* Create session Manager if not already done */
 	if(!self->msession_mgr){//if the message is UPDATE
@@ -576,14 +601,19 @@ int tsip_dialog_invite_process_ro(tsip_dialog_invite_t *self, const tsip_message
 		}
 	}
 
+
 	// is media update?
 	// (old_media_type == new_media_type) means the new session are rejected. This is way we match the CSeq
-	if(!media_session_was_null && (old_media_type != new_media_type || (TSIP_MESSAGE_IS_RESPONSE(message) && self->cseq_out_media_update == message->CSeq->seq)) && (self->msession_mgr->sdp.lo && self->msession_mgr->sdp.ro)){
+	if(!media_session_was_null &&
+			(old_media_type != new_media_type && (TSIP_MESSAGE_IS_RESPONSE(message) &&
+			self->cseq_out_media_update == message->CSeq->seq)) &&
+			(self->msession_mgr->sdp.lo && self->msession_mgr->sdp.ro)) {
 		// at this point the media session manager has been succeffuly started and all is ok
 		TSIP_DIALOG_GET_SS(self)->media.type = new_media_type;
 		TSIP_DIALOG_INVITE_SIGNAL(self, tsip_m_updated, 
 								  TSIP_RESPONSE_CODE(message), TSIP_RESPONSE_PHRASE(message), message);
 	}
+
 
 	/* start session manager */
 	if(!self->msession_mgr->started && (self->msession_mgr->sdp.lo && self->msession_mgr->sdp.ro)){
@@ -1059,22 +1089,22 @@ int x0000_Any_2_Any_X_iINFO(va_list *app)
 						static const xmlChar* __xpath_expr_stream_id = (const xmlChar*)"/media_control/vc_primitive/stream_id";
 						
 						if (!(pDoc = xmlParseDoc(content_ptr))) {
-							TSK_DEBUG_ERROR("Failed to parse XML content [%s]", content_ptr);
+							TSK_DEBUG_ERROR("Failed to parse XML content");
 							return 0;
 						}
 						if (!(pRootElement = xmlDocGetRootElement(pDoc))) {
-							TSK_DEBUG_ERROR("Failed to get root element from XML content [%s]", content_ptr);
+							TSK_DEBUG_ERROR("Failed to get root element from XML content");
 							xmlFreeDoc(pDoc);
 							return 0;
 						}
 						if (!(pPathCtx = xmlXPathNewContext(pDoc))) {
-							TSK_DEBUG_ERROR("Failed to create path context from XML content [%s]", content_ptr);
+							TSK_DEBUG_ERROR("Failed to create path context from XML content");
 							xmlFreeDoc(pDoc);
 							return 0;
 						}
 						// picture_fast_update
 						if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_picture_fast_update, pPathCtx))) {
-							TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: %s", __xpath_expr_picture_fast_update);
+							TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: picture_fast_update");
 							xmlXPathFreeContext(pPathCtx);
 							xmlFreeDoc(pDoc);
 							return 0;
@@ -1083,7 +1113,7 @@ int x0000_Any_2_Any_X_iINFO(va_list *app)
 						xmlXPathFreeObject(pPathObj);
 						// stream_id
 						if (!(pPathObj = xmlXPathEvalExpression(__xpath_expr_stream_id, pPathCtx))) {
-							TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: %s", __xpath_expr_stream_id);
+							TSK_DEBUG_ERROR("Error: unable to evaluate xpath expression: stream_id");
 							xmlXPathFreeContext(pPathCtx);
 							xmlFreeDoc(pDoc);
 						}
@@ -1260,7 +1290,8 @@ int tsip_dialog_invite_msession_start(tsip_dialog_invite_t *self)
 
 
 // send INVITE/UPDATE request
-int send_INVITEorUPDATE(tsip_dialog_invite_t *self, tsk_bool_t is_INVITE, tsk_bool_t force_sdp)
+int send_INVITEorUPDATE(tsip_dialog_invite_t *self, tsk_bool_t is_INVITE, tsk_bool_t force_sdp
+)
 {
 	int ret = -1;
 	tsip_request_t *request = tsk_null;
@@ -1283,11 +1314,13 @@ int send_INVITEorUPDATE(tsip_dialog_invite_t *self, tsk_bool_t is_INVITE, tsk_bo
 		TSK_DEBUG_ERROR("Invalid parameter");
 		goto bail;
 	}
-	//MCPTT by Eduardo
+	//MCPTT
 	if(is_INVITE && ((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_mcptt) == tmedia_mcptt)){
 		//The request_uri is PSI in New Invite to MCPTT
 		tsip_dialog_request_configure_mcptt(TSIP_DIALOG(self));
 	}
+
+
 
 	if((request = tsip_dialog_request_new(TSIP_DIALOG(self), is_INVITE ? "INVITE" : "UPDATE"))){
 		/* apply action params to the request (will add a content if the action contains one) */
@@ -1300,8 +1333,6 @@ int send_INVITEorUPDATE(tsip_dialog_invite_t *self, tsk_bool_t is_INVITE, tsk_bo
 
 
 		
-
-		
 		if(!bodiless){
 			/* add our payload if current action does not have one */
 			if((force_sdp || is_INVITE) || ((self->msession_mgr && self->msession_mgr->state_changed) || (TSIP_DIALOG(self)->state == tsip_initial))){
@@ -1310,35 +1341,46 @@ int send_INVITEorUPDATE(tsip_dialog_invite_t *self, tsk_bool_t is_INVITE, tsk_bo
 					char* sdp;
 					uint32_t speechNO = 0;
 					uint32_t speechYES = 1;
+                    uint32_t floorControlNO = 0;
+                    uint32_t floorControlYES = 1;
+                    uint32_t withFloorControl=floorControlNO;
 					if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_audio_ptt_mcptt) == tmedia_audio_ptt_mcptt){
-						//MCPTT By Eduardo
-						tmedia_session_mgr_set(self->msession_mgr,
+						//MCPTT
+                        if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_floor_control) == tmedia_floor_control) {
+                            withFloorControl=floorControlYES;
+                        }
+                            tmedia_session_mgr_set(self->msession_mgr,
+                                               TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"with_floor_control",
+                                                                        withFloorControl
+                                               ),
 							TMEDIA_SESSION_SET_INT32(tmedia_audio,"speech",speechYES),
 							TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"implicit",TSIP_DIALOG_GET_STACK(self)->pttMCPTT.mcptt_implicit),
 							TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"priority",TSIP_DIALOG_GET_STACK(self)->pttMCPTT.mcptt_priority),
 							TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"granted",TSIP_DIALOG_GET_STACK(self)->pttMCPTT.mcptt_granted),
 							TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"type_session",(TSIP_DIALOG_GET_SS(self)->media.type)),
 							TMEDIA_SESSION_SET_POBJECT(tmedia_mcptt,"mcptt_id_local",(TSIP_DIALOG_GET_STACK(self)->pttMCPTT.mcptt_id)),
-							//Insert Timers that received from CMS MCPTT UE init Config By Eduardo
+							//Insert Timers that received from CMS MCPTT UE init Config
 							TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"t100",TSIP_DIALOG_GET_STACK(self)->pttMCPTT.timer_s.timer_t100),
 							TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"t101",TSIP_DIALOG_GET_STACK(self)->pttMCPTT.timer_s.timer_t101),
 							TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"t103",TSIP_DIALOG_GET_STACK(self)->pttMCPTT.timer_s.timer_t103),
 							TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"t104",TSIP_DIALOG_GET_STACK(self)->pttMCPTT.timer_s.timer_t104),
 							TMEDIA_SESSION_SET_INT32(tmedia_mcptt,"t132",TSIP_DIALOG_GET_STACK(self)->pttMCPTT.timer_s.timer_t132),
 							TMEDIA_SESSION_SET_NULL());
-						
-						
-					}else{
-						//MCPTT By Eduardo
+
+
+                    } else{
+						//MCPTT
 						tmedia_session_mgr_set(self->msession_mgr,
 							TMEDIA_SESSION_SET_INT32(tmedia_audio,"speech",speechNO),
 							TMEDIA_SESSION_SET_NULL());
 					}
 					
 
-					//By Mikel and Eduardo
+
 					if((sdp_lo = tmedia_session_mgr_get_lo(self->msession_mgr)) && (sdp = tsdp_message_tostring(sdp_lo))){
-							//By Eduardo MCPTT IF IS INVITE AND MCPTT AUDIO
+
+
+							// MCPTT IF IS INVITE AND MCPTT AUDIO
 							if(is_INVITE && ((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_audio_ptt_mcptt) == tmedia_audio_ptt_mcptt)){//PTT call MCPTT
 							uint32_t local_ssrc = 0;
 							tmedia_session_t* audio_session;
@@ -1348,7 +1390,7 @@ int send_INVITEorUPDATE(tsip_dialog_invite_t *self, tsk_bool_t is_INVITE, tsk_bo
 							if(sdp_lo && sip_stack->pttMCPTT.mcptt_insert_x_Framed_IP){
 								x_Framed_IP_Address_Port_Header=getAddrPortsFromSDP(sdp_lo);
 							}
-							if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_audio_ptt_group_mcptt) != tmedia_audio_ptt_group_mcptt){//IF isn�t MCPTT GROUP. It is private
+							if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_mcptt_group) != tmedia_mcptt_group){//IF is not MCPTT GROUP. It is private
 								
 								tmedia_multipart_body_t* body = tsk_null;
 								tmedia_content_multipart_t* sdp_content = tsk_null;
@@ -1389,7 +1431,7 @@ int send_INVITEorUPDATE(tsip_dialog_invite_t *self, tsk_bool_t is_INVITE, tsk_bo
 
 
 							}
-							//By Eduardo MCPTT
+							// MCPTT
 							//this code generate the body of invite sip MCPTT. Call Group
 							else if(1)//IF call MCPTt  group is  and the members exist
 							{
@@ -1469,7 +1511,7 @@ int send_INVITEorUPDATE(tsip_dialog_invite_t *self, tsk_bool_t is_INVITE, tsk_bo
 							audio_session->lo_held = tsk_true;
 						
 						}
-						//By Eduardo MCPTT
+						// MCPTT
 						else if (!is_INVITE && (TSIP_DIALOG_GET_SS(self)->media.type & tmedia_audio_ptt_mcptt) == tmedia_audio_ptt_mcptt)//IF it isn�t invite
 						{
 							tmedia_session_t* audio_session = tsk_null;
@@ -1559,6 +1601,8 @@ int send_INVITEorUPDATE(tsip_dialog_invite_t *self, tsk_bool_t is_INVITE, tsk_bo
 				tsk_null
 			);
 		}
+
+
 		/*Only audio or audio and Video*/
 		if((TSIP_DIALOG_GET_SS(self)->media.type) == tmedia_audio || (TSIP_DIALOG_GET_SS(self)->media.type & tmedia_video) == tmedia_video)
 		{
@@ -1566,10 +1610,9 @@ int send_INVITEorUPDATE(tsip_dialog_invite_t *self, tsk_bool_t is_INVITE, tsk_bo
 				TSIP_HEADER_DUMMY_VA_ARGS("P-Preferred-Service", "urn:urn-7:3gpp-service.ims.icsi.mmtel"),
 				tsk_null);
 		}
-		
-		
 
-		//MCPTT by Eduardo Insert parameter in contact
+
+		//MCPTT Insert parameter in contact
 		if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_mcptt) == tmedia_mcptt){
 			TSIP_HEADER_ADD_PARAM(request->Contact, "+g.3gpp.icsi-ref", "\"urn%3Aurn-7%3A3gpp-service.ims.icsi.mcptt\"");
 			TSIP_HEADER_ADD_PARAM(request->Contact, "+g.3gpp.mcptt",tsk_null);
@@ -1581,8 +1624,6 @@ int send_INVITEorUPDATE(tsip_dialog_invite_t *self, tsk_bool_t is_INVITE, tsk_bo
 			}
 			
 		}
-
-
 
 		/* MCPTT Headers*/
 		if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_audio_ptt_mcptt) == tmedia_audio_ptt_mcptt)
@@ -1623,17 +1664,21 @@ int send_INVITEorUPDATE(tsip_dialog_invite_t *self, tsk_bool_t is_INVITE, tsk_bo
 			}
 
 			//new param insert in headers ANSWER_MODE and PRIV_ANSWER_MODE
-			if(TSIP_DIALOG_GET_STACK(self)->pttMCPTT.mcptt_priv_answer_mode==tsk_true){
-				type_Header_Answer="Priv-Answer-Mode";
-				value_Header_Answer="Auto";
-			}else if(TSIP_DIALOG_GET_STACK(self)->pttMCPTT.mcptt_answer_mode==tsk_true){
-				type_Header_Answer="Answer-Mode";
-				value_Header_Answer="Auto";
+			if(TSIP_DIALOG_GET_SS(self)->pttMCPTT.answer_mode_auto){
+				if(TSIP_DIALOG_GET_STACK(self)->pttMCPTT.mcptt_priv_answer_mode==tsk_true){
+					type_Header_Answer="Priv-Answer-Mode";
+					value_Header_Answer="Auto";
+				}else if(TSIP_DIALOG_GET_STACK(self)->pttMCPTT.mcptt_answer_mode==tsk_true){
+					type_Header_Answer="Answer-Mode";
+					value_Header_Answer="Auto";
+				}else{
+					type_Header_Answer="Answer-Mode";
+					value_Header_Answer="Manual";
+				}
 			}else{
 				type_Header_Answer="Answer-Mode";
 				value_Header_Answer="Manual";
 			}
-
 			tsip_message_add_headers(request,
 				TSIP_HEADER_DUMMY_VA_ARGS(type_Header_Answer,value_Header_Answer),
 				tsk_null);
@@ -1642,6 +1687,57 @@ int send_INVITEorUPDATE(tsip_dialog_invite_t *self, tsk_bool_t is_INVITE, tsk_bo
 				tsk_null);
 
 			tsip_message_get_header(request, tsip_htype_User_Agent);
+			//If this call is of emergency
+			if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_emergency) == tmedia_emergency ||
+				(TSIP_DIALOG_GET_SS(self)->media.type & tmedia_alert) == tmedia_alert ||
+				(TSIP_DIALOG_GET_SS(self)->media.type & tmedia_imminentperil) == tmedia_imminentperil)
+			{
+				char *resource_priority_all=tsk_null;
+				char *resource_priority_int=tsk_null;
+				tsip_ssession_t* session_sip;
+				int num_digit=0;
+				int num_priority=-1;
+				int len_priority_string=0;
+				int len_priotity_int=0;
+				session_sip=TSIP_DIALOG_GET_SS(self);
+				num_priority=session_sip->pttMCPTT.emergency.resource_priority_int;
+				//it is call emergency
+				//Now insert the header expecific:
+				if(session_sip->pttMCPTT.emergency.resource_priority_string!=tsk_null && 
+					session_sip->pttMCPTT.emergency.resource_priority_int>-1){
+					num_digit=(int)floor(log10(abs(session_sip->pttMCPTT.emergency.resource_priority_int))) + 1;
+					#if HAVE_CRT //Debug memory
+						resource_priority_int=(char*)malloc((num_digit+1)*sizeof(char));
+	
+					#else
+						resource_priority_int=(char*)tsk_malloc((num_digit+1)*sizeof(char));
+	
+					#endif //HAVE_CRT
+					sprintf(resource_priority_int, "%d",session_sip->pttMCPTT.emergency.resource_priority_int);
+					len_priority_string=tsk_strlen(session_sip->pttMCPTT.emergency.resource_priority_string);
+					len_priotity_int=tsk_strlen(resource_priority_int);
+					#if HAVE_CRT //Debug memory
+					resource_priority_all=(char*)malloc((tsk_strlen(session_sip->pttMCPTT.emergency.resource_priority_string)+tsk_strlen(resource_priority_int)+2)*sizeof(char));
+		
+					#else
+						resource_priority_all=(char*)tsk_malloc((tsk_strlen(session_sip->pttMCPTT.emergency.resource_priority_string)+tsk_strlen(resource_priority_int)+2)*sizeof(char));
+	
+					#endif //HAVE_CRT
+					sprintf(resource_priority_all, "%s.%s",session_sip->pttMCPTT.emergency.resource_priority_string,resource_priority_int);
+					tsip_message_add_headers(request,
+					TSIP_HEADER_DUMMY_VA_ARGS(tsip_header_get_name(tsip_htype_Resource_Priority), resource_priority_all),
+					tsk_null);
+				}
+				if(resource_priority_all && resource_priority_all!=tsk_null){
+					TSK_FREE(resource_priority_all);
+				}
+				if(resource_priority_int && resource_priority_int!=tsk_null){
+					TSK_FREE(resource_priority_int);
+				}
+				
+			}
+
+
 
 			
 
@@ -1665,6 +1761,8 @@ int send_INVITEorUPDATE(tsip_dialog_invite_t *self, tsk_bool_t is_INVITE, tsk_bo
 			);
 			*/
 		}
+
+
 
 		/* Always added headers */
 		// Explicit Communication Transfer (3GPP TS 24.629)
@@ -1888,7 +1986,7 @@ int tsip_dialog_invite_notify_parent(tsip_dialog_invite_t *self, const tsip_resp
 		TSK_OBJECT_SAFE_FREE(dlg_parent);
 	}
 	else{
-		TSK_DEBUG_ERROR("Failed to find parent with id = %llu", TSIP_DIALOG_GET_SS(self)->id_parent);
+		TSK_DEBUG_ERROR("Failed to find parent with id");
 	}
 	return ret;
 }
@@ -2058,7 +2156,7 @@ int send_RESPONSE(tsip_dialog_invite_t *self, const tsip_request_t* request, sho
 
 	const tsdp_message_t* sdp_lo;
 	char* sdp = tsk_null;
-	tsk_buffer_t* mcptt_info;
+	tsk_buffer_t* m_info;
 	char* content_type_hdr  = tsk_null;
 	char* body_string = tsk_null;
 	tmedia_multipart_body_t* body = tsk_null;
@@ -2134,9 +2232,12 @@ int send_RESPONSE(tsip_dialog_invite_t *self, const tsip_request_t* request, sho
 			
 			/* SDP content */
 			if(self->msession_mgr && force_sdp){
-				
-				if(((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_audio_ptt_mcptt) == tmedia_audio_ptt_mcptt) && ((sdp_lo = tmedia_session_mgr_get_lo(self->msession_mgr)) && (sdp = tsdp_message_tostring(sdp_lo)))){
-					mcptt_info = tsip_dialog_200ok_create_mcpttinfo(self);
+
+
+				    if(((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_audio_ptt_mcptt) == tmedia_audio_ptt_mcptt) && ((sdp_lo = tmedia_session_mgr_get_lo(self->msession_mgr)) && (sdp = tsdp_message_tostring(sdp_lo)))){
+
+					m_info = tsip_dialog_200ok_create_mcpttinfo(self);
+
 					body = tmedia_content_multipart_body_create("multipart/mixed", tsk_null);
 
 					if(sdp_lo && TSIP_DIALOG_GET_STACK(self)->pttMCPTT.mcptt_insert_x_Framed_IP){
@@ -2149,8 +2250,8 @@ int send_RESPONSE(tsip_dialog_invite_t *self, const tsip_request_t* request, sho
 						sdp_content = tmedia_content_multipart_create(sdp, tsk_strlen(sdp), "application/sdp", tsk_null);
 						if(sdp_content)
 						tmedia_content_multipart_body_add_content(body, sdp_content);
-						//mcpt-info
-						mcptt_info_content = tmedia_content_multipart_create(TSK_BUFFER_DATA(mcptt_info), TSK_BUFFER_SIZE(mcptt_info), "application/vnd.3gpp.mcptt-info+xml",tsk_null);
+						//mc-info
+						mcptt_info_content = tmedia_content_multipart_create(TSK_BUFFER_DATA(m_info), TSK_BUFFER_SIZE(m_info), "application/vnd.3gpp.mcptt-info+xml",tsk_null);
 						if(mcptt_info_content)
 						tmedia_content_multipart_body_add_content(body, mcptt_info_content);
 						body_string = tmedia_content_multipart_body_tostring(body);
@@ -2162,7 +2263,7 @@ int send_RESPONSE(tsip_dialog_invite_t *self, const tsip_request_t* request, sho
 					
 
 
-				TSK_FREE(mcptt_info);
+				TSK_FREE(m_info);
 				}else if((sdp_lo = tmedia_session_mgr_get_lo(self->msession_mgr)) && (sdp = tsdp_message_tostring(sdp_lo))){
 					ret = tsip_message_add_content(response, "application/sdp", sdp, tsk_strlen(sdp));
 					if(tsip_dialog_invite_ice_is_enabled(self)){
@@ -2200,7 +2301,7 @@ int send_RESPONSE(tsip_dialog_invite_t *self, const tsip_request_t* request, sho
 			}
 		}
 
-		//MCPTT by Eduardo Insert parameter in contact
+		//MCPTT Insert parameter in contact
 		if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_mcptt) == tmedia_mcptt){
 			//Add new header
 			if(x_Framed_IP_Address_Port_Header!=tsk_null){
@@ -2356,16 +2457,19 @@ static tsk_buffer_t* tsip_dialog_invite_create_resource_list(const tsip_dialog_i
 	/*}else{
 		tsk_buffer_append_2(output, "%s", headout);
 	}*/
-	if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_audio_ptt_group_mcptt) == tmedia_audio_ptt_group_mcptt){
+	if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_mcptt_group) == tmedia_mcptt_group){
 		//MCPTT GROUP
 		numMembers=tsip_ssession_get_ptt_mcptt_group_members(TSIP_DIALOG_GET_SS(self));
 		//
 		for(con=0;con<numMembers;con++){
 			tsk_buffer_append_2(output, "<entry uri=\"%s\" cc:copyControl=\"to\"/>\r\n",tsip_ssession_get_ptt_mcptt_group_member_at_position(TSIP_DIALOG_GET_SS(self),con));
 		}	
-	}else if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_audio_ptt_mcptt) == tmedia_audio_ptt_mcptt){
+	}else if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_audio_ptt_mcptt) == tmedia_audio_ptt_mcptt) {
 		//MCPTT PRIVATE 
-		tsk_buffer_append_2(output, "<entry uri=\"%s\" cc:copyControl=\"to\"/>\r\n", TSIP_DIALOG_GET_SS(self)->pttMCPTT.ptt_caller_uri);
+		tsk_buffer_append_2(output, "<entry uri=\"%s\" cc:copyControl=\"to\"/>\r\n",
+							TSIP_DIALOG_GET_SS(self)->pttMCPTT.ptt_caller_uri);
+
+
 	}else{
 		//OTHER
 		tsk_buffer_append_2(output, "<entry uri=\"%s\" cc:copyControl=\"to\"/>\r\n", tsip_uri_tostring(TSIP_DIALOG(self)->uri_remote, tsk_false, tsk_false));
@@ -2393,6 +2497,10 @@ static tsk_buffer_t* tsip_dialog_invite_create_mcpttinfo(const tsip_dialog_invit
 	xmlNodePtr mcptt_Params = NULL;/* node pointers */
 	xmlNodePtr session_type = NULL;
 	xmlNodePtr request_Uri=NULL;
+    xmlNodePtr mcptt_client_id=NULL;
+	xmlNodePtr emergency_node = NULL;
+	xmlNodePtr alert_node = NULL;
+	xmlNodePtr imminentperil_node = NULL;
 	tsip_ssession_t* session_sip;
 	tsip_ssession_t* ptsip_ssession_t=TSIP_SSESSION(self);
 	char* dataOut=tsk_null;
@@ -2414,7 +2522,27 @@ static tsk_buffer_t* tsip_dialog_invite_create_mcpttinfo(const tsip_dialog_invit
      */
     mcptt_Params=xmlNewChild(root_node, NULL, BAD_CAST "mcptt-Params",
                 BAD_CAST"");
-	
+
+	if((session_sip->media.type & tmedia_mcptt_chat) == tmedia_mcptt_chat){
+		//Chat group call
+		session_type=xmlNewChild(mcptt_Params, NULL, BAD_CAST "session-type",
+								 BAD_CAST"chat");
+			//New version
+			request_Uri=xmlNewChild(mcptt_Params, NULL, BAD_CAST "mcptt-request-uri",
+									BAD_CAST"");
+			xmlNewProp(request_Uri, BAD_CAST "type", BAD_CAST "Normal");
+			xmlNewChild(request_Uri, NULL, BAD_CAST "mcpttURI",
+						BAD_CAST session_sip->pttMCPTT.ptt_group_uri);
+
+		//Insert mcptt client id
+		mcptt_client_id=xmlNewChild(mcptt_Params, NULL, BAD_CAST "mcptt-client-id",
+										BAD_CAST"");
+		xmlNewProp(mcptt_client_id, BAD_CAST "type", BAD_CAST "Normal");
+		xmlNewChild(mcptt_client_id, NULL, BAD_CAST "mcpttString",
+					BAD_CAST TSK_BUFFER_TO_STRING(TSIP_DIALOG_GET_STACK(self)->pttMCPTT.mcptt_client_id));
+
+
+	}else
 	if((session_sip->media.type & tmedia_audio_ptt_group_mcptt) != tmedia_audio_ptt_group_mcptt){
 		//Call private
 		session_type=xmlNewChild(mcptt_Params, NULL, BAD_CAST "session-type",
@@ -2429,9 +2557,59 @@ static tsk_buffer_t* tsip_dialog_invite_create_mcpttinfo(const tsip_dialog_invit
 			xmlNewProp(request_Uri, BAD_CAST "type", BAD_CAST "Normal");
 			xmlNewChild(request_Uri, NULL, BAD_CAST "mcpttURI",
                 BAD_CAST session_sip->pttMCPTT.ptt_group_uri);
+        //Insert mcptt client id
+        mcptt_client_id=xmlNewChild(mcptt_Params, NULL, BAD_CAST "mcptt-client-id",
+                                    BAD_CAST"");
+        xmlNewProp(mcptt_client_id, BAD_CAST "type", BAD_CAST "Normal");
+        xmlNewChild(mcptt_client_id, NULL, BAD_CAST "mcpttString",
+                    BAD_CAST TSK_BUFFER_TO_STRING(TSIP_DIALOG_GET_STACK(self)->pttMCPTT.mcptt_client_id));
 		
 			
 		
+	}
+	//Define logic for call emergence
+	if((session_sip->media.type & tmedia_imminentperil) == tmedia_imminentperil){
+		imminentperil_node=xmlNewChild(mcptt_Params, NULL, BAD_CAST "imminentperil-ind",
+        BAD_CAST"");
+		xmlNewProp(imminentperil_node, BAD_CAST "type", BAD_CAST "Normal");
+		xmlNewChild(imminentperil_node, NULL, BAD_CAST "mcpttBoolean",
+        BAD_CAST"true");
+		/*
+		 * if the MCPTT user has not requested an MCPTT emergency alert to be sent, shall set the <alert-ind> element of the application/vnd.3gpp.mcptt-info+xml MIME body to "false"; and
+		 */
+		alert_node=xmlNewChild(mcptt_Params, NULL, BAD_CAST "alert-ind",
+							   BAD_CAST"");
+		xmlNewProp(alert_node, BAD_CAST "type", BAD_CAST "Normal");
+		xmlNewChild(alert_node, NULL, BAD_CAST "mcpttBoolean",
+					BAD_CAST"false");
+	}
+	if((session_sip->media.type & tmedia_alert) == tmedia_alert){
+		/**
+		 * 	include in the application/vnd.3gpp.mcptt-info+xml MIME body the <alert-ind> element set to "true" and set the MCPTT emergency alert state to "MEA 2: emergency-alert-confirm-pending";
+		 */
+		alert_node=xmlNewChild(mcptt_Params, NULL, BAD_CAST "alert-ind",
+        BAD_CAST"");
+		xmlNewProp(alert_node, BAD_CAST "type", BAD_CAST "Normal");
+		xmlNewChild(alert_node, NULL, BAD_CAST "mcpttBoolean",
+        BAD_CAST"true");
+	}else{
+		/*
+		 * if the MCPTT user has not requested an MCPTT emergency alert to be sent, shall set the <alert-ind> element of the application/vnd.3gpp.mcptt-info+xml MIME body to "false"; and
+		 */
+		alert_node=xmlNewChild(mcptt_Params, NULL, BAD_CAST "alert-ind",
+							   BAD_CAST"");
+		xmlNewProp(alert_node, BAD_CAST "type", BAD_CAST "Normal");
+		xmlNewChild(alert_node, NULL, BAD_CAST "mcpttBoolean",
+					BAD_CAST"false");
+	}
+	if((session_sip->media.type & tmedia_emergency) == tmedia_emergency){
+		emergency_node=xmlNewChild(mcptt_Params, NULL, BAD_CAST "emergency-ind",
+        BAD_CAST"");
+		xmlNewProp(emergency_node, BAD_CAST "type", BAD_CAST "Normal");
+		xmlNewChild(emergency_node, NULL, BAD_CAST "mcpttBoolean",
+        BAD_CAST"true");
+
+
 	}
 	dataOut=xml_to_string(doc);
 	output=tsk_buffer_create(dataOut,tsk_strlen(dataOut));
@@ -2508,25 +2686,27 @@ static tsk_buffer_t* tsip_dialog_invite_create_mcpttinfo(const tsip_dialog_invit
 }
 
 
+
 static char* xml_to_string(xmlDocPtr doc)
 {
 	char* out;
     xmlChar *s;
     int size;
-    xmlDocDumpMemory(doc, &s, &size);
+	xmlDocDumpFormatMemoryEnc(doc, &s, &size, "UTF-8", 1);
+	//xmlDocDumpMemory(doc, &s, &size);
 	#if HAVE_CRT //Debug memory
-		out = malloc(strlen((char *)s));
+		out = malloc(strlen((char *)s)+1);
 	#else
-		out = tsk_malloc(strlen((char *)s));
+		out = tsk_malloc(strlen((char *)s)+1);
 	#endif //HAVE_CRT
-	
+
 	strcpy(out,(char *)s);
     xmlFree(s);
 	return out;
 }
 
 
-//by Eduardo 
+
 static tsk_buffer_t* tsip_dialog_200ok_create_mcpttinfo(const tsip_dialog_invite_t* self)
 {
 	tsip_stack_t* ptsip_stack_t;
@@ -2674,3 +2854,4 @@ static const tsk_object_def_t tsip_dialog_invite_def_s =
 	tsip_dialog_invite_cmp, 
 };
 const tsk_object_def_t *tsip_dialog_invite_def_t = &tsip_dialog_invite_def_s;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           

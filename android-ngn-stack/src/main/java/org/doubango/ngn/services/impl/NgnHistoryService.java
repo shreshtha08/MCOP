@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -71,7 +70,7 @@ public class NgnHistoryService extends NgnBaseService implements INgnHistoryServ
 	     */
 		Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
 		
-		mHistoryFile = new File(String.format("%s/%s", NgnEngine.getInstance().getStorageService().getCurrentDir(), NgnHistoryService.HISTORY_FILE));
+		mHistoryFile = new File(NgnEngine.getInstance().getStorageService().getCurrentDir(), NgnHistoryService.HISTORY_FILE);
 		if(!mHistoryFile.exists()){
 			try {
 				mHistoryFile.createNewFile();

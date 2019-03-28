@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -76,7 +75,7 @@ bail:
 	return ret;
 }
 
-char* __txcap_selector_get_url_no_auid(const txcap_stack_handle_t* stack, const char* auid_id, va_list* app) //Added by Mikel
+char* __txcap_selector_get_url_no_auid(const txcap_stack_handle_t* stack, const char* auid_id, va_list* app)
 {
 	char* ret = tsk_null;
 	char* node = tsk_null;

@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -64,14 +63,14 @@
 * In real world, there are two ways to receive or send SMS messages over mobile networks: Binary (PDU) and Text mode.
 *
 * <h3>18.1.1 Text mode</h3>
-* The UE shall send the SMS as any other SIP MESSAGE request and it’s up to the IP-SM-GW to encode the payload before retransmission. This mode is out of scope because there is nothing special to do.
+* The UE shall send the SMS as any other SIP MESSAGE request and itï¿½s up to the IP-SM-GW to encode the payload before retransmission. This mode is out of scope because there is nothing special to do.
 *
 * <h3>18.1.2 Binary mode</h3>
 * The UE shall implement the roles of an SM-over-IP sender and an SM-over-IP receiver, according the procedures in sections 5.3.1 and 5.3.2 in 3GPP TS 24.341.
 *
 * The IMS core network shall take the role of an IP-SM-GW and support the general procedures in Section 5.3.3.1 of 3GPP TS 24.341, and the functions (answering of routing information query, and transport layer interworking) according to the procedures in Sections 5.3.3.3 and 5.3.3.4 in 3GPP TS 24.341.
 *
-* It’s up to the UE to encode the payload in binary format before sending the SMS. The payload contains a sequence of hexadecimal octets or decimal semi-octets strings encoded in binary format. The overall PDU (Protocol Data Unit) string contains some useful information (SMSC address, Service center time stamp, sender number, message reference ...) plus the actual message.
+* Itï¿½s up to the UE to encode the payload in binary format before sending the SMS. The payload contains a sequence of hexadecimal octets or decimal semi-octets strings encoded in binary format. The overall PDU (Protocol Data Unit) string contains some useful information (SMSC address, Service center time stamp, sender number, message reference ...) plus the actual message.
 * The message length can be up to 160 characters where each character represent 7bits [160/7bits], [140/8bits] or [70/16bits]. By default, each character represents 7bits encoded as per 3GPP TS 23.038.
 *
 * For IMS and LTE Networks, SMS messages shall be encapsulated in RPDUs (Relay Protocol Data Unit) data string as defined in 3GPP TS 24.011 section 7.3. The RPDU data is transferred from SM entity to SM entity using SIP MESSAGE requests. These SIP requests shall use the MIME type <b>"application/vnd.3gpp.sms"</b> for this purpose.
@@ -427,7 +426,7 @@ TSK_OBJECT_SAFE_FREE(rp_ack);
 * <h2> 18.3.4 RP-ERROR @anchor tsms_rpdu_group_ERROR</h2>
 * This message is sent between the MSC and the mobile station in both directions and used to relay an error cause from an erroneous short message or notification transfer attempt.<br>
 * For more information, please refer to 3GPP TS 24.011 section7.3.2.4.<br>
-* The code below shows how to send a <i>RP-ERROR</i> message with a <i>RP-User-Data</i> (see 3GPP TS 23.011 section 8.2.5.3) information element which includes <i>SMS-DELIVER-REPORT</i> as type indicator. In this example, the error message is sent because the “call is barred”. For more information about the cause values that may be contained in an <i>RP-ERROR</i> message, please refer to 3GPP TS 24.011 section 8.2.5.4.<br>
+* The code below shows how to send a <i>RP-ERROR</i> message with a <i>RP-User-Data</i> (see 3GPP TS 23.011 section 8.2.5.3) information element which includes <i>SMS-DELIVER-REPORT</i> as type indicator. In this example, the error message is sent because the ï¿½call is barredï¿½. For more information about the cause values that may be contained in an <i>RP-ERROR</i> message, please refer to 3GPP TS 24.011 section 8.2.5.4.<br>
 * 
 * @code
 #include "tsk.h"

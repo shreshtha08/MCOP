@@ -1,5 +1,4 @@
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -26,7 +25,9 @@
 */
 package org.doubango.ngn.services;
 
+import java.io.File;
+
 public interface INgnStorageService extends INgnBaseService {
-	String getCurrentDir();
+	File getCurrentDir();
 	String getContentShareDir();
 }

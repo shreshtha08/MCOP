@@ -1,6 +1,5 @@
 /*
  *
- *  Copyright (C) 2018 Eduardo Zarate Lasurtegui
  *   Copyright (C) 2018, University of the Basque Country (UPV/EHU)
  *
  *  Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
@@ -32,24 +31,24 @@ import java.util.Map;
 public class UserData {
     private String mcpttID;
     private String displayName;
-    private Map<String,String> sessionIDs;
+    private Map<String,Session> sessionIDs;
     private boolean isRegisted;
 
     public UserData(String mcpttID, String displayName) {
         this.mcpttID = mcpttID;
         this.displayName = displayName;
-        sessionIDs=new HashMap<String,String>();
+        sessionIDs=new HashMap<String,Session>();
     }
 
     public UserData(String mcpttID, String displayName, boolean isRegisted) {
         this.mcpttID = mcpttID;
         this.displayName = displayName;
         this.isRegisted = isRegisted;
-        sessionIDs=new HashMap<String,String>();
+        sessionIDs=new HashMap<String,Session>();
     }
 
     public UserData() {
-        sessionIDs=new HashMap<String,String>();
+        sessionIDs=new HashMap<String,Session>();
     }
 
     public String getMcpttID() {
@@ -85,11 +84,16 @@ public class UserData {
         return ids;
     }
 
+    public Session getSession(String sessionID) {
+        if(sessionIDs==null || sessionIDs.isEmpty())return null;
+        return sessionIDs.get(sessionID);
+    }
+
     public void removeSessionID(String sessionIDs) {
         this.sessionIDs.remove(sessionIDs);
     }
 
     public void addSessionID(String sessionIDs) {
-        this.sessionIDs.put(sessionIDs,sessionIDs);
+        this.sessionIDs.put(sessionIDs,new Session(sessionIDs));
     }
 }

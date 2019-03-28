@@ -4,7 +4,6 @@
 #include <crtdbg.h>
 #endif //HAVE_CRT
 /*
-* Copyright (C) 2017 Eduardo Zarate Lasurtegui
 * Copyright (C) 2017, University of the Basque Country (UPV/EHU)
 * Contact for licensing options: <licensing-mcpttclient(at)mcopenplatform(dot)com>
 *
@@ -54,6 +53,18 @@
 #include "tsk_debug.h"
 #include "tsk_time.h"
 #include "tsk_common.h"
+
+#if HAVE_LIBXML2
+#include <libxml/tree.h>
+#include <libxml/parser.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
+#include <tsip.h>
+#include <tinysip.h>
+#include <tinysip/tsip_ssession.h>
+
+#endif
+
 #define VALUE_CONTENT_TYPE_MESSAGE_MBMS "application/vnd.3gpp.mcptt-mbms-usage-info+xml"
 #define VALUE_CONTENT_TYPE_MULTIPART "multipart/mixed"
 #define DEBUG_STATE_MACHINE											1
@@ -65,6 +76,9 @@ static int send_MESSAGE(tsip_dialog_message_t *self);
 static int receive_MESSAGE(tsip_dialog_message_t *self,const tsip_request_t *request);
 static int tsip_dialog_message_OnTerminated(tsip_dialog_message_t *self);
 static tsk_buffer_t* tsip_dialog_message_create_mcpttinfo(const tsip_dialog_message_t* self);
+
+
+
 /*static*/ int tsip_dialog_message_msession_configure(tsip_dialog_message_t *self);
 /* ======================== transitions ======================== */
 static int tsip_dialog_message_Started_2_Sending_X_sendMESSAGE(va_list *app);
@@ -260,7 +274,8 @@ int tsip_dialog_message_Started_2_Receiving_X_recvMESSAGE(va_list *app)
 	int result=0;
 	tsip_dialog_message_t *self = va_arg(*app, tsip_dialog_message_t *);
 	const tsip_request_t *request = va_arg(*app, const tsip_request_t *);
-	result=receive_MESSAGE(self,request);
+    result=receive_MESSAGE(self,request);
+
 	return result;
 }
 
@@ -463,18 +478,36 @@ int send_MESSAGE(tsip_dialog_message_t *self)
 	char* value_Content_Type_Mbms="application/vnd.3gpp.mcptt-mbms-usage-info+xml";
 	const tsip_header_t* hdr;
 	tsk_buffer_t* mcptt_info;
+
 	tmedia_multipart_body_t* body = tsk_null;
 	tmedia_content_multipart_t* content = tsk_null;
 	tmedia_content_multipart_t* mcptt_info_content = tsk_null;
 	tsk_size_t i;
 	char* content_type_hdr  = tsk_null;
 	char* body_string  = tsk_null;
+	tsk_buffer_t* body_buffer = tsk_buffer_create_null();
 	tsk_bool_t control_accept_contact=tsk_false;
 	if(!self){
 		return -1;
 	}
 
-	//MCPTT by Eduardo
+    if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_mcptt_group) != tmedia_mcptt_group){
+		// MCPTT Private Call
+        if(TSIP_DIALOG_GET_SS(self)->pttMCPTT.ptt_caller_uri==tsk_null){
+            TSIP_DIALOG_GET_SS(self)->pttMCPTT.ptt_caller_uri=tsip_uri_tostring(TSIP_DIALOG_GET_SS(self)->to,tsk_false, tsk_false);
+        }
+    }else{
+		// MCPTT Group Call
+        if(TSIP_DIALOG_GET_SS(self)->pttMCPTT.ptt_group_uri==tsk_null){
+            TSIP_DIALOG_GET_SS(self)->pttMCPTT.ptt_group_uri=tsip_uri_tostring(TSIP_DIALOG_GET_SS(self)->to,tsk_false, tsk_false);
+        }
+
+        if(TSIP_DIALOG_GET_SS(self)->pttMCPTT.ptt_caller_uri==tsk_null){
+            TSIP_DIALOG_GET_SS(self)->pttMCPTT.ptt_caller_uri=tsip_uri_tostring(TSIP_DIALOG_GET_SS(self)->to,tsk_false, tsk_false);
+        }
+    }
+
+	//MCPTT
 	if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_mcptt) == tmedia_mcptt){
 		//The request_uri is PSI in New Invite to MCPTT
 		tsip_dialog_request_configure_mcptt(TSIP_DIALOG(self));
@@ -486,7 +519,6 @@ int send_MESSAGE(tsip_dialog_message_t *self)
 	}
 
 	//Generate Header for mcptt_location message
-
 	if((TSIP_DIALOG_GET_SS(self)->media.type & tmedia_mcptt) == tmedia_mcptt){
 		TSIP_HEADER_ADD_PARAM(request->Contact, "+g.3gpp.icsi-ref", "\"urn%3Aurn-7%3A3gpp-service.ims.icsi.mcptt\"");
 			TSIP_HEADER_ADD_PARAM(request->Contact, "+g.3gpp.mcptt",tsk_null);
@@ -556,6 +588,8 @@ int send_MESSAGE(tsip_dialog_message_t *self)
 		}
 
 	}else
+
+
 	/* apply action params to the request */
 	if(TSIP_DIALOG(self)->curr_action)
 		tsip_dialog_apply_action(request, TSIP_DIALOG(self)->curr_action);
@@ -595,109 +629,123 @@ int receive_MESSAGE(tsip_dialog_message_t *self,const tsip_request_t *request)
 		//multipart/mixed
 		boundary = tsip_header_get_param_value((tsip_header_t*)sipmessage->Content_Type, "boundary");
 			if(boundary != tsk_null) 
-			{			
+			{
 				mp_body = tmedia_content_multipart_body_parse(TSIP_MESSAGE_CONTENT_DATA(sipmessage), TSIP_MESSAGE_CONTENT_DATA_LENGTH(sipmessage), VALUE_CONTENT_TYPE_MULTIPART, boundary);
-				if(mp_body != tsk_null)
-				{
-				//mp_content is xml of MBMS
-					mp_content = tmedia_content_multipart_body_get_content(mp_body,VALUE_CONTENT_TYPE_MESSAGE_MBMS);
-					//mp_content_sdp is the data in char* of SDP
-					mp_content_sdp = tmedia_content_multipart_body_get_content(mp_body, "application/sdp");
-					if(mp_content != tsk_null && mp_content_sdp!=tsk_null)//MBMS service
-					{	
-						
-						self->msession_mgr = tmedia_session_mgr_create(tmedia_audio, 
-							TSIP_DIALOG_GET_STACK(self)->network.local_ip[TSIP_TRANSPORT_IDX_UDP], TNET_SOCKET_TYPE_IS_IPV6(TSIP_DIALOG_GET_STACK(self)->network.proxy_cscf_type[TSIP_TRANSPORT_IDX_UDP]), tsk_true);
-						//sdp_ro es the parse data in SDP. sdp_ro is a list
+                if(mp_body != tsk_null) {
+                    //mp_content is xml of MBMS
+                    mp_content = tmedia_content_multipart_body_get_content(mp_body,
+                                                                           VALUE_CONTENT_TYPE_MESSAGE_MBMS);
+                    //mp_content_sdp is the data in char* of SDP
+                    mp_content_sdp = tmedia_content_multipart_body_get_content(mp_body,
+                                                                               "application/sdp");
+                    if (mp_content != tsk_null && mp_content_sdp != tsk_null)//MBMS service
+                    {
 
-						if(!(sdp_ro = tsdp_message_parse(mp_content_sdp->data, mp_content_sdp->data_size))){
-							TSK_DEBUG_ERROR("Failed to parse remote sdp message:\n [%.*s]",  mp_content->data_size, (const char*)mp_content->data);
-							return -2;
-						}else{
-							sdp = tsdp_message_tostring(sdp_ro);
-						}
-						
-						if(!(multicast_media_mcptt_audio = tsdp_message_find_media(sdp_ro, "audio"))){
-							return -1;
-						}
-						if(!(multicast_media_mcptt_mux = tsdp_message_find_media_at_index(sdp_ro, "application",0))){
-							return -1;
-						}
-						multicast_media_mcptt=multicast_media_mcptt_mux;
-						if(!(multicast_media_mcptt_mux_2 =  tsdp_message_find_media_at_index(sdp_ro, "application",1)) && multicast_media_mcptt_mux->port==9){
-							return -1;
-						}else{
-							multicast_media_mcptt=multicast_media_mcptt_mux_2;
-						}
+                        self->msession_mgr = tmedia_session_mgr_create(tmedia_audio,
+                                                                       TSIP_DIALOG_GET_STACK(
+                                                                               self)->network.local_ip[TSIP_TRANSPORT_IDX_UDP],
+                                                                       TNET_SOCKET_TYPE_IS_IPV6(
+                                                                               TSIP_DIALOG_GET_STACK(
+                                                                                       self)->network.proxy_cscf_type[TSIP_TRANSPORT_IDX_UDP]),
+                                                                       tsk_true);
+                        //sdp_ro es the parse data in SDP. sdp_ro is a list
 
+                        if (!(sdp_ro = tsdp_message_parse(mp_content_sdp->data,
+                                                          mp_content_sdp->data_size))) {
+                            TSK_DEBUG_ERROR("Failed to parse remote sdp message:\n [%.*s]",
+                                            mp_content->data_size, (const char *) mp_content->data);
+                            return -2;
+                        } else {
+                            sdp = tsdp_message_tostring(sdp_ro);
+                        }
 
-
-						//session=TSIP_DIALOG_GET_SS(self);
-						port=multicast_media_mcptt->port;
-						//session->stack->pttMCPTTMbms.port_manager=port;
-						#if HAVE_CRT //Debug memory
-								//addrs=(char*)malloc(tsk_strlen(multicast_media_mcptt->C->addr) + 1);
-
-						#else
-								//addrs=(char*)tsk_malloc(tsk_strlen(multicast_media_mcptt->C->addr) + 1);
-
-						#endif //HAVE_CRT
-						//strcpy(addrs,multicast_media_mcptt->C->addr);
-						//session->stack->pttMCPTTMbms.addr_multicast=addrs;
-						
-						/*
-						tsk_list_lock(TSIP_DIALOG_GET_STACK(self)->ssessions);
-						tsk_list_foreach(item,TSIP_DIALOG_GET_STACK(self)->ssessions){
-							va_list ap;
-							if (!(audio_session2 = item->data) || !(audio_session2->type & tmedia_mcptt)){
-								va_end(ap);
-								continue;
-							}
-							
-							va_end(ap);
-							break;
-						}
-						*/
-						/*
-						if(sdp_ro){
+                        if (!(multicast_media_mcptt_audio = tsdp_message_find_media(sdp_ro,
+                                                                                    "audio"))) {
+                            return -1;
+                        }
+                        if (!(multicast_media_mcptt_mux = tsdp_message_find_media_at_index(sdp_ro,
+                                                                                           "application",
+                                                                                           0))) {
+                            return -1;
+                        }
+                        multicast_media_mcptt = multicast_media_mcptt_mux;
+                        if (!(multicast_media_mcptt_mux_2 = tsdp_message_find_media_at_index(sdp_ro,
+                                                                                             "application",
+                                                                                             1)) &&
+                            multicast_media_mcptt_mux->port == 9) {
+                            return -1;
+                        } else {
+                            multicast_media_mcptt = multicast_media_mcptt_mux_2;
+                        }
 
 
 
-							//session->stack->pttMCPTTMbms.sdp_ro=tsdp_message_clone(sdp_ro);
-							if (tmedia_session_mgr_is_new_ro(self->msession_mgr, sdp_ro)) {
-								ret = tsip_dialog_message_msession_configure(self);
-							}
+                        //session=TSIP_DIALOG_GET_SS(self);
+                        port = multicast_media_mcptt->port;
+                        //session->stack->pttMCPTTMbms.port_manager=port;
+#if HAVE_CRT //Debug memory
+                        //addrs=(char*)malloc(tsk_strlen(multicast_media_mcptt->C->addr) + 1);
 
-							if((ret = tmedia_session_mgr_set_ro(self->msession_mgr, sdp_ro, ro_type))){
-								TSK_DEBUG_ERROR("Failed to set remote offer");
-								return -2;
-							}
-							
-						}
-						
-						
-						
+#else
+                        //addrs=(char*)tsk_malloc(tsk_strlen(multicast_media_mcptt->C->addr) + 1);
 
-						local_ssrc = tmedia_session_mgr_audio_get_ssrc(self->msession_mgr);							
-						audio_session = tmedia_session_mgr_find(self->msession_mgr, tmedia_audio);
-						tmedia_session_mgr_set(self->msession_mgr,
-							TMEDIA_SESSION_SET_INT32(tmedia_mcptt, "local_ssrc", local_ssrc),
-							TMEDIA_SESSION_SET_POBJECT(tmedia_mcptt, "audio_session", audio_session),
-							TMEDIA_SESSION_SET_NULL());
-						audio_session = tmedia_session_mgr_find(self->msession_mgr,tmedia_mcptt);
-						audio_session->lo_held = tsk_true;
-						*/
-						//TSK_OBJECT_SAFE_FREE(mp_content);
-						/*if(addrs != tsk_null){
-							TSK_OBJECT_SAFE_FREE(addrs);
-						}*/
-						if(sdp_ro != tsk_null){
-							TSK_OBJECT_SAFE_FREE(sdp_ro);
-						}
-					}else if(mp_content != tsk_null){
-						TSK_DEBUG_ERROR("The new message isn't valid.");
-					}
-				}
+#endif //HAVE_CRT
+                        //strcpy(addrs,multicast_media_mcptt->C->addr);
+                        //session->stack->pttMCPTTMbms.addr_multicast=addrs;
+
+                        /*
+                        tsk_list_lock(TSIP_DIALOG_GET_STACK(self)->ssessions);
+                        tsk_list_foreach(item,TSIP_DIALOG_GET_STACK(self)->ssessions){
+                            va_list ap;
+                            if (!(audio_session2 = item->data) || !(audio_session2->type & tmedia_mcptt)){
+                                va_end(ap);
+                                continue;
+                            }
+
+                            va_end(ap);
+                            break;
+                        }
+                        */
+                        /*
+                        if(sdp_ro){
+
+
+
+                            //session->stack->pttMCPTTMbms.sdp_ro=tsdp_message_clone(sdp_ro);
+                            if (tmedia_session_mgr_is_new_ro(self->msession_mgr, sdp_ro)) {
+                                ret = tsip_dialog_message_msession_configure(self);
+                            }
+
+                            if((ret = tmedia_session_mgr_set_ro(self->msession_mgr, sdp_ro, ro_type))){
+                                TSK_DEBUG_ERROR("Failed to set remote offer");
+                                return -2;
+                            }
+
+                        }
+
+
+
+
+                        local_ssrc = tmedia_session_mgr_audio_get_ssrc(self->msession_mgr);
+                        audio_session = tmedia_session_mgr_find(self->msession_mgr, tmedia_audio);
+                        tmedia_session_mgr_set(self->msession_mgr,
+                            TMEDIA_SESSION_SET_INT32(tmedia_mcptt, "local_ssrc", local_ssrc),
+                            TMEDIA_SESSION_SET_POBJECT(tmedia_mcptt, "audio_session", audio_session),
+                            TMEDIA_SESSION_SET_NULL());
+                        audio_session = tmedia_session_mgr_find(self->msession_mgr,tmedia_mcptt);
+                        audio_session->lo_held = tsk_true;
+                        */
+                        //TSK_OBJECT_SAFE_FREE(mp_content);
+                        /*if(addrs != tsk_null){
+                            TSK_OBJECT_SAFE_FREE(addrs);
+                        }*/
+                        if (sdp_ro != tsk_null) {
+                            TSK_OBJECT_SAFE_FREE(sdp_ro);
+                        }
+                    } else if (mp_content != tsk_null) {
+                        TSK_DEBUG_ERROR("The new message isn't valid.");
+                    }
+                }
 			}
 	}
 	
@@ -707,17 +755,15 @@ int receive_MESSAGE(tsip_dialog_message_t *self,const tsip_request_t *request)
 	if(mp_body!=tsk_null){
 		TSK_OBJECT_SAFE_FREE(mp_body);
 	}
-	
 
 	/* Alert the user. */
 	if(sdp!=tsk_null){
 		ret=TSIP_DIALOG_MESSAGE_SIGNAL(self, tsip_i_message, 
 			tsip_event_code_dialog_request_incoming, sdp, request);
-	}else{
-		ret=TSIP_DIALOG_MESSAGE_SIGNAL(self, tsip_i_message, 
-			tsip_event_code_dialog_request_incoming, "incomming message", request);
+	}else {
+        ret=TSIP_DIALOG_MESSAGE_SIGNAL(self, tsip_i_message,
+            tsip_event_code_dialog_request_incoming, "incoming message", request);
 	}
-	
 
 	/* Update last incoming MESSAGE */
 	TSK_OBJECT_SAFE_FREE(self->request);
@@ -725,7 +771,6 @@ int receive_MESSAGE(tsip_dialog_message_t *self,const tsip_request_t *request)
 
 	return ret;
 }
-
 
 int tsip_dialog_message_msession_configure(tsip_dialog_message_t *self)
 {
@@ -852,17 +897,6 @@ static tsk_buffer_t* tsip_dialog_message_create_mcpttinfo(const tsip_dialog_mess
 	
 	return output;
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -38,6 +38,8 @@ import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.support.v4.content.ContextCompat;
+
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -106,6 +108,8 @@ public class MainActivity extends AppCompatActivity {
     private DialogMenu mDialogMenuIPs;
     private Button mainActivity_Button_Advanced_Functions;
     private DialogMenu mDialogShowAdvanceFunction;
+    private EditText mainActivity_editText;
+    private Button mainActivity_Button_mic;
 
 
     private Map<String,String[]> getProfilesParameters(List<String> parameters){
@@ -160,6 +164,7 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         setPermissions();
+        checkPermission();
         preferencesManager=new PreferencesManagerDefault();
         isSpeakerphoneOn=false;
 
@@ -196,6 +201,8 @@ public class MainActivity extends AppCompatActivity {
         mainActivity_Button_Request_token=(Button)findViewById(R.id.mainActivity_Button_Request_token);
         mainActivity_Button_Speaker=(Button)findViewById(R.id.mainActivity_Button_Speaker);
         mainActivity_Button_Advanced_Functions=(Button)findViewById(R.id.mainActivity_Button_Advanced_Functions);
+        mainActivity_editText = (EditText)findViewById(R.id.mainActivity_editText);
+        mainActivity_Button_mic=(Button)findViewById(R.id.mainActivity_Button_mic);
         if(userData==null);
         userData=new UserData();
 
@@ -1252,6 +1259,17 @@ public class MainActivity extends AppCompatActivity {
                 intent.setData(Uri.parse("package:" + this.getPackageName()));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
+            }
+        }
+    }
+
+    private void checkPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)) {
+                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+                finish();
             }
         }
     }

@@ -45,6 +45,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.ImageButton;
+
+import android.view.MotionEvent;
+import android.speech.SpeechRecognizer;
+import android.speech.RecognizerIntent;
+import android.speech.RecognitionListener;
 
 import org.mcopenplatform.muoapi.BuildConfig;
 import org.mcopenplatform.muoapi.ConstantsMCOP;
@@ -68,6 +74,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     private final static String TAG = MainActivity.class.getCanonicalName();
@@ -109,8 +116,8 @@ public class MainActivity extends AppCompatActivity {
     private Button mainActivity_Button_Advanced_Functions;
     private DialogMenu mDialogShowAdvanceFunction;
     private EditText mainActivity_editText;
-    private Button mainActivity_Button_mic;
-
+    private ImageButton mainActivity_Button_mic;
+    private SpeechRecognizer mSpeechRecognizer;
 
     private Map<String,String[]> getProfilesParameters(List<String> parameters){
         Map<String,String[]> parametersMap=new HashMap<>();
@@ -164,7 +171,6 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         setPermissions();
-        checkPermission();
         preferencesManager=new PreferencesManagerDefault();
         isSpeakerphoneOn=false;
 
@@ -202,7 +208,15 @@ public class MainActivity extends AppCompatActivity {
         mainActivity_Button_Speaker=(Button)findViewById(R.id.mainActivity_Button_Speaker);
         mainActivity_Button_Advanced_Functions=(Button)findViewById(R.id.mainActivity_Button_Advanced_Functions);
         mainActivity_editText = (EditText)findViewById(R.id.mainActivity_editText);
-        mainActivity_Button_mic=(Button)findViewById(R.id.mainActivity_Button_mic);
+        mainActivity_Button_mic=(ImageButton)findViewById(R.id.mainActivity_Button_mic);
+        mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+
+        final Intent mSpeechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE,
+                Locale.getDefault());
+
         if(userData==null);
         userData=new UserData();
 
@@ -690,6 +704,78 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 showAdvanceFeatures();
         }
+        });
+
+        mSpeechRecognizer.setRecognitionListener(new RecognitionListener() {
+            @Override
+            public void onReadyForSpeech(Bundle bundle) {
+
+            }
+
+            @Override
+            public void onBeginningOfSpeech() {
+
+            }
+
+            @Override
+            public void onRmsChanged(float v) {
+
+            }
+
+            @Override
+            public void onBufferReceived(byte[] bytes) {
+
+            }
+
+            @Override
+            public void onEndOfSpeech() {
+
+            }
+
+            @Override
+            public void onError(int i) {
+
+            }
+
+            @Override
+            public void onResults(Bundle bundle) {
+                //getting all the matches
+                ArrayList<String> matches = bundle
+                        .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+
+                //displaying the first match
+                if (matches != null)
+                    mainActivity_editText.setText(matches.get(0));
+            }
+
+            @Override
+            public void onPartialResults(Bundle bundle) {
+
+            }
+
+            @Override
+            public void onEvent(int i, Bundle bundle) {
+
+            }
+        });
+
+        mainActivity_Button_mic.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_UP:
+                        mSpeechRecognizer.stopListening();
+                        mainActivity_editText.setHint("You will see input here");
+                        break;
+
+                    case MotionEvent.ACTION_DOWN:
+                        mSpeechRecognizer.startListening(mSpeechRecognizerIntent);
+                        mainActivity_editText.setText("");
+                        mainActivity_editText.setHint("Listening...");
+                        break;
+                }
+                return false;
+            }
         });
 
         if(mConnection==null)
@@ -1259,17 +1345,6 @@ public class MainActivity extends AppCompatActivity {
                 intent.setData(Uri.parse("package:" + this.getPackageName()));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
-            }
-        }
-    }
-
-    private void checkPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)) {
-                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                        Uri.parse("package:" + getPackageName()));
-                startActivity(intent);
-                finish();
             }
         }
     }

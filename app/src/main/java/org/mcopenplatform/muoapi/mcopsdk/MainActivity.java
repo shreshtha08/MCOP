@@ -39,6 +39,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.support.v4.content.ContextCompat;
+import android.os.Environment;
 
 import android.util.Log;
 import android.view.View;
@@ -46,6 +47,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.ImageButton;
+import android.media.*;
 
 import android.view.MotionEvent;
 import android.speech.SpeechRecognizer;
@@ -75,6 +77,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Locale;
+import java.util.UUID;
+import java.io.File;
 
 public class MainActivity extends AppCompatActivity {
     private final static String TAG = MainActivity.class.getCanonicalName();
@@ -110,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
     private Map<String, String[]> clients;
     private boolean isSpeakerphoneOn;
     private Button mainActivity_Button_Speaker;
+    private Button mainActivity_Button_speakerOff;
     private Intent serviceIntent;
     private List<InterfaceAddress> interfaceAddresses;
     private DialogMenu mDialogMenuIPs;
@@ -118,6 +123,10 @@ public class MainActivity extends AppCompatActivity {
     private EditText mainActivity_editText;
     private ImageButton mainActivity_Button_mic;
     private SpeechRecognizer mSpeechRecognizer;
+
+    private  AudioManager mAudioManager;
+    private  MediaRecorder recorder;
+
 
     private Map<String,String[]> getProfilesParameters(List<String> parameters){
         Map<String,String[]> parametersMap=new HashMap<>();
@@ -206,6 +215,7 @@ public class MainActivity extends AppCompatActivity {
         mainActivity_Button_Release_token=(Button)findViewById(R.id.mainActivity_Button_Release_token);
         mainActivity_Button_Request_token=(Button)findViewById(R.id.mainActivity_Button_Request_token);
         mainActivity_Button_Speaker=(Button)findViewById(R.id.mainActivity_Button_Speaker);
+        mainActivity_Button_speakerOff=(Button)findViewById(R.id.mainActivity_Button_speakerOff);
         mainActivity_Button_Advanced_Functions=(Button)findViewById(R.id.mainActivity_Button_Advanced_Functions);
         mainActivity_editText = (EditText)findViewById(R.id.mainActivity_editText);
         mainActivity_Button_mic=(ImageButton)findViewById(R.id.mainActivity_Button_mic);
@@ -216,6 +226,7 @@ public class MainActivity extends AppCompatActivity {
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE,
                 Locale.getDefault());
+        mAudioManager =  (AudioManager)getSystemService(Context.AUDIO_SERVICE);
 
         if(userData==null);
         userData=new UserData();
@@ -599,6 +610,76 @@ public class MainActivity extends AppCompatActivity {
 
         };
 
+        mSpeechRecognizer.setRecognitionListener(new RecognitionListener() {
+            @Override
+            public void onReadyForSpeech(Bundle bundle) {
+
+            }
+
+            @Override
+            public void onBeginningOfSpeech() {
+
+            }
+
+            @Override
+            public void onRmsChanged(float v) {
+
+            }
+
+            @Override
+            public void onBufferReceived(byte[] bytes) {
+
+            }
+
+            @Override
+            public void onEndOfSpeech() {
+
+            }
+
+            @Override
+            public void onError(int i) {
+
+            }
+
+            @Override
+            public void onResults(Bundle bundle) {
+                //getting all the matches
+                ArrayList<String> matches = bundle
+                        .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+
+                //displaying the first match
+                if (matches != null)
+                    mainActivity_editText.setText(matches.get(0));
+                Log.d(TAG,"ON Result");
+                Log.d(TAG, matches.get(0));
+            }
+
+            @Override
+            public void onPartialResults(Bundle bundle) {
+                //getting all the matches
+                ArrayList<String> matches = bundle
+                        .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+
+                //displaying the first match
+                if (matches != null)
+                    mainActivity_editText.setText(matches.get(0));
+
+                Log.d(TAG,"ON partial");
+                Log.d(TAG, matches.get(0));
+            }
+
+            @Override
+            public void onEvent(int i, Bundle bundle) {
+                //getting all the matches
+                ArrayList<String> matches = bundle
+                        .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+
+                //displaying the first match
+                Log.d(TAG,"ON Event");
+                Log.d(TAG, matches.get(0));
+            }
+        });
+
         mainActivity_Button_Register.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -657,6 +738,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 showIds(getApplicationContext());
+                recorder.stop();
+                recorder.release();
+                recorder = null;
+                mSpeechRecognizer.stopListening();
             }
         });
         mainActivity_Button_accept_call.setOnClickListener(new View.OnClickListener() {
@@ -683,18 +768,64 @@ public class MainActivity extends AppCompatActivity {
         mainActivity_Button_Speaker.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                AudioManager mAudioManager;
-                mAudioManager =  (AudioManager)getSystemService(Context.AUDIO_SERVICE);
-                if(isSpeakerphoneOn){
+                try {
+
+                        String outputFile = Environment.getExternalStorageDirectory().getAbsolutePath() + "/recording-"+UUID.randomUUID()+".3gp";
+
+                    File root = Environment.getExternalStorageDirectory();
+                    File file = new File(root.getAbsolutePath() + "/MCOP/Audios");
+                    if (!file.exists()) {
+                        file.mkdirs();
+                        Log.d(TAG,"Folder created");
+                    }
+
+                    String fileName =  root.getAbsolutePath() + "/MCOP/Audios/" +
+                            String.valueOf(System.currentTimeMillis() + ".mp3");
+
+                        recorder = new MediaRecorder();
+                        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+                        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+                        recorder.setOutputFile(fileName);
+                        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+                        recorder.prepare();
+                        recorder.start();
+
+                        isSpeakerphoneOn=true;
+                        Log.d(TAG, "Speaker true");
+                        mainActivity_Button_Speaker.setText("Speaker ON");
+                        mainActivity_Button_speakerOff.setText("Set Speaker off");
+                        mSpeechRecognizer.startListening(mSpeechRecognizerIntent);
+                        mainActivity_editText.setText("");
+                        mainActivity_editText.setHint("Listening...");
+
+
+                         mAudioManager.setSpeakerphoneOn(true);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+
+        mainActivity_Button_speakerOff.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
                     isSpeakerphoneOn=false;
                     Log.d(TAG, "Speaker false");
-                    mainActivity_Button_Speaker.setText("Speaker false");
-                }else{
-                    isSpeakerphoneOn=true;
-                    Log.d(TAG, "Speaker true");
-                    mainActivity_Button_Speaker.setText("Speaker true");
+                    mainActivity_Button_speakerOff.setText("Speaker OFF");
+                    mainActivity_Button_Speaker.setText("Set Speaker on");
+                    recorder.stop();
+                    recorder.release();
+                    recorder = null;
+                    mSpeechRecognizer.stopListening();
+                    mainActivity_editText.setHint("You will see input here");
+                    mAudioManager.setSpeakerphoneOn(false);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                mAudioManager.setSpeakerphoneOn(isSpeakerphoneOn);
 
             }
         });
@@ -706,58 +837,6 @@ public class MainActivity extends AppCompatActivity {
         }
         });
 
-        mSpeechRecognizer.setRecognitionListener(new RecognitionListener() {
-            @Override
-            public void onReadyForSpeech(Bundle bundle) {
-
-            }
-
-            @Override
-            public void onBeginningOfSpeech() {
-
-            }
-
-            @Override
-            public void onRmsChanged(float v) {
-
-            }
-
-            @Override
-            public void onBufferReceived(byte[] bytes) {
-
-            }
-
-            @Override
-            public void onEndOfSpeech() {
-
-            }
-
-            @Override
-            public void onError(int i) {
-
-            }
-
-            @Override
-            public void onResults(Bundle bundle) {
-                //getting all the matches
-                ArrayList<String> matches = bundle
-                        .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-
-                //displaying the first match
-                if (matches != null)
-                    mainActivity_editText.setText(matches.get(0));
-            }
-
-            @Override
-            public void onPartialResults(Bundle bundle) {
-
-            }
-
-            @Override
-            public void onEvent(int i, Bundle bundle) {
-
-            }
-        });
 
         mainActivity_Button_mic.setOnTouchListener(new View.OnTouchListener() {
             @Override
